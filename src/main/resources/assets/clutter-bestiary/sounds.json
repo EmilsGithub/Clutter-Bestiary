@@ -1,0 +1,15 @@
+{
+  "entity_kiwi_call": {
+    "subtitle": "sounds.clutter-bestiary.entity_kiwi_call",
+    "sounds": [
+      "clutter-bestiary:kiwi_call_one",
+      "clutter-bestiary:kiwi_call_two"
+    ]
+  },
+  "entity_nether_newt_hurt": {
+    "subtitle": "sounds.clutter-bestiary.entity_nether_newt_hurt",
+    "sounds": [
+      "clutter-bestiary:nether_newt_hurt"
+    ]
+  }
+}

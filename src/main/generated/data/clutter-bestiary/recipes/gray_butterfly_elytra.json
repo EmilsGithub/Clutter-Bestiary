@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": {
+    "item": "minecraft:gray_dye"
+  },
+  "base": {
+    "tag": "c:elytra"
+  },
+  "result": {
+    "item": "clutter-bestiary:gray_butterfly_elytra"
+  },
+  "template": {
+    "item": "clutter-bestiary:butterfly_elytra_smithing_template"
+  }
+}

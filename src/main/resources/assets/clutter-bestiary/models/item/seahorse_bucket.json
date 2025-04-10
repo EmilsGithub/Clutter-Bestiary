@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:item/generated",
+  "overrides": [
+    {
+      "model": "clutter-bestiary:item/yellow_seahorse_bucket",
+      "predicate": {
+        "type": 0.0
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/light_blue_seahorse_bucket",
+      "predicate": {
+        "type": 0.1
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/red_seahorse_bucket",
+      "predicate": {
+        "type": 0.2
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/purple_seahorse_bucket",
+      "predicate": {
+        "type": 0.3
+      }
+    }
+  ],
+  "textures": {
+    "layer0": "clutter-bestiary:item/yellow_seahorse_bucket"
+  }
+}

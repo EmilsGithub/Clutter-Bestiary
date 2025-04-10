@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "food",
+  "cookingtime": 200,
+  "experience": 0.4,
+  "group": "venison",
+  "ingredient": {
+    "item": "clutter-bestiary:raw_venison"
+  },
+  "result": "clutter-bestiary:cooked_venison"
+}

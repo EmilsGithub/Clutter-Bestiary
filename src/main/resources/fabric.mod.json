@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"id": "clutter-bestiary",
+	"version": "${version}",
+	"name": "Clutter Bestiary",
+	"description": "Part of the [Clutter] series, adds a bunch of mobs to the game.",
+	"authors": [
+		"EmilSG"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "MIT",
+	"icon": "assets/clutter-bestiary/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.emilsg.clutter_bestiary.ClutterBestiary"
+		],
+		"client": [
+			"net.emilsg.clutter_bestiary.ClutterBestiaryClient"
+		],
+		"fabric-datagen": [
+			"net.emilsg.clutter_bestiary.ClutterBestiaryDataGenerator"
+		]
+	},
+	"mixins": [
+		"clutter-bestiary.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.10",
+		"minecraft": "~1.20.1",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}

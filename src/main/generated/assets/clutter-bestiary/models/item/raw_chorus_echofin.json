@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "clutter-bestiary:item/raw_chorus_echofin"
+  }
+}

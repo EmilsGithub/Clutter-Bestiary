@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "food",
+  "cookingtime": 200,
+  "experience": 0.4,
+  "group": "levitating_echofin",
+  "ingredient": {
+    "item": "clutter-bestiary:raw_levitating_echofin"
+  },
+  "result": "clutter-bestiary:cooked_levitating_echofin"
+}

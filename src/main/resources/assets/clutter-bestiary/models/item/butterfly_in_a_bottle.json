@@ -1,0 +1,122 @@
+{
+  "parent": "minecraft:item/generated",
+  "overrides": [
+    {
+      "model": "clutter-bestiary:item/yellow_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.0
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/red_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.01
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/blue_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.02
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/purple_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.03
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/white_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.04
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/gray_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.05
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/orange_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.06
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/lime_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.07
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/green_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.08
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/black_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.09
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/light_gray_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.10
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/light_blue_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.11
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/brown_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.12
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/cyan_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.13
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/magenta_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.14
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/pink_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.15
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/warped_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.16
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/crimson_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.17
+      }
+    },
+    {
+      "model": "clutter-bestiary:item/soul_butterfly_in_a_bottle",
+      "predicate": {
+        "type": 0.18
+      }
+    }
+  ],
+  "textures": {
+    "layer0": "clutter-bestiary:item/white_butterfly_in_a_bottle"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:elytra",
+    "clutter-bestiary:white_butterfly_elytra",
+    "clutter-bestiary:light_gray_butterfly_elytra",
+    "clutter-bestiary:gray_butterfly_elytra",
+    "clutter-bestiary:black_butterfly_elytra",
+    "clutter-bestiary:brown_butterfly_elytra",
+    "clutter-bestiary:red_butterfly_elytra",
+    "clutter-bestiary:orange_butterfly_elytra",
+    "clutter-bestiary:yellow_butterfly_elytra",
+    "clutter-bestiary:lime_butterfly_elytra",
+    "clutter-bestiary:green_butterfly_elytra",
+    "clutter-bestiary:cyan_butterfly_elytra",
+    "clutter-bestiary:light_blue_butterfly_elytra",
+    "clutter-bestiary:blue_butterfly_elytra",
+    "clutter-bestiary:purple_butterfly_elytra",
+    "clutter-bestiary:magenta_butterfly_elytra",
+    "clutter-bestiary:pink_butterfly_elytra",
+    "clutter-bestiary:crimson_butterfly_elytra",
+    "clutter-bestiary:warped_butterfly_elytra",
+    "clutter-bestiary:soul_butterfly_elytra"
+  ]
+}
