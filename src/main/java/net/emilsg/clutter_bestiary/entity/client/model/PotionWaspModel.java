@@ -2,12 +2,10 @@ package net.emilsg.clutter_bestiary.entity.client.model;
 
 import net.emilsg.clutter_bestiary.entity.client.animation.PotionWaspAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.BestiaryModel;
-import net.emilsg.clutter_bestiary.entity.custom.ButterflyEntity;
 import net.emilsg.clutter_bestiary.entity.custom.PotionWaspEntity;
 import net.minecraft.client.model.*;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
-import org.joml.Vector3f;
 
 
 public class PotionWaspModel<T extends PotionWaspEntity> extends BestiaryModel<T> {
@@ -82,10 +80,7 @@ public class PotionWaspModel<T extends PotionWaspEntity> extends BestiaryModel<T
 
         this.getPotionSacPart().hidden = !potionWasp.hasPotionSac();
 
-        if (potionWasp.isLarge()) this.getPotionSacPart().scale(new Vector3f(1.1f, 1.1f, 1.1f));
-
         this.updateAnimation(potionWasp.flyingAnimState, potionWasp.hasPotionSac() ? PotionWaspAnimations.POTIONWASP_FLY : PotionWaspAnimations.POTIONWASP_FLY_NO_SAC, ageInTicks, 1f);
-        this.updateAnimation(potionWasp.popSacAnimState, potionWasp.isLarge() ? PotionWaspAnimations.POTIONWASP_POTION_SAC_POP_LARGE : PotionWaspAnimations.POTIONWASP_POTION_SAC_POP, ageInTicks, 1f);
     }
 
     @Override

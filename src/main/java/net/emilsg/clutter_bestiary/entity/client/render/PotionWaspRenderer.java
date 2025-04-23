@@ -22,10 +22,6 @@ public class PotionWaspRenderer extends MobEntityRenderer<PotionWaspEntity, Poti
 
     @Override
     public void render(PotionWaspEntity potionWasp, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
-        matrixStack.push();
-        if (potionWasp.isLarge() && potionWasp.hasPotionSac())  matrixStack.translate(0.0F, 0.5F, 0.0F);
-
         super.render(potionWasp, f, g, matrixStack, vertexConsumerProvider, i);
-        matrixStack.pop();
     }
 }

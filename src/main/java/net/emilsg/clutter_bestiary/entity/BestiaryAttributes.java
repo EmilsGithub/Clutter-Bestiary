@@ -20,6 +20,9 @@ public class BestiaryAttributes {
         FabricDefaultAttributeRegistry.register(ModEntityTypes.MANTA_RAY, MantaRayEntity.setAttributes());
         FabricDefaultAttributeRegistry.register(ModEntityTypes.SEAHORSE, SeahorseEntity.setAttributes());
         FabricDefaultAttributeRegistry.register(ModEntityTypes.POTION_WASP, PotionWaspEntity.setAttributes());
+        FabricDefaultAttributeRegistry.register(ModEntityTypes.POTION_SAC, PotionSacEntity.setAttributes());
+        FabricDefaultAttributeRegistry.register(ModEntityTypes.DRAGONFLY, DragonflyEntity.setAttributes());
+        FabricDefaultAttributeRegistry.register(ModEntityTypes.BOOPLET, BoopletEntity.setAttributes());
 
     }
 }

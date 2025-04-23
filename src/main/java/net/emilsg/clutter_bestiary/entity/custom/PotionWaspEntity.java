@@ -1,9 +1,9 @@
 package net.emilsg.clutter_bestiary.entity.custom;
 
-import net.emilsg.clutter_bestiary.entity.custom.goal.ButterflyWanderOverworldGoal;
+import net.emilsg.clutter_bestiary.entity.ModEntityTypes;
 import net.emilsg.clutter_bestiary.entity.custom.parent.ParentAnimalEntity;
-import net.emilsg.clutter_bestiary.entity.variants.ButterflyVariant;
 import net.emilsg.clutter_bestiary.entity.variants.PotionWaspVariant;
+import net.emilsg.clutter_bestiary.sound.ModSoundEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.AboveGroundTargeting;
@@ -21,29 +21,17 @@ import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.BeeEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.potion.Potions;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.tag.BiomeTags;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Util;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.LocalDifficulty;
 import net.minecraft.world.ServerWorldAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldView;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeKeys;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -52,14 +40,9 @@ import java.util.List;
 public class PotionWaspEntity extends ParentAnimalEntity {
     private static final TrackedData<String> VARIANT = DataTracker.registerData(PotionWaspEntity.class, TrackedDataHandlerRegistry.STRING);
     private static final TrackedData<Boolean> HAS_POTION_SAC = DataTracker.registerData(PotionWaspEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Boolean> IS_LARGE = DataTracker.registerData(PotionWaspEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private int potionSacDelayTicks = -1;
 
     public final AnimationState flyingAnimState = new AnimationState();
     private int animationTimeout = 0;
-
-    public final AnimationState popSacAnimState = new AnimationState();
-
 
     public PotionWaspEntity(EntityType<? extends AnimalEntity> entityType, World world) {
         super(entityType, world);
@@ -71,14 +54,12 @@ public class PotionWaspEntity extends ParentAnimalEntity {
         super.initDataTracker();
         this.dataTracker.startTracking(VARIANT, PotionWaspVariant.REGENERATION.getId());
         this.dataTracker.startTracking(HAS_POTION_SAC, true);
-        this.dataTracker.startTracking(IS_LARGE, false);
     }
 
     public void writeCustomDataToNbt(NbtCompound nbt) {
         super.writeCustomDataToNbt(nbt);
         nbt.putString("Variant", this.getTypeVariant());
         nbt.putBoolean("HasPotionSac", this.hasPotionSac());
-        nbt.putBoolean("IsLarge", this.isLarge());
     }
 
     @Override
@@ -86,7 +67,6 @@ public class PotionWaspEntity extends ParentAnimalEntity {
         super.readCustomDataFromNbt(nbt);
         this.dataTracker.set(VARIANT, nbt.getString("Variant"));
         this.dataTracker.set(HAS_POTION_SAC, nbt.getBoolean("HasPotionSac"));
-        this.dataTracker.set(IS_LARGE, nbt.getBoolean("IsLarge"));
     }
 
     public PotionWaspVariant getVariant() {
@@ -109,22 +89,18 @@ public class PotionWaspEntity extends ParentAnimalEntity {
         return this.dataTracker.get(HAS_POTION_SAC);
     }
 
-    public void setIsLarge(boolean isLarge) {
-        this.dataTracker.set(IS_LARGE, isLarge);
-    }
-
-    public boolean isLarge() {
-        return this.dataTracker.get(IS_LARGE);
-    }
-
     @Override
     public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
         PotionWaspVariant variant = PotionWaspVariant.getRandom();
         this.setVariant(variant);
         this.setHasPotionSac(true);
-        this.setIsLarge(random.nextInt(20) == 0);
 
         return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+    }
+
+    @Override
+    protected @Nullable SoundEvent getAmbientSound() {
+        return ModSoundEvents.ENTITY_POTION_WASP_FLY;
     }
 
     @Override
@@ -133,13 +109,24 @@ public class PotionWaspEntity extends ParentAnimalEntity {
     }
 
     @Override
+    public void takeKnockback(double strength, double x, double z) {
+        super.takeKnockback(this.hasPotionSac() ? 0 : strength, x, z);
+    }
+
+    @Override
     public boolean damage(DamageSource source, float amount) {
-        if (hasPotionSac() && amount >= 1f) {
-            if (!this.getWorld().isClient) {
-                potionSacDelayTicks = 20;
-            }
-            if (this.getWorld().isClient) {
-                this.popSacAnimState.start(this.age);
+        if (this.hasPotionSac()) {
+            if (this.getWorld() instanceof ServerWorld serverWorld) {
+                PotionSacEntity potionSacEntity = ModEntityTypes.POTION_SAC.create(serverWorld);
+
+                if (potionSacEntity == null) return super.damage(source, amount);
+
+                potionSacEntity.setVariant(this.getVariant());
+                potionSacEntity.setPosition(this.getPos().add(0D, -0.25D, 0D));
+                potionSacEntity.setOnGround(false);
+
+                serverWorld.spawnEntity(potionSacEntity);
+                this.setHasPotionSac(false);
             }
         }
         return super.damage(source, amount);
@@ -168,14 +155,8 @@ public class PotionWaspEntity extends ParentAnimalEntity {
         super.tick();
         World world = this.getWorld();
 
-        if (potionSacDelayTicks == 0) {
-            world.playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.NEUTRAL, 2f, 0.25f);
-        }
-
         if (world.isClient) {
             this.setupAnimationStates();
-        } else {
-            this.spawnEffectClound();
         }
     }
 
@@ -186,37 +167,6 @@ public class PotionWaspEntity extends ParentAnimalEntity {
             if (effectInstance.getEffectType() == effect) return false;
         }
         return true;
-    }
-
-    protected Box calculateBoundingBox() {
-        return this.getBoxAt(getX(), getY(), getZ());
-    }
-
-    public Box getBoxAt(double x, double y, double z) {
-        float width = this.getWidth() / 2.0F;
-        float height = this.getHeight();
-
-        width = width * (isLarge() ? 1.3f : 1);
-        height = height * (isLarge() ? 1.5f : 1);
-
-        return new Box(x - (double)width, y, z - (double)width, x + (double)width, y + (double)height, z + (double)width);
-    }
-
-    private void spawnEffectClound() {
-        if (!this.getWorld().isClient && potionSacDelayTicks >= 0) {
-            potionSacDelayTicks--;
-            if (potionSacDelayTicks == 0) {
-                setHasPotionSac(false);
-                AreaEffectCloudEntity potionCloud = EntityType.AREA_EFFECT_CLOUD.create((ServerWorld) this.getWorld());
-                if (potionCloud != null) {
-                    potionCloud.setPotion(this.getVariant().getPotionEffect());
-                    potionCloud.setDuration(isLarge() ? 200 : 100);
-                    potionCloud.setRadius(isLarge() ? 2.5f : 1.5f);
-                    potionCloud.setPosition(this.getPos());
-                    this.getWorld().spawnEntity(potionCloud);
-                }
-            }
-        }
     }
 
     @Override

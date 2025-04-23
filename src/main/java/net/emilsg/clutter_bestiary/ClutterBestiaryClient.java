@@ -36,6 +36,10 @@ public class ClutterBestiaryClient implements ClientModInitializer {
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.ECHOFIN, EchofinModel::getTexturedModelData);
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.SEAHORSE, SeahorseModel::getTexturedModelData);
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.POTION_WASP, PotionWaspModel::getTexturedModelData);
+        EntityModelLayerRegistry.registerModelLayer(ModModelLayers.POTION_SAC, PotionSacModel::getTexturedModelData);
+        EntityModelLayerRegistry.registerModelLayer(ModModelLayers.DRAGONFLY, DragonflyModel::getTexturedModelData);
+        EntityModelLayerRegistry.registerModelLayer(ModModelLayers.BOOPLET, BoopletModel::getTexturedModelData);
+
     }
 
     private void registerEntityRenderers() {
@@ -54,5 +58,10 @@ public class ClutterBestiaryClient implements ClientModInitializer {
         EntityRendererRegistry.register(ModEntityTypes.MOSSBLOOM, MossbloomRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.EMPEROR_PENGUIN, EmperorPenguinRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.POTION_WASP, PotionWaspRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.POTION_SAC, PotionSacRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.DRAGONFLY, DragonflyRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.BOOPLET, BoopletRenderer::new);
+
+
     }
 }

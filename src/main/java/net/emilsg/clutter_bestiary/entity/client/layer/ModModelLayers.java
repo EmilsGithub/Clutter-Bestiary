@@ -20,6 +20,8 @@ public class ModModelLayers {
     public static final EntityModelLayer EMPEROR_PENGUIN = new EntityModelLayer(new Identifier(ClutterBestiary.MOD_ID, "emperor_penguin"), "main");
     public static final EntityModelLayer BABY_EMPEROR_PENGUIN = new EntityModelLayer(new Identifier(ClutterBestiary.MOD_ID, "baby_emperor_penguin"), "main");
     public static final EntityModelLayer POTION_WASP = new EntityModelLayer(new Identifier(ClutterBestiary.MOD_ID, "potion_wasp"), "main");
-
+    public static final EntityModelLayer POTION_SAC = new EntityModelLayer(new Identifier(ClutterBestiary.MOD_ID, "potion_sac"), "main");
+    public static final EntityModelLayer DRAGONFLY = new EntityModelLayer(new Identifier(ClutterBestiary.MOD_ID, "dragonfly"), "main");
+    public static final EntityModelLayer BOOPLET = new EntityModelLayer(new Identifier(ClutterBestiary.MOD_ID, "booplet"), "main");
 
 }

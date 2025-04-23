@@ -1,4 +1,5 @@
-// 1.20.1	2025-04-09T12:10:25.2018847	Clutter Bestiary/Model Definitions
+// 1.20.1	2025-04-20T02:13:02.063109	Clutter Bestiary/Model Definitions
+63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets\clutter-bestiary\models\item\dragonfly_spawn_egg.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets\clutter-bestiary\models\item\warped_newt_spawn_egg.json
 6aa37dd51906ad99d47d9866bfb44e22425734d3 assets\clutter-bestiary\models\item\broken_yellow_butterfly_elytra.json
 ae69a9404ed0d5b1ca267e4abd0836d83c12a1a6 assets\clutter-bestiary\models\item\cooked_levitating_echofin.json
@@ -6,8 +7,8 @@ e1120bce528987b132654190864fb5ef4596afff assets\clutter-bestiary\models\item\cya
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets\clutter-bestiary\models\item\emperor_penguin_spawn_egg.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets\clutter-bestiary\models\item\beaver_spawn_egg.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets\clutter-bestiary\models\item\crimson_newt_spawn_egg.json
-63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets\clutter-bestiary\models\item\chameleon_spawn_egg.json
 bbb73cc84a3f799d5d39998a5165f5471bb862b6 assets\clutter-bestiary\models\item\green_butterfly_elytra.json
+63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets\clutter-bestiary\models\item\chameleon_spawn_egg.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets\clutter-bestiary\models\item\seahorse_spawn_egg.json
 b3f3da14542b48919ea80a02984476290340dc17 assets\clutter-bestiary\models\item\black_butterfly_elytra.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets\clutter-bestiary\models\item\butterfly_spawn_egg.json
@@ -50,8 +51,8 @@ cc77c2ab05b618f2e107d24f735c24806cceff82 assets\clutter-bestiary\models\item\but
 16dfd532a6a9c43f01b4b4ff5adeb02dca18278d assets\clutter-bestiary\models\item\warped_butterfly_elytra.json
 bbd9467124c1fa31695144e46cd50b2201ac6c26 assets\clutter-bestiary\models\item\butterfly_elytra_smithing_template_shards.json
 c66a26f0b0fb827964e32be4b9b78b7a2ca56270 assets\clutter-bestiary\models\item\soul_butterfly_elytra.json
-05d349e7a3e16a999745ab262be83654c657c621 assets\clutter-bestiary\models\item\light_gray_butterfly_elytra.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets\clutter-bestiary\models\item\potion_wasp_spawn_egg.json
+05d349e7a3e16a999745ab262be83654c657c621 assets\clutter-bestiary\models\item\light_gray_butterfly_elytra.json
 63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets\clutter-bestiary\models\item\mossbloom_spawn_egg.json
 09c7fb52fc593d664c661cbba2e6fbc112688afe assets\clutter-bestiary\models\item\broken_pink_butterfly_elytra.json
 c80dc4e77620f3f811261565200c26b6a008e90c assets\clutter-bestiary\models\item\broken_white_butterfly_elytra.json
@@ -63,6 +64,7 @@ febe9dee5c13d12853558727567cff17a17bcd6b assets\clutter-bestiary\models\item\raw
 7ddeb36815c4e2a30b809df10aeec452fbaf7df1 assets\clutter-bestiary\models\item\chorus_echofin_bucket.json
 a805c5f7a9c93052a315b1a2d096dfd8075b9a44 assets\clutter-bestiary\models\item\broken_lime_butterfly_elytra.json
 7a1b4b026a326e625759bfc65be46746a021f3ef assets\clutter-bestiary\models\item\broken_magenta_butterfly_elytra.json
+63ec6c618a3a23eab4cab9c52d7d3250de9b516e assets\clutter-bestiary\models\item\booplet_spawn_egg.json
 c97a0751d207f917fa6bb7b5868e879f9da82472 assets\clutter-bestiary\models\item\mossbloom_antlers.json
 a72e33c1c42e21a22c090d95dffe820694490bf7 assets\clutter-bestiary\models\item\broken_brown_butterfly_elytra.json
 2ceab62274fc3ba1650ea202be2b0d2cd4db39d7 assets\clutter-bestiary\models\item\raw_chorus_echofin.json

@@ -58,6 +58,15 @@ public class ModEntityTypes {
     public static final EntityType<PotionWaspEntity> POTION_WASP = Registry.register(Registries.ENTITY_TYPE, new Identifier(ClutterBestiary.MOD_ID, "potion_wasp"),
             FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, PotionWaspEntity::new).dimensions(EntityDimensions.changing(0.75f, 0.75f)).build());
 
+    public static final EntityType<PotionSacEntity> POTION_SAC = Registry.register(Registries.ENTITY_TYPE, new Identifier(ClutterBestiary.MOD_ID, "potion_sac"),
+            FabricEntityTypeBuilder.create(SpawnGroup.MISC, PotionSacEntity::new).dimensions(EntityDimensions.changing(0.75f, 0.75f)).build());
+
+    public static final EntityType<DragonflyEntity> DRAGONFLY = Registry.register(Registries.ENTITY_TYPE, new Identifier(ClutterBestiary.MOD_ID, "dragonfly"),
+            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, DragonflyEntity::new).dimensions(EntityDimensions.changing(0.65f, 0.4f)).build());
+
+    public static final EntityType<BoopletEntity> BOOPLET = Registry.register(Registries.ENTITY_TYPE, new Identifier(ClutterBestiary.MOD_ID, "booplet"),
+            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, BoopletEntity::new).dimensions(EntityDimensions.changing(0.6f, 0.6f)).build());
+
     public static void register(){}
 
 }

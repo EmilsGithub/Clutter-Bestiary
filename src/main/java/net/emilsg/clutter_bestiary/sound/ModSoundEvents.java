@@ -9,6 +9,7 @@ import net.minecraft.util.Identifier;
 public class ModSoundEvents {
     public static SoundEvent ENTITY_KIWI_CALL = registerSoundEvent("entity_kiwi_call");
     public static SoundEvent ENTITY_NETHER_NEWT_HURT = registerSoundEvent("entity_nether_newt_hurt");
+    public static SoundEvent ENTITY_POTION_WASP_FLY = registerSoundEvent("entity_potion_wasp_fly");
 
     private static SoundEvent registerSoundEvent(String name) {
         Identifier id = new Identifier(ClutterBestiary.MOD_ID, name);
