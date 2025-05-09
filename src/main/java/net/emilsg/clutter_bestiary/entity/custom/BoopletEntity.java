@@ -28,6 +28,7 @@ import net.minecraft.world.event.GameEvent;
 public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     private static final TrackedData<Boolean> IS_FLEEING = DataTracker.registerData(BoopletEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> IS_FLUFFY = DataTracker.registerData(BoopletEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Integer> FLUFF_TIMER = DataTracker.registerData(BoopletEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
     public final AnimationState happyAnimationState = new AnimationState();
     private int happyAnimationTimer = 0;
@@ -50,6 +51,7 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
         super.initDataTracker();
         this.dataTracker.startTracking(IS_FLEEING, false);
         this.dataTracker.startTracking(IS_FLUFFY, true);
+        this.dataTracker.startTracking(FLUFF_TIMER, 0);
     }
 
     @Override
@@ -105,6 +107,10 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
                 this.boopAnimationState.start(this.age);
                 this.isBooped = false;
             }
+        } else if (!this.isFluffy()) {
+            int fluffTimer = this.getFluffTimer();
+            if(fluffTimer < 5000) this.setFluffTimer(fluffTimer++);
+            this.setIsFluffy(fluffTimer >= 5000);
         }
     }
 
@@ -115,6 +121,7 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     public void sheared(SoundCategory shearedSoundCategory) {
         this.getWorld().playSoundFromEntity(null, this, SoundEvents.ENTITY_SHEEP_SHEAR, shearedSoundCategory, 1.0F, 1.25F);
         this.setIsFluffy(false);
+        this.setFluffTimer(0);
         int droppedAmount = 1 + this.random.nextInt(3);
 
         for(int j = 0; j < droppedAmount; ++j) {
@@ -146,12 +153,14 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
         this.setIsFluffy(nbt.getBoolean("IsFluffy"));
+        this.setFluffTimer(nbt.getInt("FluffTimer"));
     }
 
     @Override
     public void writeCustomDataToNbt(NbtCompound nbt) {
         super.writeCustomDataToNbt(nbt);
         nbt.putBoolean("IsFluffy", this.isFluffy());
+        nbt.putInt("FluffTimer", this.getFluffTimer());
     }
 
     public boolean isFleeing() {
@@ -168,5 +177,13 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
 
     public void setIsFluffy(boolean fluffy) {
         this.dataTracker.set(IS_FLUFFY, fluffy);
+    }
+
+    public int getFluffTimer() {
+        return this.dataTracker.get(FLUFF_TIMER);
+    }
+
+    public void setFluffTimer(int fluffTimer) {
+        this.dataTracker.set(FLUFF_TIMER, fluffTimer);
     }
 }
