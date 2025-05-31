@@ -12,7 +12,8 @@ public class RendererRegistration {
 
     public static void register() {
         LivingEntityFeatureRenderEvents.ALLOW_CAPE_RENDER.register((AbstractClientPlayerEntity player) -> !(player.getEquippedStack(EquipmentSlot.CHEST).getItem() instanceof ElytraItem));
-        if (ClutterBestiary.IS_TRINKETS_LOADED) LivingEntityFeatureRenderEvents.ALLOW_CAPE_RENDER.register((AbstractClientPlayerEntity player) -> TrinketsElytraUse.getEquippedElytra(player).isEmpty());
+        if (ClutterBestiary.IS_TRINKETS_LOADED)
+            LivingEntityFeatureRenderEvents.ALLOW_CAPE_RENDER.register((AbstractClientPlayerEntity player) -> TrinketsElytraUse.getEquippedElytra(player).isEmpty());
     }
 
 }

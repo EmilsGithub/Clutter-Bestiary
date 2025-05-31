@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.EchofinAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.EchofinEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutter_bestiary.entity.custom.EchofinEntity;
 import net.minecraft.client.model.*;
@@ -50,9 +50,8 @@ public class EchofinModel<T extends EchofinEntity> extends BestiaryModel<T> {
     }
 
     @Override
-    public void setAngles(EchofinEntity echofin, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.updateAnimation(echofin.movingAnimState, EchofinAnimations.ECHOFIN_SWIMMING, ageInTicks, 1f);
+    public ModelPart getPart() {
+        return root;
     }
 
     @Override
@@ -61,8 +60,9 @@ public class EchofinModel<T extends EchofinEntity> extends BestiaryModel<T> {
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
+    public void setAngles(EchofinEntity echofin, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        this.updateAnimation(echofin.movingAnimState, EchofinEntityAnimations.ECHOFIN_SWIMMING, ageInTicks, 1f);
     }
 
     @Override

@@ -27,8 +27,8 @@ public class PotionSacModel<T extends PotionSacEntity> extends SinglePartEntityM
     }
 
     @Override
-    public void setAngles(PotionSacEntity potionSac, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
+    public ModelPart getPart() {
+        return root;
     }
 
     @Override
@@ -37,7 +37,7 @@ public class PotionSacModel<T extends PotionSacEntity> extends SinglePartEntityM
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
+    public void setAngles(PotionSacEntity potionSac, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
     }
 }

@@ -12,11 +12,11 @@ public class ButterflyElytraItem extends BestiaryElytraItem {
         this.color = color;
     }
 
-    public String getColor() {
-        return color;
-    }
-
     public boolean canRepair(ItemStack stack, ItemStack ingredient) {
         return ingredient.isOf(ModItems.BUTTERFLY_IN_A_BOTTLE);
+    }
+
+    public String getType() {
+        return color + "_butterfly_elytra";
     }
 }

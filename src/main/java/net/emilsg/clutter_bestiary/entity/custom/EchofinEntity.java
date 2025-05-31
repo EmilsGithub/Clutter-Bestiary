@@ -7,7 +7,6 @@ import net.emilsg.clutter_bestiary.entity.variants.EchofinVariant;
 import net.emilsg.clutter_bestiary.item.ModItems;
 import net.emilsg.clutter_bestiary.util.ModBlockTags;
 import net.minecraft.block.BlockState;
-import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.control.FlightMoveControl;
 import net.minecraft.entity.ai.control.LookControl;
@@ -52,10 +51,8 @@ public class EchofinEntity extends ParentAnimalEntity {
     private static final TrackedData<BlockPos> HOME_POS = DataTracker.registerData(EchofinEntity.class, TrackedDataHandlerRegistry.BLOCK_POS);
     private static final TrackedData<String> VARIANT = DataTracker.registerData(EchofinEntity.class, TrackedDataHandlerRegistry.STRING);
     private static final TrackedData<Integer> ABILITY_TIMER = DataTracker.registerData(EchofinEntity.class, TrackedDataHandlerRegistry.INTEGER);
-
-    final int maxAbilityTimer = 2400;
-
     public final AnimationState movingAnimState = new AnimationState();
+    final int maxAbilityTimer = 2400;
     private int animationTimeout = 0;
 
 
@@ -84,68 +81,74 @@ public class EchofinEntity extends ParentAnimalEntity {
     }
 
     @Override
+    public void applyDamageEffects(LivingEntity attacker, Entity target) {
+        super.applyDamageEffects(attacker, target);
+        World world = target.getWorld();
+
+        if (world.isClient || !(target instanceof PlayerEntity player)) return;
+
+        if (shouldTeleportPlayers()) teleportPlayer(player, world);
+        else if (shouldLevitatePlayers()) levitatePlayer(player);
+
+    }
+
+    @Override
+    public boolean canBeLeashedBy(PlayerEntity player) {
+        return false;
+    }
+
+    @Override
     public boolean canImmediatelyDespawn(double distanceSquared) {
         return true;
     }
 
-    @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new EscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(1, new MeleeAttackGoal(this, 3.0, true));
-        this.goalSelector.add(2, new EchofinWanderAroundGoal(this));
-        this.targetSelector.add(1, new EchofinConditionalActiveTargetGoal(this, PlayerEntity.class, false));
+    public int getAbilityTimerEntitiesTimer() {
+        return this.dataTracker.get(ABILITY_TIMER);
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(HOME_POS, BlockPos.ORIGIN);
-        this.dataTracker.startTracking(VARIANT, EchofinVariant.CHORUS.getId());
-        this.dataTracker.startTracking(ABILITY_TIMER, 0);
+    public BlockPos getHomePos() {
+        return this.dataTracker.get(HOME_POS);
+    }
+
+    public void setHomePos(BlockPos pos) {
+        this.dataTracker.set(HOME_POS, pos);
+    }
+
+    @Override
+    public int getLimitPerChunk() {
+        return 3;
     }
 
     public float getPathfindingFavor(BlockPos pos, WorldView world) {
         return world.getBlockState(pos).isAir() ? 10.0F : 0.0F;
     }
 
-    private void setupAnimationStates() {
-        if (this.animationTimeout <= 0) {
-            this.animationTimeout = 20;
-            this.movingAnimState.start(this.age);
-        } else {
-            --this.animationTimeout;
-        }
+    public String getTypeVariant() {
+        return this.dataTracker.get(VARIANT);
+    }
+
+    public EchofinVariant getVariant() {
+        return EchofinVariant.fromId(this.getTypeVariant());
+    }
+
+    public void setVariant(EchofinVariant variant) {
+        this.dataTracker.set(VARIANT, variant.getId());
     }
 
     @Override
-    public void onDamaged(DamageSource damageSource) {
-        super.onDamaged(damageSource);
-        this.setEntityAbilityTimer(0);
+    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+        return false;
+    }
+
+    public boolean hasAbility() {
+        return this.getAbilityTimerEntitiesTimer() >= maxAbilityTimer;
     }
 
     @Override
-    public void tick() {
-        super.tick();
-        World world = this.getWorld();
-        if (world instanceof ServerWorld) {
-            setEntityAbilityTimer(getAbilityTimerEntitiesTimer() + random.nextInt(3));
-        }
-
-        if (hasAbility() && random.nextInt(1000) == 0) {
-            setEntityAbilityTimer(0);
-        }
-
-        if (world.isClient) {
-            this.setupAnimationStates();
-
-            if (this.getVariant() == EchofinVariant.CHORUS && random.nextBoolean()) {
-                this.getWorld().addParticle(ParticleTypes.PORTAL, true, this.getX() + random.nextDouble() / 4.0 * (double) (random.nextBoolean() ? 1 : -1), this.getY() + random.nextDouble() / 16.0 * (double) (random.nextBoolean() ? 1 : -1), this.getZ() + random.nextDouble() / 4.0 * (double) (random.nextBoolean() ? 1 : -1), (random.nextBoolean() ? 0.1 : -0.1), (random.nextBoolean() ? 0.1 : -0.1), (random.nextBoolean() ? 0.1 : -0.1));
-            }
-        }
-    }
-
-    @Override
-    public int getLimitPerChunk() {
-        return 3;
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
+        setVariant(EchofinVariant.getRandom());
+        this.setHomePos(this.getBlockPos());
+        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
     }
 
     @Override
@@ -178,90 +181,79 @@ public class EchofinEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public boolean canBeLeashedBy(PlayerEntity player) {
-        return false;
+    public boolean isExperienceDroppingDisabled() {
+        return true;
     }
 
-    public BlockPos getHomePos() {
-        return this.dataTracker.get(HOME_POS);
+    @Override
+    public void onDamaged(DamageSource damageSource) {
+        super.onDamaged(damageSource);
+        this.setEntityAbilityTimer(0);
     }
 
-    public void setHomePos(BlockPos pos) {
-        this.dataTracker.set(HOME_POS, pos);
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        int i = nbt.getInt("HomePosX");
+        int j = nbt.getInt("HomePosY");
+        int k = nbt.getInt("HomePosZ");
+        this.setHomePos(new BlockPos(i, j, k));
+        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
+        this.setEntityAbilityTimer(nbt.getInt("AbilityTimer"));
     }
 
-    public boolean shouldLevitatePlayers() {
-        return hasAbility() && this.getVariant() == EchofinVariant.LEVITATING;
-    }
-
-    public boolean shouldTeleportPlayers() {
-        return hasAbility() && this.getVariant() == EchofinVariant.CHORUS;
-    }
-
-    public boolean hasAbility() {
-        return this.getAbilityTimerEntitiesTimer() >= maxAbilityTimer;
-    }
-
-    public int getAbilityTimerEntitiesTimer() {
-        return this.dataTracker.get(ABILITY_TIMER);
+    @Override
+    public void refreshPositionAndAngles(BlockPos pos, float yaw, float pitch) {
+        this.setHomePos(pos);
+        super.refreshPositionAndAngles(pos, yaw, pitch);
     }
 
     public void setEntityAbilityTimer(int timer) {
         this.dataTracker.set(ABILITY_TIMER, timer);
     }
 
+    public boolean shouldLevitatePlayers() {
+        return hasAbility() && this.getVariant() == EchofinVariant.LEVITATING;
+    }
+
     @Override
-    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+    public boolean shouldSpawnSprintingParticles() {
         return false;
     }
 
-    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
+    public boolean shouldTeleportPlayers() {
+        return hasAbility() && this.getVariant() == EchofinVariant.CHORUS;
     }
 
     @Override
-    protected void playStepSound(BlockPos pos, BlockState state) {
-    }
+    public void tick() {
+        super.tick();
+        World world = this.getWorld();
+        if (world instanceof ServerWorld) {
+            setEntityAbilityTimer(getAbilityTimerEntitiesTimer() + random.nextInt(3));
+        }
 
-    @Override
-    public boolean isExperienceDroppingDisabled() {
-        return true;
-    }
+        if (hasAbility() && random.nextInt(1000) == 0) {
+            setEntityAbilityTimer(0);
+        }
 
-    @Override
-    public void applyDamageEffects(LivingEntity attacker, Entity target) {
-        super.applyDamageEffects(attacker, target);
-        World world = target.getWorld();
+        if (world.isClient) {
+            this.setupAnimationStates();
 
-        if (world.isClient || !(target instanceof PlayerEntity player)) return;
-
-        if (shouldTeleportPlayers()) teleportPlayer(player, world);
-        else if (shouldLevitatePlayers()) levitatePlayer(player);
-
-    }
-
-    private void teleportPlayer(PlayerEntity player, World world) {
-        for(int i = 0; i < 16; ++i) {
-            double x = player.getX() + (player.getWorld().getRandom().nextDouble() - 0.5) * 512.0;
-            double y = MathHelper.clamp(player.getY() + (double)(player.getWorld().getRandom().nextInt(16) - 8), (double)world.getBottomY(), (double)(world.getBottomY() + ((ServerWorld)world).getLogicalHeight() - 1));
-            double z = player.getZ() + (player.getWorld().getRandom().nextDouble() - 0.5) * 512.0;
-            if (player.hasVehicle()) {
-                player.stopRiding();
-            }
-
-            Vec3d vec3d = player.getPos();
-            if (player.teleport(x, y, z, true)) {
-                world.emitGameEvent(GameEvent.TELEPORT, vec3d, GameEvent.Emitter.of(player));
-                this.setEntityAbilityTimer(0);
-                break;
+            if (this.getVariant() == EchofinVariant.CHORUS && random.nextBoolean()) {
+                this.getWorld().addParticle(ParticleTypes.PORTAL, true, this.getX() + random.nextDouble() / 4.0 * (double) (random.nextBoolean() ? 1 : -1), this.getY() + random.nextDouble() / 16.0 * (double) (random.nextBoolean() ? 1 : -1), this.getZ() + random.nextDouble() / 4.0 * (double) (random.nextBoolean() ? 1 : -1), (random.nextBoolean() ? 0.1 : -0.1), (random.nextBoolean() ? 0.1 : -0.1), (random.nextBoolean() ? 0.1 : -0.1));
             }
         }
     }
 
-    private void levitatePlayer(PlayerEntity player) {
-        player.addStatusEffect(new StatusEffectInstance(StatusEffects.LEVITATION, 100, 2), this);
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putInt("HomePosX", this.getHomePos().getX());
+        nbt.putInt("HomePosY", this.getHomePos().getY());
+        nbt.putInt("HomePosZ", this.getHomePos().getZ());
+        nbt.putString("Variant", this.getTypeVariant());
+        nbt.putInt("AbilityTimer", this.getAbilityTimerEntitiesTimer());
     }
-
-
 
     protected EntityNavigation createNavigation(World world) {
         BirdNavigation birdNavigation = new BirdNavigation(this, world) {
@@ -276,35 +268,7 @@ public class EchofinEntity extends ParentAnimalEntity {
         return birdNavigation;
     }
 
-    @Override
-    public boolean shouldSpawnSprintingParticles() {
-        return false;
-    }
-
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putInt("HomePosX", this.getHomePos().getX());
-        nbt.putInt("HomePosY", this.getHomePos().getY());
-        nbt.putInt("HomePosZ", this.getHomePos().getZ());
-        nbt.putString("Variant", this.getTypeVariant());
-        nbt.putInt("AbilityTimer", this.getAbilityTimerEntitiesTimer());
-    }
-
-    @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        int i = nbt.getInt("HomePosX");
-        int j = nbt.getInt("HomePosY");
-        int k = nbt.getInt("HomePosZ");
-        this.setHomePos(new BlockPos(i, j, k));
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
-        this.setEntityAbilityTimer(nbt.getInt("AbilityTimer"));
-    }
-
-    @Nullable
-    @Override
-    protected SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.BLOCK_WOOL_HIT;
+    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
     }
 
     @Nullable
@@ -313,29 +277,60 @@ public class EchofinEntity extends ParentAnimalEntity {
         return SoundEvents.ENTITY_COD_DEATH;
     }
 
+    @Nullable
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
-        setVariant(EchofinVariant.getRandom());
-        this.setHomePos(this.getBlockPos());
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return SoundEvents.BLOCK_WOOL_HIT;
+    }
+
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(HOME_POS, BlockPos.ORIGIN);
+        this.dataTracker.startTracking(VARIANT, EchofinVariant.CHORUS.getId());
+        this.dataTracker.startTracking(ABILITY_TIMER, 0);
     }
 
     @Override
-    public void refreshPositionAndAngles(BlockPos pos, float yaw, float pitch) {
-        this.setHomePos(pos);
-        super.refreshPositionAndAngles(pos, yaw, pitch);
+    protected void initGoals() {
+        this.goalSelector.add(0, new EscapeDangerGoal(this, 1.25));
+        this.goalSelector.add(1, new MeleeAttackGoal(this, 3.0, true));
+        this.goalSelector.add(2, new EchofinWanderAroundGoal(this));
+        this.targetSelector.add(1, new EchofinConditionalActiveTargetGoal(this, PlayerEntity.class, false));
     }
 
-    public EchofinVariant getVariant() {
-        return EchofinVariant.fromId(this.getTypeVariant());
+    @Override
+    protected void playStepSound(BlockPos pos, BlockState state) {
     }
 
-    public void setVariant(EchofinVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId());
+    private void levitatePlayer(PlayerEntity player) {
+        player.addStatusEffect(new StatusEffectInstance(StatusEffects.LEVITATION, 100, 2), this);
     }
 
-    public String getTypeVariant() {
-        return this.dataTracker.get(VARIANT);
+    private void setupAnimationStates() {
+        if (this.animationTimeout <= 0) {
+            this.animationTimeout = 20;
+            this.movingAnimState.start(this.age);
+        } else {
+            --this.animationTimeout;
+        }
+    }
+
+    private void teleportPlayer(PlayerEntity player, World world) {
+        for (int i = 0; i < 16; ++i) {
+            double x = player.getX() + (player.getWorld().getRandom().nextDouble() - 0.5) * 512.0;
+            double y = MathHelper.clamp(player.getY() + (double) (player.getWorld().getRandom().nextInt(16) - 8), world.getBottomY(), world.getBottomY() + ((ServerWorld) world).getLogicalHeight() - 1);
+            double z = player.getZ() + (player.getWorld().getRandom().nextDouble() - 0.5) * 512.0;
+            if (player.hasVehicle()) {
+                player.stopRiding();
+            }
+
+            Vec3d vec3d = player.getPos();
+            if (player.teleport(x, y, z, true)) {
+                world.emitGameEvent(GameEvent.TELEPORT, vec3d, GameEvent.Emitter.of(player));
+                this.setEntityAbilityTimer(0);
+                break;
+            }
+        }
     }
 
     private static class EchofinLookControl extends LookControl {

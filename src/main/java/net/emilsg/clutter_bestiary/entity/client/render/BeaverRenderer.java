@@ -18,14 +18,14 @@ public class BeaverRenderer extends MobEntityRenderer<BeaverEntity, BeaverModel<
     }
 
     @Override
+    public Identifier getTexture(BeaverEntity entity) {
+        return TEXTURE;
+    }
+
+    @Override
     public void render(BeaverEntity livingEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
         this.shadowRadius = 0.4f;
 
         super.render(livingEntity, f, g, matrixStack, vertexConsumerProvider, i);
-    }
-
-    @Override
-    public Identifier getTexture(BeaverEntity entity) {
-        return TEXTURE;
     }
 }

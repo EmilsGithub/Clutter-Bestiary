@@ -22,13 +22,6 @@ public class SeahorseRenderer extends MobEntityRenderer<SeahorseEntity, Seahorse
     }
 
     @Override
-    public void render(SeahorseEntity seahorseEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
-        this.shadowRadius = 0.2f;
-
-        super.render(seahorseEntity, f, g, matrixStack, vertexConsumerProvider, i);
-    }
-
-    @Override
     public Identifier getTexture(SeahorseEntity seahorseEntity) {
         return switch (seahorseEntity.getVariant()) {
             case YELLOW -> YELLOW_TEXTURE;
@@ -36,5 +29,12 @@ public class SeahorseRenderer extends MobEntityRenderer<SeahorseEntity, Seahorse
             case RED -> RED_TEXTURE;
             case PURPLE -> PURPLE_TEXTURE;
         };
+    }
+
+    @Override
+    public void render(SeahorseEntity seahorseEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
+        this.shadowRadius = 0.2f;
+
+        super.render(seahorseEntity, f, g, matrixStack, vertexConsumerProvider, i);
     }
 }

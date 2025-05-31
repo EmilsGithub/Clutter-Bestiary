@@ -31,6 +31,54 @@ public class PotionSacEntity extends LivingEntity {
     }
 
     @Override
+    public boolean collidesWith(Entity other) {
+        return false;
+    }
+
+    @Override
+    public void equipStack(EquipmentSlot slot, ItemStack stack) {
+
+    }
+
+    @Override
+    public Iterable<ItemStack> getArmorItems() {
+        return List.of();
+    }
+
+    @Override
+    public ItemStack getEquippedStack(EquipmentSlot slot) {
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public Arm getMainArm() {
+        return Arm.RIGHT;
+    }
+
+    public String getTypeVariant() {
+        return this.dataTracker.get(VARIANT);
+    }
+
+    public PotionWaspVariant getVariant() {
+        return PotionWaspVariant.fromId(this.getTypeVariant());
+    }
+
+    public void setVariant(PotionWaspVariant variant) {
+        this.dataTracker.set(VARIANT, variant.getId());
+    }
+
+    @Override
+    public boolean isCollidable() {
+        return false;
+    }
+
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
+    }
+
+    @Override
     public void tick() {
         super.tick();
 
@@ -49,67 +97,19 @@ public class PotionSacEntity extends LivingEntity {
     }
 
     @Override
-    protected @Nullable SoundEvent getDeathSound() {
-        return SoundEvents.ENTITY_SLIME_DEATH_SMALL;
-    }
-
-    @Override
-    public boolean isCollidable() {
-        return false;
-    }
-
-    @Override
-    public boolean collidesWith(Entity other) {
-        return false;
-    }
-
-    @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(VARIANT, PotionWaspVariant.REGENERATION.getId());
-    }
-
-    @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
-    }
-
-    @Override
     public void writeCustomDataToNbt(NbtCompound nbt) {
         super.writeCustomDataToNbt(nbt);
         nbt.putString("Variant", this.getTypeVariant());
     }
 
     @Override
-    public Iterable<ItemStack> getArmorItems() {
-        return List.of();
+    protected @Nullable SoundEvent getDeathSound() {
+        return SoundEvents.ENTITY_SLIME_DEATH_SMALL;
     }
 
     @Override
-    public ItemStack getEquippedStack(EquipmentSlot slot) {
-        return ItemStack.EMPTY;
-    }
-
-    @Override
-    public void equipStack(EquipmentSlot slot, ItemStack stack) {
-
-    }
-
-    @Override
-    public Arm getMainArm() {
-        return Arm.RIGHT;
-    }
-
-    public PotionWaspVariant getVariant() {
-        return PotionWaspVariant.fromId(this.getTypeVariant());
-    }
-
-    public void setVariant(PotionWaspVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId());
-    }
-
-    public String getTypeVariant() {
-        return this.dataTracker.get(VARIANT);
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(VARIANT, PotionWaspVariant.REGENERATION.getId());
     }
 }

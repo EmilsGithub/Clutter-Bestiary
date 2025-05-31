@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.EmperorPenguinAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.EmperorPenguinEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutter_bestiary.entity.custom.EmperorPenguinEntity;
 import net.minecraft.client.model.*;
@@ -47,18 +47,13 @@ public class EmperorPenguinModel<T extends EmperorPenguinEntity> extends Bestiar
     }
 
     @Override
-    public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
-        this.getPart().render(matrices, vertexConsumer, light, overlay, red, green, blue, alpha);
-    }
-
-    @Override
     public ModelPart getPart() {
         return root;
     }
 
     @Override
-    protected ModelPart getHeadPart() {
-        return head;
+    public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
+        this.getPart().render(matrices, vertexConsumer, light, overlay, red, green, blue, alpha);
     }
 
     @Override
@@ -70,10 +65,16 @@ public class EmperorPenguinModel<T extends EmperorPenguinEntity> extends Bestiar
             this.getPart().yaw = headYaw * 0.017453292F;
         }
 
-        if(!emperorPenguinEntity.isTouchingWater()) this.animateMovement(EmperorPenguinAnimations.EMPEROR_PENGUIN_WALK, limbSwing, limbSwingAmount, 2.0f, 2.5f);
+        if (!emperorPenguinEntity.isTouchingWater())
+            this.animateMovement(EmperorPenguinEntityAnimations.EMPEROR_PENGUIN_WALK, limbSwing, limbSwingAmount, 2.0f, 2.5f);
 
-        this.updateAnimation(emperorPenguinEntity.flapAnimationStateOne, EmperorPenguinAnimations.EMPEROR_PENGUIN_RANDOM_FLAP, ageInTicks, 1f);
-        this.updateAnimation(emperorPenguinEntity.flapAnimationStateTwo, EmperorPenguinAnimations.EMPEROR_PENGUIN_RANDOM_FLAP_TWO, ageInTicks, 1f);
-        this.updateAnimation(emperorPenguinEntity.preenAnimationState, EmperorPenguinAnimations.EMPEROR_PENGUIN_PREEN, ageInTicks, 1f);
+        this.updateAnimation(emperorPenguinEntity.flapAnimationStateOne, EmperorPenguinEntityAnimations.EMPEROR_PENGUIN_RANDOM_FLAP, ageInTicks, 1f);
+        this.updateAnimation(emperorPenguinEntity.flapAnimationStateTwo, EmperorPenguinEntityAnimations.EMPEROR_PENGUIN_RANDOM_FLAP_TWO, ageInTicks, 1f);
+        this.updateAnimation(emperorPenguinEntity.preenAnimationState, EmperorPenguinEntityAnimations.EMPEROR_PENGUIN_PREEN, ageInTicks, 1f);
+    }
+
+    @Override
+    protected ModelPart getHeadPart() {
+        return head;
     }
 }

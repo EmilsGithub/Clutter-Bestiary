@@ -169,10 +169,10 @@ public class ModConfigManager {
      * Sets the value of a specific configuration entry using a JSON element.
      * If the type of the value is unsupported, an error is logged.
      *
-     * @param configEntry The configuration entry to update.
+     * @param configEntry  The configuration entry to update.
      * @param valueElement The JSON element containing the new value.
-     * @param key The key associated with the configuration entry.
-     * @param <T> The type of the configuration value.
+     * @param key          The key associated with the configuration entry.
+     * @param <T>          The type of the configuration value.
      */
     @SuppressWarnings("unchecked")
     private static <T> void setConfigEntryValue(ModConfigEntry<T> configEntry, JsonElement valueElement, String key) {

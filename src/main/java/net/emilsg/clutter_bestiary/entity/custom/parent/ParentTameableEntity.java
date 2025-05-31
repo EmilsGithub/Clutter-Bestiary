@@ -14,15 +14,37 @@ import org.jetbrains.annotations.Nullable;
 
 public class ParentTameableEntity extends TameableEntity {
     private static final TrackedData<Boolean> MOVING = DataTracker.registerData(ParentTameableEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Boolean> IS_FLEEING = DataTracker.registerData(ParentTameableEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     protected ParentTameableEntity(EntityType<? extends TameableEntity> entityType, World world) {
         super(entityType, world);
     }
 
+    @Nullable
     @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(MOVING, false);
+    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return null;
+    }
+
+    public boolean isMoving() {
+        return this.dataTracker.get(MOVING);
+    }
+
+    public void setMoving(boolean moving) {
+        this.dataTracker.set(MOVING, moving);
+    }
+
+    public void setIsFleeing(boolean moving) {
+        this.dataTracker.set(IS_FLEEING, moving);
+    }
+
+    public boolean isFleeing() {
+        return this.dataTracker.get(IS_FLEEING);
+    }
+
+    @Override
+    public EntityView method_48926() {
+        return this.getWorld();
     }
 
     @Override
@@ -35,22 +57,11 @@ public class ParentTameableEntity extends TameableEntity {
         super.tickMovement();
     }
 
-    public boolean isMoving() {
-        return this.dataTracker.get(MOVING);
-    }
-
-    public void setMoving(boolean moving) {
-        this.dataTracker.set(MOVING, moving);
-    }
-
     @Override
-    public EntityView method_48926() {
-        return this.getWorld();
-    }
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(MOVING, false);
+        this.dataTracker.startTracking(IS_FLEEING, false);
 
-    @Nullable
-    @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return null;
     }
 }

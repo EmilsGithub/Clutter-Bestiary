@@ -18,9 +18,8 @@ public class ButterflyElytraSmithingTemplateItem extends Item {
     private final Text ELYTRA_UPGRADE_TEXT = Text.translatable(Util.createTranslationKey("item", new Identifier(ClutterBestiary.MOD_ID, "smithing_template.elytra_upgrade"))).formatted(Formatting.GRAY);
     private final Text ELYTRAS_TEXT = Text.translatable(Util.createTranslationKey("item", new Identifier(ClutterBestiary.MOD_ID, "smithing_template.elytras"))).formatted(Formatting.BLUE);
     private final Text APPLIES_TO_TEXT = Text.translatable(Util.createTranslationKey("item", new Identifier(ClutterBestiary.MOD_ID, "smithing_template.applies_to"))).formatted(Formatting.GRAY);
-    private final Text INGREDIENTS_TEXT = Text.translatable(Util.createTranslationKey("item", new Identifier(ClutterBestiary.MOD_ID,"smithing_template.ingredients"))).formatted(Formatting.GRAY);
-    private final Text INGREDIENTS_USED_TEXT = Text.translatable(Util.createTranslationKey("item", new Identifier(ClutterBestiary.MOD_ID,"smithing_template.ingredients_used"))).formatted(Formatting.BLUE);
-
+    private final Text INGREDIENTS_TEXT = Text.translatable(Util.createTranslationKey("item", new Identifier(ClutterBestiary.MOD_ID, "smithing_template.ingredients"))).formatted(Formatting.GRAY);
+    private final Text INGREDIENTS_USED_TEXT = Text.translatable(Util.createTranslationKey("item", new Identifier(ClutterBestiary.MOD_ID, "smithing_template.ingredients_used"))).formatted(Formatting.BLUE);
 
 
     public ButterflyElytraSmithingTemplateItem(Settings settings) {

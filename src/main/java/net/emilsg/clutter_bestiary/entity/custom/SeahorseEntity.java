@@ -45,51 +45,22 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
     private static final TrackedData<Boolean> HAS_CHILDREN = DataTracker.registerData(SeahorseEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Float> HAS_CHILDREN_TIMER = DataTracker.registerData(SeahorseEntity.class, TrackedDataHandlerRegistry.FLOAT);
     private static final TrackedData<Boolean> CHILD = DataTracker.registerData(SeahorseEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-
-    private int ticker = 0;
-    private int loveTicks;
-    @Nullable private UUID lovingPlayer;
+    public final AnimationState swimmingAnimationState = new AnimationState();
+    public final AnimationState flopAnimationState = new AnimationState();
     protected int breedingAge;
     protected int forcedAge;
     protected int happyTicksRemaining;
-
-    public final AnimationState swimmingAnimationState = new AnimationState();
+    private int ticker = 0;
+    private int loveTicks;
+    @Nullable
+    private UUID lovingPlayer;
     private int swimmingAnimationTimeout = 0;
-
-    public final AnimationState flopAnimationState = new AnimationState();
     private int flopAnimationTimeout = 0;
 
-
-    private void setupAnimationStates() {
-        if (this.swimmingAnimationTimeout <= 0) {
-            this.swimmingAnimationTimeout = 20;
-            this.swimmingAnimationState.start(this.age);
-        } else {
-            --this.swimmingAnimationTimeout;
-        }
-
-        if (this.flopAnimationTimeout <= 0) {
-            this.flopAnimationTimeout = 20;
-            this.flopAnimationState.start(this.age);
-        } else {
-            --this.flopAnimationTimeout;
-        }
-    }
 
     public SeahorseEntity(EntityType<? extends FishEntity> entityType, World world) {
         super(entityType, world);
         this.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
-    }
-
-    protected void initGoals() {
-        super.initGoals();
-        this.goalSelector.add(0, new EscapeDangerGoal(this, 0.7D));
-        this.goalSelector.add(1, new SeahorseFollowParentGoal(this, 1.25D));
-        this.goalSelector.add(2, new SeahorseMateGoal(this, 1D, SeahorseEntity.class));
-        this.goalSelector.add(3, new SeahorseReleaseChildrenGoal(this));
-        this.goalSelector.add(4, new TemptGoal(this, 1.25D, Ingredient.ofItems(Items.SEA_PICKLE), false));
-        this.goalSelector.add(5, new SwimToRandomPlaceGoal(this, 0.5D));
-        this.goalSelector.add(6, new SeahorseMoveToCoralGoal(this, 0.5D, 8));
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
@@ -101,13 +72,47 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
         return world.getBlockState(pos).getFluidState().isOf(Fluids.WATER);
     }
 
+    public static int toGrowUpAge(int breedingAge) {
+        return (int) ((float) (breedingAge / 20) * 0.1F);
+    }
 
+    public void breed(ServerWorld world, SeahorseEntity other) {
+        this.breed(world, other, null);
+    }
 
-    @Override
-    public void copyDataToStack(ItemStack stack) {
-        NbtCompound nbtCompound = stack.getOrCreateNbt();
-        nbtCompound.putInt("Variant", this.getTypeVariant());
-        super.copyDataToStack(stack);
+    public void breed(ServerWorld world, SeahorseEntity other, @Nullable SeahorseEntity baby) {
+        this.setBreedingAge(6000);
+        other.setBreedingAge(6000);
+        this.setHasChildren(true);
+        this.resetLoveTicks();
+        other.resetLoveTicks();
+        world.sendEntityStatus(this, (byte) 18);
+        if (world.getGameRules().getBoolean(GameRules.DO_MOB_LOOT)) {
+            world.spawnEntity(new ExperienceOrbEntity(world, this.getX(), this.getY(), this.getZ(), this.getRandom().nextInt(7) + 1));
+        }
+
+    }
+
+    public boolean canBreedWith(SeahorseEntity other) {
+        if (other == this) {
+            return false;
+        } else if (other.getClass() != this.getClass()) {
+            return false;
+        } else {
+            return this.isInLove() && other.isInLove();
+        }
+    }
+
+    public boolean canEat() {
+        return this.loveTicks <= 0;
+    }
+
+    public boolean canImmediatelyDespawn(double distanceSquared) {
+        return !this.isFromBucket() && !this.hasCustomName();
+    }
+
+    public boolean cannotDespawn() {
+        return super.cannotDespawn() || this.isFromBucket();
     }
 
     @Override
@@ -119,37 +124,11 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
         super.copyDataFromNbt(nbt);
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(VARIANT, 0);
-        this.dataTracker.startTracking(HAS_CHILDREN, false);
-        this.dataTracker.startTracking(HAS_CHILDREN_TIMER, 0.0f);
-        this.dataTracker.startTracking(CHILD, false);
-    }
-
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putInt("Variant", this.getTypeVariant());
-        nbt.putBoolean("HasChildren", this.hasChildren());
-        nbt.putFloat("HasChildrenTimer", this.getHasChildrenTimer());
-        nbt.putInt("InLove", this.loveTicks);
-        if (this.lovingPlayer != null) {
-            nbt.putUuid("LoveCause", this.lovingPlayer);
-        }
-        nbt.putInt("Age", this.getBreedingAge());
-        nbt.putInt("ForcedAge", this.forcedAge);
-    }
-
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.dataTracker.set(VARIANT, nbt.getInt("Variant"));
-        this.dataTracker.set(HAS_CHILDREN, nbt.getBoolean("HasChildren"));
-        this.dataTracker.set(HAS_CHILDREN_TIMER, nbt.getFloat("HasChildrenTimer"));
-        this.loveTicks = nbt.getInt("InLove");
-        this.lovingPlayer = nbt.containsUuid("LoveCause") ? nbt.getUuid("LoveCause") : null;
-        this.setBreedingAge(nbt.getInt("Age"));
-        this.forcedAge = nbt.getInt("ForcedAge");
+    public void copyDataToStack(ItemStack stack) {
+        NbtCompound nbtCompound = stack.getOrCreateNbt();
+        nbtCompound.putInt("Variant", this.getTypeVariant());
+        super.copyDataToStack(stack);
     }
 
     @Nullable
@@ -157,24 +136,79 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
         return ModEntityTypes.SEAHORSE.create(world);
     }
 
-    public boolean isReadyToBreed() {
-        return false;
+    @Override
+    public boolean damage(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
+            return false;
+        } else {
+            this.loveTicks = 0;
+            return super.damage(source, amount);
+        }
     }
 
     public int getBreedingAge() {
         if (this.getWorld().isClient) {
-            return (Boolean)this.dataTracker.get(CHILD) ? -1 : 1;
+            return this.dataTracker.get(CHILD) ? -1 : 1;
         } else {
             return this.breedingAge;
         }
     }
 
-    public void onTrackedDataSet(TrackedData<?> data) {
-        if (CHILD.equals(data)) {
-            this.calculateDimensions();
+    public void setBreedingAge(int age) {
+        int i = this.getBreedingAge();
+        this.breedingAge = age;
+        if (i < 0 && age >= 0 || i >= 0 && age < 0) {
+            this.dataTracker.set(CHILD, age < 0);
+            this.onGrowUp();
         }
 
-        super.onTrackedDataSet(data);
+    }
+
+    public SoundEvent getBucketFillSound() {
+        return SoundEvents.ITEM_BUCKET_FILL_FISH;
+    }
+
+    @Override
+    public ItemStack getBucketItem() {
+        return new ItemStack(ModItems.SEAHORSE_BUCKET);
+    }
+
+    public float getHasChildrenTimer() {
+        return this.dataTracker.get(HAS_CHILDREN_TIMER);
+    }
+
+    public void setHasChildrenTimer(float hasChildrenTimer) {
+        this.dataTracker.set(HAS_CHILDREN_TIMER, hasChildrenTimer);
+    }
+
+    public int getLoveTicks() {
+        return this.loveTicks;
+    }
+
+    public void setLoveTicks(int loveTicks) {
+        this.loveTicks = loveTicks;
+    }
+
+    @Nullable
+    public ServerPlayerEntity getLovingPlayer() {
+        if (this.lovingPlayer == null) {
+            return null;
+        } else {
+            PlayerEntity playerEntity = this.getWorld().getPlayerByUuid(this.lovingPlayer);
+            return playerEntity instanceof ServerPlayerEntity ? (ServerPlayerEntity) playerEntity : null;
+        }
+    }
+
+    public int getMaxChildren() {
+        return 3;
+    }
+
+    public SeahorseVariant getVariant() {
+        return SeahorseVariant.byId(this.getTypeVariant() & 255);
+    }
+
+    public void setVariant(SeahorseVariant variant) {
+        this.dataTracker.set(VARIANT, variant.getId() & 255);
     }
 
     public void growUp(int age, boolean overGrow) {
@@ -204,47 +238,39 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
         this.growUp(age, false);
     }
 
-    public void setBreedingAge(int age) {
-        int i = this.getBreedingAge();
-        this.breedingAge = age;
-        if (i < 0 && age >= 0 || i >= 0 && age < 0) {
-            this.dataTracker.set(CHILD, age < 0);
-            this.onGrowUp();
+    public void handleStatus(byte status) {
+        if (status == 18) {
+            for (int i = 0; i < 7; ++i) {
+                double d = this.random.nextGaussian() * 0.02;
+                double e = this.random.nextGaussian() * 0.02;
+                double f = this.random.nextGaussian() * 0.02;
+                this.getWorld().addParticle(ParticleTypes.HEART, this.getParticleX(1.0), this.getRandomBodyY() + 0.5, this.getParticleZ(1.0), d, e, f);
+            }
+        } else {
+            super.handleStatus(status);
         }
 
-    }
-
-    public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(Items.SEA_PICKLE);
-    }
-
-    public SeahorseVariant getVariant() {
-        return SeahorseVariant.byId(this.getTypeVariant() & 255);
-    }
-
-    public void setVariant(SeahorseVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId() & 255);
-    }
-
-    private int getTypeVariant() {
-        return this.dataTracker.get(VARIANT);
     }
 
     public boolean hasChildren() {
         return this.dataTracker.get(HAS_CHILDREN);
     }
 
-    public void setHasChildren(boolean hasChildren) {
-        this.dataTracker.set(HAS_CHILDREN, hasChildren);
-    }
-
     @Override
-    protected void mobTick() {
-        if (this.getBreedingAge() != 0) {
-            this.loveTicks = 0;
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
+        if (entityData == null) {
+            entityData = new PassiveEntity.PassiveData(true);
         }
 
-        super.mobTick();
+        PassiveEntity.PassiveData passiveData = (PassiveEntity.PassiveData) entityData;
+        if (passiveData.canSpawnBaby() && passiveData.getSpawnedCount() > 0 && world.getRandom().nextFloat() <= passiveData.getBabyChance()) {
+            this.setBreedingAge(-24000);
+        }
+
+        passiveData.countSpawned();
+        SeahorseVariant variant = Util.getRandom(SeahorseVariant.values(), this.random);
+        this.setVariant(variant);
+        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
     }
 
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
@@ -271,15 +297,24 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
         return super.interactMob(player, hand);
     }
 
-    protected void eat(PlayerEntity player, Hand hand, ItemStack stack) {
-        if (!player.getAbilities().creativeMode) {
-            stack.decrement(1);
-        }
-
+    public boolean isBaby() {
+        return this.getBreedingAge() < 0;
     }
 
-    public boolean canEat() {
-        return this.loveTicks <= 0;
+    public void setBaby(boolean baby) {
+        this.setBreedingAge(baby ? -24000 : 0);
+    }
+
+    public boolean isBreedingItem(ItemStack stack) {
+        return stack.isOf(Items.SEA_PICKLE);
+    }
+
+    public boolean isInLove() {
+        return this.getLoveTicks() > 0;
+    }
+
+    public boolean isReadyToBreed() {
+        return false;
     }
 
     public void lovePlayer(@Nullable PlayerEntity player) {
@@ -288,99 +323,35 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
             this.lovingPlayer = player.getUuid();
         }
 
-        this.getWorld().sendEntityStatus(this, (byte)18);
+        this.getWorld().sendEntityStatus(this, (byte) 18);
     }
 
-    public void setLoveTicks(int loveTicks) {
-        this.loveTicks = loveTicks;
-    }
-
-    public int getLoveTicks() {
-        return this.loveTicks;
-    }
-
-    @Nullable
-    public ServerPlayerEntity getLovingPlayer() {
-        if (this.lovingPlayer == null) {
-            return null;
-        } else {
-            PlayerEntity playerEntity = this.getWorld().getPlayerByUuid(this.lovingPlayer);
-            return playerEntity instanceof ServerPlayerEntity ? (ServerPlayerEntity)playerEntity : null;
+    public void onTrackedDataSet(TrackedData<?> data) {
+        if (CHILD.equals(data)) {
+            this.calculateDimensions();
         }
+
+        super.onTrackedDataSet(data);
     }
 
-    public boolean isInLove() {
-        return this.getLoveTicks() > 0;
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.dataTracker.set(VARIANT, nbt.getInt("Variant"));
+        this.dataTracker.set(HAS_CHILDREN, nbt.getBoolean("HasChildren"));
+        this.dataTracker.set(HAS_CHILDREN_TIMER, nbt.getFloat("HasChildrenTimer"));
+        this.loveTicks = nbt.getInt("InLove");
+        this.lovingPlayer = nbt.containsUuid("LoveCause") ? nbt.getUuid("LoveCause") : null;
+        this.setBreedingAge(nbt.getInt("Age"));
+        this.forcedAge = nbt.getInt("ForcedAge");
     }
 
     public void resetLoveTicks() {
         this.setLoveTicks(0);
     }
 
-    public boolean canBreedWith(SeahorseEntity other) {
-        if (other == this) {
-            return false;
-        } else if (other.getClass() != this.getClass()) {
-            return false;
-        } else {
-            return this.isInLove() && other.isInLove();
-        }
-    }
-
-    public void breed(ServerWorld world, SeahorseEntity other) {
-        this.breed(world, other, null);
-    }
-
-    public void breed(ServerWorld world, SeahorseEntity other, @Nullable SeahorseEntity baby) {
-        this.setBreedingAge(6000);
-        other.setBreedingAge(6000);
-        this.setHasChildren(true);
-        this.resetLoveTicks();
-        other.resetLoveTicks();
-        world.sendEntityStatus(this, (byte)18);
-        if (world.getGameRules().getBoolean(GameRules.DO_MOB_LOOT)) {
-            world.spawnEntity(new ExperienceOrbEntity(world, this.getX(), this.getY(), this.getZ(), this.getRandom().nextInt(7) + 1));
-        }
-
-    }
-
-    public void handleStatus(byte status) {
-        if (status == 18) {
-            for(int i = 0; i < 7; ++i) {
-                double d = this.random.nextGaussian() * 0.02;
-                double e = this.random.nextGaussian() * 0.02;
-                double f = this.random.nextGaussian() * 0.02;
-                this.getWorld().addParticle(ParticleTypes.HEART, this.getParticleX(1.0), this.getRandomBodyY() + 0.5, this.getParticleZ(1.0), d, e, f);
-            }
-        } else {
-            super.handleStatus(status);
-        }
-
-    }
-
-    public float getHasChildrenTimer() {
-        return this.dataTracker.get(HAS_CHILDREN_TIMER);
-    }
-
-    public void setHasChildrenTimer(float hasChildrenTimer) {
-        this.dataTracker.set(HAS_CHILDREN_TIMER, hasChildrenTimer);
-    }
-
-    @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
-        if (entityData == null) {
-            entityData = new PassiveEntity.PassiveData(true);
-        }
-
-        PassiveEntity.PassiveData passiveData = (PassiveEntity.PassiveData)entityData;
-        if (passiveData.canSpawnBaby() && passiveData.getSpawnedCount() > 0 && world.getRandom().nextFloat() <= passiveData.getBabyChance()) {
-            this.setBreedingAge(-24000);
-        }
-
-        passiveData.countSpawned();
-        SeahorseVariant variant = Util.getRandom(SeahorseVariant.values(), this.random);
-        this.setVariant(variant);
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+    public void setHasChildren(boolean hasChildren) {
+        this.dataTracker.set(HAS_CHILDREN, hasChildren);
     }
 
     @Override
@@ -388,9 +359,9 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
         super.tick();
         World world = this.getWorld();
 
-        if(!world.isClient) {
+        if (!world.isClient) {
             ticker++;
-            if(this.hasChildren() && ticker == 120) {
+            if (this.hasChildren() && ticker == 120) {
                 this.setHasChildrenTimer(this.getHasChildrenTimer() + 0.20f);
                 ticker = 0;
             }
@@ -445,11 +416,63 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
         super.tickMovement();
     }
 
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putInt("Variant", this.getTypeVariant());
+        nbt.putBoolean("HasChildren", this.hasChildren());
+        nbt.putFloat("HasChildrenTimer", this.getHasChildrenTimer());
+        nbt.putInt("InLove", this.loveTicks);
+        if (this.lovingPlayer != null) {
+            nbt.putUuid("LoveCause", this.lovingPlayer);
+        }
+        nbt.putInt("Age", this.getBreedingAge());
+        nbt.putInt("ForcedAge", this.forcedAge);
+    }
+
+    protected void eat(PlayerEntity player, Hand hand, ItemStack stack) {
+        if (!player.getAbilities().creativeMode) {
+            stack.decrement(1);
+        }
+
+    }
+
+    @Override
+    protected SoundEvent getFlopSound() {
+        return SoundEvents.ENTITY_TROPICAL_FISH_FLOP;
+    }
+
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(VARIANT, 0);
+        this.dataTracker.startTracking(HAS_CHILDREN, false);
+        this.dataTracker.startTracking(HAS_CHILDREN_TIMER, 0.0f);
+        this.dataTracker.startTracking(CHILD, false);
+    }
+
+    protected void initGoals() {
+        super.initGoals();
+        this.goalSelector.add(0, new EscapeDangerGoal(this, 0.7D));
+        this.goalSelector.add(1, new SeahorseFollowParentGoal(this, 1.25D));
+        this.goalSelector.add(2, new SeahorseMateGoal(this, 1D, SeahorseEntity.class));
+        this.goalSelector.add(3, new SeahorseReleaseChildrenGoal(this));
+        this.goalSelector.add(4, new TemptGoal(this, 1.25D, Ingredient.ofItems(Items.SEA_PICKLE), false));
+        this.goalSelector.add(5, new SwimToRandomPlaceGoal(this, 0.5D));
+        this.goalSelector.add(6, new SeahorseMoveToCoralGoal(this, 0.5D, 8));
+    }
+
+    @Override
+    protected void mobTick() {
+        if (this.getBreedingAge() != 0) {
+            this.loveTicks = 0;
+        }
+
+        super.mobTick();
+    }
+
     protected void onGrowUp() {
         if (!this.isBaby() && this.hasVehicle()) {
             Entity var2 = this.getVehicle();
-            if (var2 instanceof BoatEntity) {
-                BoatEntity boatEntity = (BoatEntity)var2;
+            if (var2 instanceof BoatEntity boatEntity) {
                 if (!boatEntity.isSmallerThanBoat(this)) {
                     this.stopRiding();
                 }
@@ -458,51 +481,23 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
 
     }
 
-    public boolean cannotDespawn() {
-        return super.cannotDespawn() || this.isFromBucket();
+    private int getTypeVariant() {
+        return this.dataTracker.get(VARIANT);
     }
 
-    public boolean canImmediatelyDespawn(double distanceSquared) {
-        return !this.isFromBucket() && !this.hasCustomName();
-    }
-
-    public SoundEvent getBucketFillSound() {
-        return SoundEvents.ITEM_BUCKET_FILL_FISH;
-    }
-
-    public boolean isBaby() {
-        return this.getBreedingAge() < 0;
-    }
-
-    public void setBaby(boolean baby) {
-        this.setBreedingAge(baby ? -24000 : 0);
-    }
-
-    public static int toGrowUpAge(int breedingAge) {
-        return (int)((float)(breedingAge / 20) * 0.1F);
-    }
-
-    @Override
-    public boolean damage(DamageSource source, float amount) {
-        if (this.isInvulnerableTo(source)) {
-            return false;
+    private void setupAnimationStates() {
+        if (this.swimmingAnimationTimeout <= 0) {
+            this.swimmingAnimationTimeout = 20;
+            this.swimmingAnimationState.start(this.age);
         } else {
-            this.loveTicks = 0;
-            return super.damage(source, amount);
+            --this.swimmingAnimationTimeout;
         }
-    }
 
-    @Override
-    protected SoundEvent getFlopSound() {
-        return SoundEvents.ENTITY_TROPICAL_FISH_FLOP;
-    }
-
-    @Override
-    public ItemStack getBucketItem() {
-        return new ItemStack(ModItems.SEAHORSE_BUCKET);
-    }
-
-    public int getMaxChildren() {
-        return 3;
+        if (this.flopAnimationTimeout <= 0) {
+            this.flopAnimationTimeout = 20;
+            this.flopAnimationState.start(this.age);
+        } else {
+            --this.flopAnimationTimeout;
+        }
     }
 }

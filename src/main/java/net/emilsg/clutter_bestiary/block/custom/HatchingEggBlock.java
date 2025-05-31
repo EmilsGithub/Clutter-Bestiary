@@ -40,9 +40,8 @@ public class HatchingEggBlock extends Block {
         this.width = width;
     }
 
-    @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        builder.add(HATCH);
+    public int getHatchStage(BlockState state) {
+        return state.get(HATCH);
     }
 
     @Override
@@ -51,16 +50,28 @@ public class HatchingEggBlock extends Block {
     }
 
     @Override
+    public BlockRenderType getRenderType(BlockState state) {
+        return BlockRenderType.MODEL;
+    }
+
+    @Override
     public boolean hasRandomTicks(BlockState state) {
         return true;
     }
 
-    public int getHatchStage(BlockState state) {
-        return state.get(HATCH);
+    public boolean isAboveHatchBooster(BlockView world, BlockPos pos) {
+        return world.getBlockState(pos.down()).isIn(hatchBoostTag);
     }
 
-    private boolean isReadyToHatch(BlockState state) {
-        return this.getHatchStage(state) == 2;
+    public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
+        boolean aboveHatchBooster = isAboveHatchBooster(world, pos);
+        if (!world.isClient() && aboveHatchBooster) {
+            world.syncWorldEvent(3009, pos, 0);
+        }
+        var hatchTime = aboveHatchBooster ? (averageHatchTimeInMinutes * 600) : (averageHatchTimeInMinutes * 1200);
+        int hatchEventTime = (int) hatchTime / 3;
+        world.emitGameEvent(GameEvent.BLOCK_PLACE, pos, GameEvent.Emitter.of(state));
+        world.scheduleBlockTick(pos, this, hatchEventTime + world.random.nextInt(300));
     }
 
     public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
@@ -81,23 +92,12 @@ public class HatchingEggBlock extends Block {
         }
     }
 
-    public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
-        boolean aboveHatchBooster = isAboveHatchBooster(world, pos);
-        if (!world.isClient() && aboveHatchBooster) {
-            world.syncWorldEvent(3009, pos, 0);
-        }
-        var hatchTime = aboveHatchBooster ? (averageHatchTimeInMinutes * 600) : (averageHatchTimeInMinutes * 1200);
-        int hatchEventTime = (int) hatchTime / 3;
-        world.emitGameEvent(GameEvent.BLOCK_PLACE, pos, GameEvent.Emitter.of(state));
-        world.scheduleBlockTick(pos, this, hatchEventTime + world.random.nextInt(300));
-    }
-
-    public boolean isAboveHatchBooster(BlockView world, BlockPos pos) {
-        return world.getBlockState(pos.down()).isIn(hatchBoostTag);
-    }
-
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(HATCH);
+    }
+
+    private boolean isReadyToHatch(BlockState state) {
+        return this.getHatchStage(state) == 2;
     }
 }

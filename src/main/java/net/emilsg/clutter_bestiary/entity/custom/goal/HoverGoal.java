@@ -6,8 +6,8 @@ import net.minecraft.entity.ai.goal.Goal;
 import java.util.EnumSet;
 
 public class HoverGoal extends Goal {
-    private int hoverTime;
     private final ParentAnimalEntity animalEntity;
+    private int hoverTime;
 
     public HoverGoal(ParentAnimalEntity animalEntity) {
         setControls(EnumSet.of(Goal.Control.MOVE));
@@ -20,21 +20,21 @@ public class HoverGoal extends Goal {
     }
 
     @Override
+    public boolean shouldContinue() {
+        return hoverTime-- > 0;
+    }
+
+    @Override
     public void start() {
         hoverTime = animalEntity.getRandom().nextInt(40);
     }
 
     @Override
     public void tick() {
-        if(animalEntity.isTouchingWater()) this.stop();
+        if (animalEntity.isTouchingWater()) this.stop();
 
         animalEntity.getNavigation().stop();
         double hoverY = Math.sin(animalEntity.age * 0.2) * 0.02;
         animalEntity.setVelocity(0, hoverY, 0);
-    }
-
-    @Override
-    public boolean shouldContinue() {
-        return hoverTime-- > 0;
     }
 }

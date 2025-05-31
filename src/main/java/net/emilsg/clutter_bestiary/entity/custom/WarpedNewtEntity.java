@@ -29,13 +29,13 @@ public class WarpedNewtEntity extends AbstractNetherNewtEntity {
     }
 
     @Override
-    public Item getBreedingItem() {
-        return Items.WARPED_ROOTS;
+    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return ModEntityTypes.WARPED_NEWT.create(world);
     }
 
     @Override
-    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.WARPED_NEWT.create(world);
+    public Item getBreedingItem() {
+        return Items.WARPED_ROOTS;
     }
 
     @Override

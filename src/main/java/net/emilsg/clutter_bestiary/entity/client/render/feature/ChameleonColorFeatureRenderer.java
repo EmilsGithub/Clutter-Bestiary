@@ -27,6 +27,20 @@ public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEnti
         super(context);
     }
 
+    public BlockState getBelowState(ChameleonEntity entity) {
+        World world = entity.getEntityWorld();
+        BlockPos entityPos = entity.getBlockPos();
+        BlockPos groundPos = world.raycast(new RaycastContext(
+                entityPos.toCenterPos(),
+                entityPos.add(0, World.MIN_Y - entityPos.getY(), 0).toCenterPos(),
+                RaycastContext.ShapeType.COLLIDER,
+                RaycastContext.FluidHandling.ANY,
+                entity
+        )).getBlockPos();
+
+        return world.getBlockState(groundPos);
+    }
+
     @Override
     public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, ChameleonEntity entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
         Color chameleonColor = getChameleonColor(entity);
@@ -35,7 +49,7 @@ public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEnti
         float blue = chameleonColor.getBlue() / 255.0f;
 
         VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.getContextModel().getLayer(this.getTexture(entity)));
-        this.getContextModel().render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, red, green, blue, 1.0f);
+        this.getContextModel().render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, red, green, blue, 0.25f);
     }
 
     private Color getChameleonColor(ChameleonEntity chameleon) {
@@ -57,19 +71,5 @@ public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEnti
 
 
         return new Color(colorInt);
-    }
-
-    public BlockState getBelowState(ChameleonEntity entity) {
-        World world = entity.getEntityWorld();
-        BlockPos entityPos = entity.getBlockPos();
-        BlockPos groundPos = world.raycast(new RaycastContext(
-                entityPos.toCenterPos(),
-                entityPos.add(0, World.MIN_Y - entityPos.getY(), 0).toCenterPos(),
-                RaycastContext.ShapeType.COLLIDER,
-                RaycastContext.FluidHandling.ANY,
-                entity
-        )).getBlockPos();
-
-        return world.getBlockState(groundPos);
     }
 }

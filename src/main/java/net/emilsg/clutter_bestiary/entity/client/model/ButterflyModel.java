@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.ButterflyAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.ButterflyEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutter_bestiary.entity.custom.ButterflyEntity;
 import net.minecraft.client.model.*;
@@ -35,17 +35,8 @@ public class ButterflyModel<T extends ButterflyEntity> extends BestiaryModel<T> 
     }
 
     @Override
-    public void setAngles(ButterflyEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        Animation flightAnim;
-
-        switch (entity.getFlyingTypeVariant()) {
-            case 1 -> flightAnim = ButterflyAnimations.BUTTERFLY_FLYING_TWO;
-            case 2 -> flightAnim = ButterflyAnimations.BUTTERFLY_FLYING_THREE;
-            default -> flightAnim = ButterflyAnimations.BUTTERFLY_FLYING_ONE;
-        }
-
-        this.updateAnimation(entity.flyingAnimState, flightAnim, ageInTicks, 1f);
+    public ModelPart getPart() {
+        return root;
     }
 
     @Override
@@ -54,12 +45,21 @@ public class ButterflyModel<T extends ButterflyEntity> extends BestiaryModel<T> 
     }
 
     @Override
-    protected ModelPart getHeadPart() {
-        return null;
+    public void setAngles(ButterflyEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        Animation flightAnim;
+
+        switch (entity.getFlyingTypeVariant()) {
+            case 1 -> flightAnim = ButterflyEntityAnimations.BUTTERFLY_FLYING_TWO;
+            case 2 -> flightAnim = ButterflyEntityAnimations.BUTTERFLY_FLYING_THREE;
+            default -> flightAnim = ButterflyEntityAnimations.BUTTERFLY_FLYING_ONE;
+        }
+
+        this.updateAnimation(entity.flyingAnimState, flightAnim, ageInTicks, 1f);
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
+    protected ModelPart getHeadPart() {
+        return null;
     }
 }

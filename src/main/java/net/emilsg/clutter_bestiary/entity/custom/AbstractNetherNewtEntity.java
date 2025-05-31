@@ -63,53 +63,29 @@ public abstract class AbstractNetherNewtEntity extends ParentAnimalEntity implem
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 3.0f);
     }
 
-    public abstract Item getBreedingItem();
-
-    private Ingredient getBreedingIngredient() {
-        return Ingredient.ofItems(getBreedingItem());
-    }
-
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(1, new SwimGoal(this));
-        this.goalSelector.add(2, new PounceAtTargetGoal(this, 0.4f));
-        this.goalSelector.add(3, new MeleeAttackGoal(this, 1.0f, true));
-        this.goalSelector.add(4, new AnimalMateGoal(this, 1.2f));
-        this.goalSelector.add(5, new TemptGoal(this, 1.2f, this.getBreedingIngredient(), false));
-        this.goalSelector.add(6, new FollowParentGoal(this, 1.2f));
-        this.goalSelector.add(7, new WanderAroundFarGoal(this, 1.0f, 0.3f));
-        this.goalSelector.add(8, new LookAtEntityGoal(this, PlayerEntity.class, 6.0f));
-        this.goalSelector.add(9, new LookAroundGoal(this));
-        this.targetSelector.add(1, (new RevengeGoal(this)).setGroupRevenge());
-        this.targetSelector.add(2, new UniversalAngerGoal<>(this, true));
-    }
+    public void breed(ServerWorld world, AnimalEntity other) {
+        AbstractNetherNewtEntity crimsonNewtEntity = (AbstractNetherNewtEntity) this.createChild(world, other);
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(ANGER_TIME, 0);
-        this.dataTracker.startTracking(SIZE, 0f);
-        this.dataTracker.startTracking(MOVING, false);
-        this.dataTracker.startTracking(FUNGI, 1);
-    }
+        if (crimsonNewtEntity == null) return;
 
-    private void setupAnimationStates() {
-        if (this.idleAnimationTimeout <= 0 && !this.isMoving()) {
-            this.idleAnimationTimeout = 80;
-            this.idleAnimationState.start(this.age);
-        } else {
-            --this.idleAnimationTimeout;
-        }
-    }
-
-    protected void updateLimbs(float v) {
-        float f;
-        if (this.getPose() == EntityPose.STANDING) {
-            f = Math.min(v * 6.0F, 1.0F);
-        } else {
-            f = 0.0F;
+        float scaledSize;
+        switch (random.nextInt(3) + 1) {
+            case 2 -> scaledSize = 1.25f;
+            case 3 -> scaledSize = 1.5f;
+            default -> scaledSize = 1;
         }
 
-        this.limbAnimator.updateLimbs(f, 0.2F);
+        crimsonNewtEntity.setBaby(true);
+        crimsonNewtEntity.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
+        crimsonNewtEntity.setNewtSize(scaledSize);
+        crimsonNewtEntity.setFungiCount(random.nextInt(5) + 1);
+        this.breed(world, other, crimsonNewtEntity);
+        world.spawnEntityAndPassengers(crimsonNewtEntity);
+    }
+
+    public boolean canBeLeashedBy(PlayerEntity player) {
+        return !this.hasAngerTime() && super.canBeLeashedBy(player);
     }
 
     public boolean canSpawn(WorldView world) {
@@ -121,12 +97,8 @@ public abstract class AbstractNetherNewtEntity extends ParentAnimalEntity implem
         return true;
     }
 
-    public boolean isMoving() {
-        return this.dataTracker.get(MOVING);
-    }
-
-    public void setMoving(boolean moving) {
-        this.dataTracker.set(MOVING, moving);
+    public void chooseRandomAngerTime() {
+        this.setAngerTime(ANGER_TIME_RANGE.get(this.random));
     }
 
     @Nullable
@@ -134,157 +106,13 @@ public abstract class AbstractNetherNewtEntity extends ParentAnimalEntity implem
     public abstract PassiveEntity createChild(ServerWorld world, PassiveEntity entity);
 
     @Override
-    public void setBaby(boolean baby) {
-        float scaledSize;
-        switch (random.nextInt(3) + 1) {
-            default -> scaledSize = 1;
-            case 2 -> scaledSize = 1.25f;
-            case 3 -> scaledSize = 1.5f;
-        }
-        this.setNewtSize(scaledSize);
-        this.setFungiCount(random.nextInt(5) + 1);
-        super.setBaby(baby);
-    }
-
-    @Override
     public boolean damage(DamageSource source, float amount) {
-        if(source.getAttacker() instanceof LivingEntity attacker && attacker.getWorld() instanceof ServerWorld && !this.isBaby() && this.getFungiCount() >= 1 && getOnAttackEffect() != null) {
-            if(random.nextInt(8) == 0) {
+        if (source.getAttacker() instanceof LivingEntity attacker && attacker.getWorld() instanceof ServerWorld && !this.isBaby() && this.getFungiCount() >= 1 && getOnAttackEffect() != null) {
+            if (random.nextInt(8) == 0) {
                 attacker.addStatusEffect(new StatusEffectInstance(getOnAttackEffect(), getOnAttackEffect() == StatusEffects.POISON ? 100 : 200, 1), this);
             }
         }
         return super.damage(source, amount);
-    }
-
-    @Nullable public abstract StatusEffect getOnAttackEffect();
-
-    @Override
-    public void breed(ServerWorld world, AnimalEntity other) {
-        AbstractNetherNewtEntity crimsonNewtEntity = (AbstractNetherNewtEntity) this.createChild(world, other);
-
-        if (crimsonNewtEntity == null) return;
-
-        float scaledSize;
-        switch (random.nextInt(3) + 1) {
-            default -> scaledSize = 1;
-            case 2 -> scaledSize = 1.25f;
-            case 3 -> scaledSize = 1.5f;
-        }
-
-        crimsonNewtEntity.setBaby(true);
-        crimsonNewtEntity.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
-        crimsonNewtEntity.setNewtSize(scaledSize);
-        crimsonNewtEntity.setFungiCount(random.nextInt(5) + 1);
-        this.breed(world, other, crimsonNewtEntity);
-        world.spawnEntityAndPassengers(crimsonNewtEntity);
-    }
-
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
-        float scaledSize;
-        switch (random.nextInt(3) + 1) {
-            default -> scaledSize = 1;
-            case 2 -> scaledSize = 1.25f;
-            case 3 -> scaledSize = 1.5f;
-        }
-        this.setNewtSize(scaledSize);
-        this.setFungiCount(random.nextInt(5) + 1);
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
-    }
-
-    public float getNewtSize() {
-        return this.dataTracker.get(SIZE);
-    }
-
-    public void setNewtSize(float size) {
-        this.dataTracker.set(SIZE, MathHelper.clamp(size, 0f, 1.5f));
-        this.calculateDimensions();
-    }
-
-    protected float getActiveEyeHeight(EntityPose pose, EntityDimensions dimensions) {
-        return dimensions.height * 0.4F;
-    }
-
-    public void onTrackedDataSet(TrackedData<?> data) {
-        if (SIZE.equals(data)) {
-            this.calculateDimensions();
-        }
-
-        super.onTrackedDataSet(data);
-    }
-
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        this.writeAngerToNbt(nbt);
-        nbt.putFloat("Size", this.getNewtSize());
-        nbt.putInt("Fungi", this.getFungiCount());
-    }
-
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.readAngerFromNbt(this.getWorld(), nbt);
-        this.setNewtSize(nbt.getFloat("Size"));
-        this.setFungiCount(nbt.getInt("Fungi"));
-    }
-
-    @Nullable
-    @Override
-    protected SoundEvent getHurtSound(DamageSource source) {
-        return ModSoundEvents.ENTITY_NETHER_NEWT_HURT;
-    }
-
-    @Override
-    public EntityDimensions getDimensions(EntityPose pose) {
-        return super.getDimensions(pose).scaled(0.65f * this.getNewtSize());
-    }
-
-    @Override
-    public void tickMovement() {
-        super.tickMovement();
-        if (!this.getWorld().isClient) {
-            BlockPos oldPos = this.getBlockPos();
-            BlockPos newPos = this.getBlockPos();
-            this.setMoving(oldPos != newPos);
-            this.tickAngerLogic((ServerWorld) this.getWorld(), true);
-        }
-    }
-
-    @Override
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack stackInHand = player.getStackInHand(hand);
-        World world = this.getWorld();
-        BlockPos pos = this.getBlockPos();
-        int fungiCount = this.getFungiCount();
-
-        if (stackInHand.getItem() instanceof ShearsItem && !world.isClient && fungiCount != 0) {
-            if (!player.getAbilities().creativeMode) stackInHand.damage(1, player, (p) -> p.sendToolBreakStatus(hand));
-            this.dropStack(new ItemStack(this.getFungusItem(), fungiCount));
-            world.playSound(null, pos, SoundEvents.BLOCK_GROWING_PLANT_CROP, SoundCategory.BLOCKS, 1.0F, 1.0F);
-            this.setFungiCount(0);
-            return ActionResult.SUCCESS;
-        }
-
-        return super.interactMob(player, hand);
-    }
-
-    protected abstract Item getFungusItem();
-
-    @Override
-    public void tick() {
-        super.tick();
-        World world = this.getWorld();
-
-        if (!world.isClient) {
-            ticker--;
-
-            if (ticker <= 0 && this.getFungiCount() != 5) {
-                this.setFungiCount(this.getFungiCount() + 1);
-                ticker = 6000;
-            }
-        }
-
-        if (world.isClient) {
-            this.setupAnimationStates();
-        }
     }
 
     @Override
@@ -306,12 +134,106 @@ public abstract class AbstractNetherNewtEntity extends ParentAnimalEntity implem
         this.angryAt = angryAt;
     }
 
-    public void chooseRandomAngerTime() {
-        this.setAngerTime(ANGER_TIME_RANGE.get(this.random));
+    public abstract Item getBreedingItem();
+
+    @Override
+    public EntityDimensions getDimensions(EntityPose pose) {
+        return super.getDimensions(pose).scaled(0.65f * this.getNewtSize());
     }
 
-    public boolean canBeLeashedBy(PlayerEntity player) {
-        return !this.hasAngerTime() && super.canBeLeashedBy(player);
+    public int getFungiCount() {
+        return this.dataTracker.get(FUNGI);
+    }
+
+    public void setFungiCount(int count) {
+        this.dataTracker.set(FUNGI, MathHelper.clamp(count, 0, 5));
+    }
+
+    public float getNewtSize() {
+        return this.dataTracker.get(SIZE);
+    }
+
+    public void setNewtSize(float size) {
+        this.dataTracker.set(SIZE, MathHelper.clamp(size, 0f, 1.5f));
+        this.calculateDimensions();
+    }
+
+    @Nullable
+    public abstract StatusEffect getOnAttackEffect();
+
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
+        float scaledSize;
+        switch (random.nextInt(3) + 1) {
+            case 2 -> scaledSize = 1.25f;
+            case 3 -> scaledSize = 1.5f;
+            default -> scaledSize = 1;
+        }
+        this.setNewtSize(scaledSize);
+        this.setFungiCount(random.nextInt(5) + 1);
+        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+    }
+
+    @Override
+    public ActionResult interactMob(PlayerEntity player, Hand hand) {
+        ItemStack stackInHand = player.getStackInHand(hand);
+        World world = this.getWorld();
+        BlockPos pos = this.getBlockPos();
+        int fungiCount = this.getFungiCount();
+
+        if (stackInHand.getItem() instanceof ShearsItem && !world.isClient && fungiCount != 0) {
+            if (!player.getAbilities().creativeMode) stackInHand.damage(1, player, (p) -> p.sendToolBreakStatus(hand));
+            this.dropStack(new ItemStack(this.getFungusItem(), fungiCount));
+            world.playSound(null, pos, SoundEvents.BLOCK_GROWING_PLANT_CROP, SoundCategory.BLOCKS, 1.0F, 1.0F);
+            this.setFungiCount(0);
+            return ActionResult.SUCCESS;
+        }
+
+        return super.interactMob(player, hand);
+    }
+
+    @Override
+    public boolean isBreedingItem(ItemStack stack) {
+        return stack.isOf(this.getBreedingItem());
+    }
+
+    public boolean isMoving() {
+        return this.dataTracker.get(MOVING);
+    }
+
+    public void setMoving(boolean moving) {
+        this.dataTracker.set(MOVING, moving);
+    }
+
+    public boolean isUniversallyAngry(World world) {
+        return world.getGameRules().getBoolean(GameRules.UNIVERSAL_ANGER) && this.hasAngerTime() && this.getAngryAt() == null;
+    }
+
+    public void onTrackedDataSet(TrackedData<?> data) {
+        if (SIZE.equals(data)) {
+            this.calculateDimensions();
+        }
+
+        super.onTrackedDataSet(data);
+    }
+
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.readAngerFromNbt(this.getWorld(), nbt);
+        this.setNewtSize(nbt.getFloat("Size"));
+        this.setFungiCount(nbt.getInt("Fungi"));
+    }
+
+    @Override
+    public void setBaby(boolean baby) {
+        float scaledSize;
+        switch (random.nextInt(3) + 1) {
+            case 2 -> scaledSize = 1.25f;
+            case 3 -> scaledSize = 1.5f;
+            default -> scaledSize = 1;
+        }
+        this.setNewtSize(scaledSize);
+        this.setFungiCount(random.nextInt(5) + 1);
+        super.setBaby(baby);
     }
 
     public boolean shouldAngerAt(LivingEntity entity) {
@@ -322,20 +244,99 @@ public abstract class AbstractNetherNewtEntity extends ParentAnimalEntity implem
         }
     }
 
-    public boolean isUniversallyAngry(World world) {
-        return world.getGameRules().getBoolean(GameRules.UNIVERSAL_ANGER) && this.hasAngerTime() && this.getAngryAt() == null;
+    @Override
+    public void tick() {
+        super.tick();
+        World world = this.getWorld();
+
+        if (!world.isClient) {
+            ticker--;
+
+            if (ticker <= 0 && this.getFungiCount() != 5) {
+                this.setFungiCount(this.getFungiCount() + 1);
+                ticker = 6000;
+            }
+        }
+
+        if (world.isClient) {
+            this.setupAnimationStates();
+        }
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(this.getBreedingItem());
+    public void tickMovement() {
+        super.tickMovement();
+        if (!this.getWorld().isClient) {
+            BlockPos oldPos = this.getBlockPos();
+            BlockPos newPos = this.getBlockPos();
+            this.setMoving(oldPos != newPos);
+            this.tickAngerLogic((ServerWorld) this.getWorld(), true);
+        }
     }
 
-    public int getFungiCount() {
-        return this.dataTracker.get(FUNGI);
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        this.writeAngerToNbt(nbt);
+        nbt.putFloat("Size", this.getNewtSize());
+        nbt.putInt("Fungi", this.getFungiCount());
     }
 
-    public void setFungiCount(int count) {
-        this.dataTracker.set(FUNGI, MathHelper.clamp(count, 0, 5));
+    protected float getActiveEyeHeight(EntityPose pose, EntityDimensions dimensions) {
+        return dimensions.height * 0.4F;
+    }
+
+    protected abstract Item getFungusItem();
+
+    @Nullable
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return ModSoundEvents.ENTITY_NETHER_NEWT_HURT;
+    }
+
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(ANGER_TIME, 0);
+        this.dataTracker.startTracking(SIZE, 0f);
+        this.dataTracker.startTracking(MOVING, false);
+        this.dataTracker.startTracking(FUNGI, 1);
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(1, new SwimGoal(this));
+        this.goalSelector.add(2, new PounceAtTargetGoal(this, 0.4f));
+        this.goalSelector.add(3, new MeleeAttackGoal(this, 1.0f, true));
+        this.goalSelector.add(4, new AnimalMateGoal(this, 1.2f));
+        this.goalSelector.add(5, new TemptGoal(this, 1.2f, this.getBreedingIngredient(), false));
+        this.goalSelector.add(6, new FollowParentGoal(this, 1.2f));
+        this.goalSelector.add(7, new WanderAroundFarGoal(this, 1.0f, 0.3f));
+        this.goalSelector.add(8, new LookAtEntityGoal(this, PlayerEntity.class, 6.0f));
+        this.goalSelector.add(9, new LookAroundGoal(this));
+        this.targetSelector.add(1, (new RevengeGoal(this)).setGroupRevenge());
+        this.targetSelector.add(2, new UniversalAngerGoal<>(this, true));
+    }
+
+    protected void updateLimbs(float v) {
+        float f;
+        if (this.getPose() == EntityPose.STANDING) {
+            f = Math.min(v * 6.0F, 1.0F);
+        } else {
+            f = 0.0F;
+        }
+
+        this.limbAnimator.updateLimbs(f, 0.2F);
+    }
+
+    private Ingredient getBreedingIngredient() {
+        return Ingredient.ofItems(getBreedingItem());
+    }
+
+    private void setupAnimationStates() {
+        if (this.idleAnimationTimeout <= 0 && !this.isMoving()) {
+            this.idleAnimationTimeout = 80;
+            this.idleAnimationState.start(this.age);
+        } else {
+            --this.idleAnimationTimeout;
+        }
     }
 }

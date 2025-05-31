@@ -48,8 +48,32 @@ public class ButterflyCocoonBlock extends Block {
     }
 
     @Override
+    public boolean canPlaceAt(BlockState state, WorldView world, BlockPos pos) {
+        return world.getBlockState(pos.up()).getBlock() instanceof LeavesBlock || world.getBlockState(pos.up()).isIn(BlockTags.LOGS) || world.getBlockState(pos.up()).isIn(BlockTags.WART_BLOCKS) || world.getBlockState(pos.up()).isOf(Blocks.BONE_BLOCK);
+    }
+
+    @Override
     public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
         return SHAPE;
+    }
+
+    @Override
+    public BlockRenderType getRenderType(BlockState state) {
+        return BlockRenderType.MODEL;
+    }
+
+    @Override
+    @Deprecated
+    public BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState neighborState, WorldAccess world, BlockPos pos, BlockPos neighborPos) {
+        if (world.getBlockState(pos.up()).isAir()) {
+            return Blocks.AIR.getDefaultState();
+        }
+        return super.getStateForNeighborUpdate(state, direction, neighborState, world, pos, neighborPos);
+    }
+
+    @Override
+    public boolean hasRandomTicks(BlockState state) {
+        return true;
     }
 
     @Override
@@ -70,8 +94,11 @@ public class ButterflyCocoonBlock extends Block {
     }
 
     @Override
-    public boolean hasRandomTicks(BlockState state) {
-        return true;
+    public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
+        if (random.nextInt(200 + random.nextInt(200)) <= 0) {
+            world.playSound((double) pos.getX() + 0.5, (double) pos.getY() + 0.5, (double) pos.getZ() + 0.5, SoundEvents.BLOCK_MOSS_FALL, SoundCategory.BLOCKS, 0.25f, 1.25f, false);
+        }
+        super.randomDisplayTick(state, world, pos, random);
     }
 
     public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
@@ -119,6 +146,12 @@ public class ButterflyCocoonBlock extends Block {
         }
     }
 
+    @Override
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(HATCH, CAN_HATCH);
+        super.appendProperties(builder);
+    }
+
     private boolean shouldHatchProgress(World world, BlockState state) {
         boolean isDay = world.isDay();
         boolean isNether = world.getDimensionKey() == DimensionTypes.THE_NETHER;
@@ -128,38 +161,5 @@ public class ButterflyCocoonBlock extends Block {
             return world.random.nextInt(500) == 0;
         }
         return false;
-    }
-
-    @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        builder.add(HATCH, CAN_HATCH);
-        super.appendProperties(builder);
-    }
-
-    @Override
-    public BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
-    }
-
-    @Override
-    public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
-        if (random.nextInt(200 + random.nextInt(200)) <= 0) {
-            world.playSound((double) pos.getX() + 0.5, (double) pos.getY() + 0.5, (double) pos.getZ() + 0.5, SoundEvents.BLOCK_MOSS_FALL, SoundCategory.BLOCKS, 0.25f, 1.25f, false);
-        }
-        super.randomDisplayTick(state, world, pos, random);
-    }
-
-    @Override
-    public boolean canPlaceAt(BlockState state, WorldView world, BlockPos pos) {
-        return world.getBlockState(pos.up()).getBlock() instanceof LeavesBlock || world.getBlockState(pos.up()).isIn(BlockTags.LOGS) || world.getBlockState(pos.up()).isIn(BlockTags.WART_BLOCKS) || world.getBlockState(pos.up()).isOf(Blocks.BONE_BLOCK);
-    }
-
-    @Override
-    @Deprecated
-    public BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState neighborState, WorldAccess world, BlockPos pos, BlockPos neighborPos) {
-        if (world.getBlockState(pos.up()).isAir()) {
-            return Blocks.AIR.getDefaultState();
-        }
-        return super.getStateForNeighborUpdate(state, direction, neighborState, world, pos, neighborPos);
     }
 }

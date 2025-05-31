@@ -5,7 +5,7 @@ import net.minecraft.client.render.entity.animation.AnimationHelper;
 import net.minecraft.client.render.entity.animation.Keyframe;
 import net.minecraft.client.render.entity.animation.Transformation;
 
-public class ButterflyAnimations {
+public class ButterflyEntityAnimations {
     public static final Animation BUTTERFLY_IDLE = Animation.Builder.create(0.0F)
             .build();
 

@@ -17,12 +17,12 @@ public class DragonflyRenderer extends MobEntityRenderer<DragonflyEntity, Dragon
     }
 
     @Override
-    public void render(DragonflyEntity dragonflyEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
-        super.render(dragonflyEntity, f, g, matrixStack, vertexConsumerProvider, i);
+    public Identifier getTexture(DragonflyEntity dragonflyEntity) {
+        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/dragonfly/dragonfly.png");
     }
 
     @Override
-    public Identifier getTexture(DragonflyEntity dragonflyEntity) {
-        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/dragonfly/dragonfly.png");
+    public void render(DragonflyEntity dragonflyEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
+        super.render(dragonflyEntity, f, g, matrixStack, vertexConsumerProvider, i);
     }
 }

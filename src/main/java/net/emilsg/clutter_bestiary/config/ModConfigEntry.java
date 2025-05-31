@@ -52,6 +52,24 @@ public class ModConfigEntry<T> {
     }
 
     /**
+     * Returns the comment associated with this configuration entry.
+     *
+     * @return The comment as a String.
+     */
+    public String getComment() {
+        return comment;
+    }
+
+    /**
+     * Returns the default value of this configuration entry.
+     *
+     * @return The default value of type T.
+     */
+    public T getDefaultValue() {
+        return defaultValue;
+    }
+
+    /**
      * Returns the key associated with this configuration entry.
      *
      * @return The key as a String.
@@ -76,24 +94,6 @@ public class ModConfigEntry<T> {
      */
     public void setValue(T value) {
         this.value = value;
-    }
-
-    /**
-     * Returns the default value of this configuration entry.
-     *
-     * @return The default value of type T.
-     */
-    public T getDefaultValue() {
-        return defaultValue;
-    }
-
-    /**
-     * Returns the comment associated with this configuration entry.
-     *
-     * @return The comment as a String.
-     */
-    public String getComment() {
-        return comment;
     }
 
     /**

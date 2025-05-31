@@ -10,12 +10,12 @@ import net.minecraft.util.Hand;
 public class EmberTortoiseMeleeGoal extends MeleeAttackGoal {
     private final EmberTortoiseEntity entity;
     private final double speed;
-    private int attackDelay = 10;
+    private int attackDelay = 20;
     private Path path;
     private int updateCountdownTicks;
     private int cooldown;
     private long lastUpdateTime;
-    private int ticksUntilNextAttack = 10;
+    private int ticksUntilNextAttack = 20;
     private boolean shouldCountTillNextAttack = false;
 
     public EmberTortoiseMeleeGoal(PathAwareEntity mob, double speed, boolean pauseWhenMobIdle) {
@@ -29,34 +29,35 @@ public class EmberTortoiseMeleeGoal extends MeleeAttackGoal {
         return !entity.isShielding() && startAttack();
     }
 
-    private boolean startAttack() {
-        long l = this.mob.getWorld().getTime();
-        if (l - this.lastUpdateTime < 20L) {
-            return false;
-        }
-        this.lastUpdateTime = l;
-        LivingEntity livingEntity = this.mob.getTarget();
-        if (livingEntity == null) {
-            return false;
-        }
-        if (!livingEntity.isAlive()) {
-            return false;
-        }
-        this.path = this.mob.getNavigation().findPathTo(livingEntity, 1);
-        if (this.path != null) {
-            return true;
-        }
-        return this.getSquaredMaxAttackDistance(livingEntity) >= this.mob.squaredDistanceTo(livingEntity.getX(), livingEntity.getY(), livingEntity.getZ());
-    }
-
     @Override
     public void start() {
         this.mob.getNavigation().startMovingAlong(this.path, this.speed);
         this.mob.setAttacking(true);
         this.updateCountdownTicks = 0;
         this.cooldown = 0;
-        attackDelay = 10;
-        ticksUntilNextAttack = 10;
+        attackDelay = 20;
+        ticksUntilNextAttack = 20;
+    }
+
+    @Override
+    public void stop() {
+        entity.setAttacking(false);
+        super.stop();
+    }
+
+    @Override
+    public void tick() {
+        if (this.entity.isShielding()) {
+            resetAttackCooldown();
+            entity.setAttacking(false);
+            this.stop();
+            return;
+        }
+        super.tick();
+
+        if (shouldCountTillNextAttack) {
+            this.ticksUntilNextAttack = Math.max(this.ticksUntilNextAttack - 1, 0);
+        }
     }
 
     @Override
@@ -86,20 +87,12 @@ public class EmberTortoiseMeleeGoal extends MeleeAttackGoal {
         }
     }
 
-    private boolean isEnemyWithinAttackDistance(LivingEntity pEnemy) {
-        return this.mob.squaredDistanceTo(pEnemy) < 5f;
-    }
-
-    protected void resetAttackCooldown() {
-        this.ticksUntilNextAttack = this.getTickCount(attackDelay * 2);
+    protected boolean isTimeToAttack() {
+        return this.ticksUntilNextAttack <= 0;
     }
 
     protected boolean isTimeToStartAttackAnimation() {
         return this.ticksUntilNextAttack <= attackDelay;
-    }
-
-    protected boolean isTimeToAttack() {
-        return this.ticksUntilNextAttack <= 0;
     }
 
     protected void performAttack(LivingEntity pEnemy) {
@@ -108,24 +101,31 @@ public class EmberTortoiseMeleeGoal extends MeleeAttackGoal {
         this.mob.tryAttack(pEnemy);
     }
 
-    @Override
-    public void tick() {
-        if (this.entity.isShielding()) {
-            resetAttackCooldown();
-            entity.setAttacking(false);
-            this.stop();
-            return;
-        }
-        super.tick();
-
-        if (shouldCountTillNextAttack) {
-            this.ticksUntilNextAttack = Math.max(this.ticksUntilNextAttack - 1, 0);
-        }
+    protected void resetAttackCooldown() {
+        this.ticksUntilNextAttack = this.getTickCount(attackDelay * 2);
     }
 
-    @Override
-    public void stop() {
-        entity.setAttacking(false);
-        super.stop();
+    private boolean isEnemyWithinAttackDistance(LivingEntity pEnemy) {
+        return this.mob.squaredDistanceTo(pEnemy) < 8f;
+    }
+
+    private boolean startAttack() {
+        long l = this.mob.getWorld().getTime();
+        if (l - this.lastUpdateTime < 20L) {
+            return false;
+        }
+        this.lastUpdateTime = l;
+        LivingEntity livingEntity = this.mob.getTarget();
+        if (livingEntity == null) {
+            return false;
+        }
+        if (!livingEntity.isAlive()) {
+            return false;
+        }
+        this.path = this.mob.getNavigation().findPathTo(livingEntity, 1);
+        if (this.path != null) {
+            return true;
+        }
+        return this.getSquaredMaxAttackDistance(livingEntity) >= this.mob.squaredDistanceTo(livingEntity.getX(), livingEntity.getY(), livingEntity.getZ());
     }
 }

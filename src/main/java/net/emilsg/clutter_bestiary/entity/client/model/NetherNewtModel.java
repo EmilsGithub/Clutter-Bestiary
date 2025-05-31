@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.NetherNewtAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.NetherNewtEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutter_bestiary.entity.custom.AbstractNetherNewtEntity;
 import net.minecraft.client.model.*;
@@ -103,14 +103,8 @@ public class NetherNewtModel<T extends AbstractNetherNewtEntity> extends Bestiar
     }
 
     @Override
-    public void setAngles(AbstractNetherNewtEntity newt, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(newt, netHeadYaw, headPitch, ageInTicks);
-
-        this.animateMovement(NetherNewtAnimations.NETHER_NEWT_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
-        this.updateAnimation(newt.idleAnimationState, NetherNewtAnimations.NETHER_NEWT_IDLE, ageInTicks, 1f);
-
-        updateVisibleParts(newt);
+    public ModelPart getPart() {
+        return root;
     }
 
     @Override
@@ -131,6 +125,22 @@ public class NetherNewtModel<T extends AbstractNetherNewtEntity> extends Bestiar
         }
     }
 
+    @Override
+    public void setAngles(AbstractNetherNewtEntity newt, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        this.setHeadAngles(newt, netHeadYaw, headPitch, ageInTicks);
+
+        this.animateMovement(NetherNewtEntityAnimations.NETHER_NEWT_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
+        this.updateAnimation(newt.idleAnimationState, NetherNewtEntityAnimations.NETHER_NEWT_IDLE, ageInTicks, 1f);
+
+        updateVisibleParts(newt);
+    }
+
+    @Override
+    protected ModelPart getHeadPart() {
+        return head;
+    }
+
     private void updateVisibleParts(AbstractNetherNewtEntity netherNewtEntity) {
         int fungiCount = netherNewtEntity.getFungiCount();
 
@@ -139,15 +149,5 @@ public class NetherNewtModel<T extends AbstractNetherNewtEntity> extends Bestiar
         fungi3.visible = fungiCount >= 2;
         fungi4.visible = fungiCount >= 5;
         fungi5.visible = fungiCount >= 3;
-    }
-
-    @Override
-    public ModelPart getPart() {
-        return root;
-    }
-
-    @Override
-    protected ModelPart getHeadPart() {
-        return head;
     }
 }

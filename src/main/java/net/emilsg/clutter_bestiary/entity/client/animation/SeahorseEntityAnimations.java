@@ -1,4 +1,4 @@
-package net.emilsg.clutter_bestiary.entity.client.animation;// Save this class in your mod and generate all required imports
+package net.emilsg.clutter_bestiary.entity.client.animation;
 
 import net.minecraft.client.render.entity.animation.Animation;
 import net.minecraft.client.render.entity.animation.AnimationHelper;
@@ -6,7 +6,7 @@ import net.minecraft.client.render.entity.animation.Keyframe;
 import net.minecraft.client.render.entity.animation.Transformation;
 
 
-public class SeahorseAnimations {
+public class SeahorseEntityAnimations {
 
     public static final Animation SEAHORSE_IDLE = Animation.Builder.create(1f).looping()
             .addBoneAnimation("body",

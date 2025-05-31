@@ -21,9 +21,25 @@ public class MossbloomDropHornsGoal extends Goal {
     }
 
     @Override
+    public boolean shouldContinue() {
+        return this.mossbloom.getHasHorns() && this.mossbloom.getHornDropTimer() > MossbloomEntity.SHOULD_DROP_HORNS_VALUE && !this.hasDroppedAntlers;
+    }
+
+    @Override
+    public boolean shouldRunEveryTick() {
+        return true;
+    }
+
+    @Override
     public void start() {
         this.mossbloom.setIsShaking(true);
         this.mossbloom.getNavigation().stop();
+    }
+
+    @Override
+    public void stop() {
+        this.hasDroppedAntlers = false;
+        this.mossbloom.setTimeTillDrop(0);
     }
 
     @Override
@@ -38,21 +54,5 @@ public class MossbloomDropHornsGoal extends Goal {
             this.mossbloom.setIsShaking(false);
             this.mossbloom.shakingAnimationState.stop();
         }
-    }
-
-    @Override
-    public boolean shouldRunEveryTick() {
-        return true;
-    }
-
-    @Override
-    public boolean shouldContinue() {
-        return this.mossbloom.getHasHorns() && this.mossbloom.getHornDropTimer() > MossbloomEntity.SHOULD_DROP_HORNS_VALUE && !this.hasDroppedAntlers;
-    }
-
-    @Override
-    public void stop() {
-        this.hasDroppedAntlers = false;
-        this.mossbloom.setTimeTillDrop(0);
     }
 }

@@ -19,9 +19,18 @@ public abstract class ParentFishEntity extends FishEntity {
     }
 
     @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(MOVING, false);
+    public abstract ItemStack getBucketItem();
+
+    public boolean getHasSelfControl() {
+        return hasSelfControl();
+    }
+
+    public boolean isMoving() {
+        return this.dataTracker.get(MOVING);
+    }
+
+    public void setMoving(boolean moving) {
+        this.dataTracker.set(MOVING, moving);
     }
 
     @Override
@@ -49,22 +58,13 @@ public abstract class ParentFishEntity extends FishEntity {
 
     }
 
-    public boolean getHasSelfControl() {
-        return hasSelfControl();
-    }
-
     @Override
     protected abstract SoundEvent getFlopSound();
 
     @Override
-    public abstract ItemStack getBucketItem();
-
-    public boolean isMoving() {
-        return this.dataTracker.get(MOVING);
-    }
-
-    public void setMoving(boolean moving) {
-        this.dataTracker.set(MOVING, moving);
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(MOVING, false);
     }
 
 }

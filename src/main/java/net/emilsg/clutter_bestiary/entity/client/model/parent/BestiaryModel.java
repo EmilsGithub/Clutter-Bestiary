@@ -10,14 +10,16 @@ import org.joml.Vector3f;
 public abstract class BestiaryModel<T extends ParentAnimalEntity> extends SinglePartEntityModel<T> {
     private ModelPart head;
 
+    public Vector3f createVec3f(float scale) {
+        return new Vector3f(scale, scale, scale);
+    }
+
     @Override
     public void setAngles(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
 
     }
 
-    public Vector3f createVec3f(float scale) {
-        return new Vector3f(scale, scale, scale);
-    }
+    protected abstract ModelPart getHeadPart();
 
     protected void setHeadAngles(LivingEntity entity, float headYaw, float headPitch, float animationProgress) {
         if (getHeadPart() == null) return;
@@ -28,6 +30,4 @@ public abstract class BestiaryModel<T extends ParentAnimalEntity> extends Single
         getHeadPart().yaw = headYaw * 0.017453292F;
         getHeadPart().pitch = headPitch * 0.017453292F;
     }
-
-    protected abstract ModelPart getHeadPart();
 }

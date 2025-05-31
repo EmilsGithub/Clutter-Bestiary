@@ -94,54 +94,15 @@ public class BeaverEntity extends ParentAnimalEntity {
         return (world.getBlockState(pos.down()).isIn(BlockTags.ANIMALS_SPAWNABLE_ON) || world.getBlockState(pos).isOf(Blocks.WATER));
     }
 
-    private void setupAnimationStates() {
-        if (this.waterAnimationTimeout <= 0) {
-            this.waterAnimationTimeout = 20;
-            this.waterAnimationState.startIfNotRunning(this.age);
-        } else {
-            --this.waterAnimationTimeout;
-        }
-
-        if (this.idleAnimationTimeout <= 0 && !this.isMoving() && this.getNavigation().isIdle()) {
-            this.idleAnimationTimeout = 40;
-            this.idleAnimationState.startIfNotRunning(this.age);
-        } else {
-            --this.idleAnimationTimeout;
-        }
-    }
-
     @Override
-    public void tick() {
-        super.tick();
-        World world = this.getWorld();
-
-        if (world.isClient) {
-            this.setupAnimationStates();
-        }
+    public boolean canBreatheInWater() {
+        return true;
     }
 
-    protected void updateLimbs(float v) {
-        float f;
-        if (this.getPose() == EntityPose.STANDING) {
-            f = Math.min(v * 6.0F, 1.0F);
-        } else {
-            f = 0.0F;
-        }
-
-        this.limbAnimator.updateLimbs(f, 0.5F);
-    }
-
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(HOME_POS, BlockPos.ORIGIN);
-    }
-
-    BlockPos getHomePos() {
-        return this.dataTracker.get(HOME_POS);
-    }
-
-    public void setHomePos(BlockPos pos) {
-        this.dataTracker.set(HOME_POS, pos);
+    @Nullable
+    @Override
+    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return ModEntityTypes.BEAVER.create(world);
     }
 
     @Override
@@ -151,44 +112,14 @@ public class BeaverEntity extends ParentAnimalEntity {
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new AnimalMateGoal(this, 1.0f));
-        this.goalSelector.add(1, new BeaverTemptGoal(this, 1.1f, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(2, new FollowParentGoal(this, 1.0f));
-        this.goalSelector.add(3, new MeleeAttackGoal(this, 1.2f, true));
-        this.goalSelector.add(4, new HighWanderAroundFarGoal(this, 1.0f, 0.001f));
-        this.goalSelector.add(5, new LookAtEntityGoal(this, PlayerEntity.class, 6.0f));
-        this.goalSelector.add(6, new LookAroundGoal(this));
-
-        this.targetSelector.add(3, new RevengeGoal(this));
-
-    }
-
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putInt("HomePosX", this.getHomePos().getX());
-        nbt.putInt("HomePosY", this.getHomePos().getY());
-        nbt.putInt("HomePosZ", this.getHomePos().getZ());
-    }
-
-    @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        int i = nbt.getInt("HomePosX");
-        int j = nbt.getInt("HomePosY");
-        int k = nbt.getInt("HomePosZ");
-        this.setHomePos(new BlockPos(i, j, k));
+    public float getScaleFactor() {
+        return this.isBaby() ? 0.6F : 1.0F;
     }
 
     @Override
     public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
         this.setHomePos(this.getBlockPos());
         return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
-    }
-
-    @Override
-    public float getScaleFactor() {
-        return this.isBaby() ? 0.6F : 1.0F;
     }
 
     @Override
@@ -236,18 +167,22 @@ public class BeaverEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public boolean canBreatheInWater() {
-        return true;
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        int i = nbt.getInt("HomePosX");
+        int j = nbt.getInt("HomePosY");
+        int k = nbt.getInt("HomePosZ");
+        this.setHomePos(new BlockPos(i, j, k));
     }
 
-    protected EntityNavigation createNavigation(World world) {
-        return new BeaverSwimNavigation(this, world);
-    }
-
-    @Nullable
     @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.BEAVER.create(world);
+    public void tick() {
+        super.tick();
+        World world = this.getWorld();
+
+        if (world.isClient) {
+            this.setupAnimationStates();
+        }
     }
 
     public void travel(Vec3d movementInput) {
@@ -262,6 +197,71 @@ public class BeaverEntity extends ParentAnimalEntity {
             super.travel(movementInput);
         }
 
+    }
+
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putInt("HomePosX", this.getHomePos().getX());
+        nbt.putInt("HomePosY", this.getHomePos().getY());
+        nbt.putInt("HomePosZ", this.getHomePos().getZ());
+    }
+
+    BlockPos getHomePos() {
+        return this.dataTracker.get(HOME_POS);
+    }
+
+    public void setHomePos(BlockPos pos) {
+        this.dataTracker.set(HOME_POS, pos);
+    }
+
+    protected EntityNavigation createNavigation(World world) {
+        return new BeaverSwimNavigation(this, world);
+    }
+
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(HOME_POS, BlockPos.ORIGIN);
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new AnimalMateGoal(this, 1.0f));
+        this.goalSelector.add(1, new BeaverTemptGoal(this, 1.1f, BREEDING_INGREDIENT, false));
+        this.goalSelector.add(2, new FollowParentGoal(this, 1.0f));
+        this.goalSelector.add(3, new MeleeAttackGoal(this, 1.2f, true));
+        this.goalSelector.add(4, new HighWanderAroundFarGoal(this, 1.0f, 0.001f));
+        this.goalSelector.add(5, new LookAtEntityGoal(this, PlayerEntity.class, 6.0f));
+        this.goalSelector.add(6, new LookAroundGoal(this));
+
+        this.targetSelector.add(3, new RevengeGoal(this));
+
+    }
+
+    protected void updateLimbs(float v) {
+        float f;
+        if (this.getPose() == EntityPose.STANDING) {
+            f = Math.min(v * 6.0F, 1.0F);
+        } else {
+            f = 0.0F;
+        }
+
+        this.limbAnimator.updateLimbs(f, 0.5F);
+    }
+
+    private void setupAnimationStates() {
+        if (this.waterAnimationTimeout <= 0) {
+            this.waterAnimationTimeout = 20;
+            this.waterAnimationState.startIfNotRunning(this.age);
+        } else {
+            --this.waterAnimationTimeout;
+        }
+
+        if (this.idleAnimationTimeout <= 0 && !this.isMoving() && this.getNavigation().isIdle()) {
+            this.idleAnimationTimeout = 40;
+            this.idleAnimationState.startIfNotRunning(this.age);
+        } else {
+            --this.idleAnimationTimeout;
+        }
     }
 
     private static class BeaverMoveControl extends MoveControl {

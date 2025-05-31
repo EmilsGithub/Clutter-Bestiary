@@ -42,19 +42,11 @@ public class ChameleonEntity extends ParentTameableEntity {
     private static final Ingredient BREEDING_INGREDIENT;
     private static final TrackedData<Boolean> SITTING = DataTracker.registerData(ChameleonEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
-    public final AnimationState sittingAnimationState = new AnimationState();
-
-    private void setupAnimationStates() {
-        if (this.isSitting() && !this.sittingAnimationState.isRunning()) {
-            this.sittingAnimationState.start(this.age);
-        } else if (!this.isSitting()) {
-            this.sittingAnimationState.stop();
-        }
-    }
-
     static {
         BREEDING_INGREDIENT = Ingredient.ofItems(ModItems.BUTTERFLY_IN_A_BOTTLE);
     }
+
+    public final AnimationState sittingAnimationState = new AnimationState();
 
     public ChameleonEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
         super(entityType, world);
@@ -74,54 +66,12 @@ public class ChameleonEntity extends ParentTameableEntity {
     }
 
     @Override
-    public void tick() {
-        super.tick();
-        World world = this.getWorld();
-
-        if (world.isClient) {
-            this.setupAnimationStates();
-        }
+    public void breed(ServerWorld world, AnimalEntity other) {
+        super.breed(world, other);
     }
 
-    @Override
-    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
-        return false;
-    }
-
-    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
-    }
-
-    @Override
-    public double getMountedHeightOffset() {
-        return 0.15D;
-    }
-
-    @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new RideAdultChameleonGoal(this));
-        this.goalSelector.add(1, new SwimGoal(this));
-        this.goalSelector.add(2, new SitGoal(this));
-        this.goalSelector.add(3, new ChameleonEscapeDangerGoal(1.5));
-        this.goalSelector.add(4, new FollowOwnerGoal(this, 1.2, 10.0F, 2.0F, false));
-        this.goalSelector.add(5, new AnimalMateGoal(this, 1));
-        this.goalSelector.add(6, new TemptGoal(this, 1.2, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(7, new FollowParentGoal(this, 1.2));
-        this.goalSelector.add(8, new AttackGoal(this, 1.25));
-        this.goalSelector.add(9, new WanderAroundFarGoal(this, 1.0, 1));
-        this.goalSelector.add(10, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(11, new LookAroundGoal(this));
-
-        this.targetSelector.add(1, new ActiveTargetGoal<>(this, ButterflyEntity.class, true));
-    }
-
-    @Override
-    public void setBreedingAge(int age) {
-        super.setBreedingAge(age);
-    }
-
-    @Override
-    public boolean isBreedingItem(ItemStack stack) {
-        return stack.getItem() instanceof ButterflyBottleItem;
+    public boolean canBeLeashedBy(PlayerEntity player) {
+        return !this.isSitting() && this.isOwner(player);
     }
 
     @Override
@@ -158,8 +108,18 @@ public class ChameleonEntity extends ParentTameableEntity {
     }
 
     @Override
-    public void breed(ServerWorld world, AnimalEntity other) {
-        super.breed(world, other);
+    public double getMountedHeightOffset() {
+        return 0.15D;
+    }
+
+    @Override
+    public AbstractTeam getScoreboardTeam() {
+        return super.getScoreboardTeam();
+    }
+
+    @Override
+    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+        return false;
     }
 
     @Override
@@ -214,13 +174,29 @@ public class ChameleonEntity extends ParentTameableEntity {
         return super.interactMob(player, hand);
     }
 
-    public void setSit(boolean sitting) {
-        this.dataTracker.set(SITTING, sitting);
-        super.setSitting(sitting);
+    @Override
+    public boolean isBreedingItem(ItemStack stack) {
+        return stack.getItem() instanceof ButterflyBottleItem;
     }
 
     public boolean isSitting() {
         return this.dataTracker.get(SITTING);
+    }
+
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.dataTracker.set(SITTING, nbt.getBoolean("isSitting"));
+    }
+
+    @Override
+    public void setBreedingAge(int age) {
+        super.setBreedingAge(age);
+    }
+
+    public void setSit(boolean sitting) {
+        this.dataTracker.set(SITTING, sitting);
+        super.setSitting(sitting);
     }
 
     @Override
@@ -236,30 +212,54 @@ public class ChameleonEntity extends ParentTameableEntity {
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        World world = this.getWorld();
+
+        if (world.isClient) {
+            this.setupAnimationStates();
+        }
+    }
+
+    @Override
     public void writeCustomDataToNbt(NbtCompound nbt) {
         super.writeCustomDataToNbt(nbt);
         nbt.putBoolean("isSitting", this.dataTracker.get(SITTING));
     }
 
-    @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.dataTracker.set(SITTING, nbt.getBoolean("isSitting"));
-    }
-
-    @Override
-    public AbstractTeam getScoreboardTeam() {
-        return super.getScoreboardTeam();
-    }
-
-    public boolean canBeLeashedBy(PlayerEntity player) {
-        return !this.isSitting() && this.isOwner(player);
+    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
     }
 
     @Override
     protected void initDataTracker() {
         super.initDataTracker();
         this.dataTracker.startTracking(SITTING, false);
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new RideAdultChameleonGoal(this));
+        this.goalSelector.add(1, new SwimGoal(this));
+        this.goalSelector.add(2, new SitGoal(this));
+        this.goalSelector.add(3, new ChameleonEscapeDangerGoal(1.5));
+        this.goalSelector.add(4, new FollowOwnerGoal(this, 1.2, 10.0F, 2.0F, false));
+        this.goalSelector.add(5, new AnimalMateGoal(this, 1));
+        this.goalSelector.add(6, new TemptGoal(this, 1.2, BREEDING_INGREDIENT, false));
+        this.goalSelector.add(7, new FollowParentGoal(this, 1.2));
+        this.goalSelector.add(8, new AttackGoal(this, 1.25));
+        this.goalSelector.add(9, new WanderAroundFarGoal(this, 1.0, 1));
+        this.goalSelector.add(10, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(11, new LookAroundGoal(this));
+
+        this.targetSelector.add(1, new ActiveTargetGoal<>(this, ButterflyEntity.class, true));
+    }
+
+    private void setupAnimationStates() {
+        if (this.isSitting() && !this.sittingAnimationState.isRunning()) {
+            this.sittingAnimationState.start(this.age);
+        } else if (!this.isSitting()) {
+            this.sittingAnimationState.stop();
+        }
     }
 
     public static class RideAdultChameleonGoal extends Goal {
@@ -288,15 +288,15 @@ public class ChameleonEntity extends ParentTameableEntity {
         }
 
         @Override
+        public boolean shouldContinue() {
+            return babyChameleon.isBaby() && babyChameleon.hasVehicle() && babyChameleon.getVehicle() instanceof ChameleonEntity;
+        }
+
+        @Override
         public void start() {
             if (targetChameleon != null) {
                 babyChameleon.startRiding(targetChameleon);
             }
-        }
-
-        @Override
-        public boolean shouldContinue() {
-            return babyChameleon.isBaby() && babyChameleon.hasVehicle() && babyChameleon.getVehicle() instanceof ChameleonEntity;
         }
 
         @Override

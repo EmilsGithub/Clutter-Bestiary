@@ -20,6 +20,16 @@ public class DragonflyFastWanderGoal extends Goal {
         this.dragonflyEntity = dragonflyEntity;
     }
 
+    public static int rayCastDown(World world, BlockPos start, int maxDepth) {
+        for (int i = 1; i <= maxDepth; i++) {
+            BlockPos checkPos = start.down(i);
+            if (!world.getBlockState(checkPos).isAir()) {
+                return i;
+            }
+        }
+        return maxDepth;
+    }
+
     @Override
     public boolean canStart() {
         return dragonflyEntity.getNavigation().isIdle() && dragonflyEntity.getRandom().nextInt(8) == 0;
@@ -30,11 +40,6 @@ public class DragonflyFastWanderGoal extends Goal {
         return dragonflyEntity.getNavigation().isFollowingPath();
     }
 
-    @Override
-    public void tick() {
-        if (dragonflyEntity.isTouchingWater()) this.stop();
-    }
-
     public void start() {
         Vec3d vec3d = this.getRandomLocation();
 
@@ -43,9 +48,14 @@ public class DragonflyFastWanderGoal extends Goal {
             double speed = dragonflyEntity.getAttributeValue(EntityAttributes.GENERIC_FLYING_SPEED);
 
             Path path = dragonflyEntity.getNavigation().findPathTo(pos, 1);
-            if(path != null) dragonflyEntity.getNavigation().startMovingAlong(path, speed);
+            if (path != null) dragonflyEntity.getNavigation().startMovingAlong(path, speed);
         }
         super.start();
+    }
+
+    @Override
+    public void tick() {
+        if (dragonflyEntity.isTouchingWater()) this.stop();
     }
 
     private Vec3d getRandomLocation() {
@@ -61,16 +71,6 @@ public class DragonflyFastWanderGoal extends Goal {
             return targetedPos;
         }
 
-        return NoPenaltySolidTargeting.find(dragonflyEntity, 8, 4, -2, dragonflyRotation.x, dragonflyRotation.z, ((float)Math.PI / 2F));
-    }
-
-    public static int rayCastDown(World world, BlockPos start, int maxDepth) {
-        for (int i = 1; i <= maxDepth; i++) {
-            BlockPos checkPos = start.down(i);
-            if (!world.getBlockState(checkPos).isAir()) {
-                return i;
-            }
-        }
-        return maxDepth;
+        return NoPenaltySolidTargeting.find(dragonflyEntity, 8, 4, -2, dragonflyRotation.x, dragonflyRotation.z, ((float) Math.PI / 2F));
     }
 }

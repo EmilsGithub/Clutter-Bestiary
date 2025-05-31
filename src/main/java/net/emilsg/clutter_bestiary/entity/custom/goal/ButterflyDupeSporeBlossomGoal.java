@@ -23,6 +23,11 @@ public class ButterflyDupeSporeBlossomGoal extends MoveToTargetPosGoal {
         return this.butterflyEntity.getDupeTimer() >= dupeCooldown && super.canStart();
     }
 
+    @Override
+    public double getDesiredDistanceToTarget() {
+        return 1.5F;
+    }
+
     public boolean shouldContinue() {
         return super.shouldContinue() && this.butterflyEntity.getDupeTimer() >= dupeCooldown;
     }
@@ -30,17 +35,12 @@ public class ButterflyDupeSporeBlossomGoal extends MoveToTargetPosGoal {
     public void tick() {
         super.tick();
         if (this.hasReached()) {
-            if(!this.butterflyEntity.getWorld().isClient) {
+            if (!this.butterflyEntity.getWorld().isClient) {
                 this.butterflyEntity.setDupeTimer(0);
                 this.butterflyEntity.dropStack(new ItemStack(Items.SPORE_BLOSSOM));
             }
             this.stop();
         }
-    }
-
-    @Override
-    public double getDesiredDistanceToTarget() {
-        return 1.5F;
     }
 
     protected boolean isTargetPos(WorldView world, BlockPos pos) {

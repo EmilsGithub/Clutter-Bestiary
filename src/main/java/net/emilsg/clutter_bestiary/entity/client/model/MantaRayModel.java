@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.MantaRayAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.MantaRayEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.BestiaryAquaticModel;
 import net.emilsg.clutter_bestiary.entity.custom.MantaRayEntity;
 import net.minecraft.client.model.*;
@@ -52,15 +52,8 @@ public class MantaRayModel<T extends MantaRayEntity> extends BestiaryAquaticMode
     }
 
     @Override
-    public void setAngles(MantaRayEntity ray, float limbAngle, float limbDistance, float ageInTicks, float headYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.getPart().getChild("root").pitch = headPitch * 0.017453292F;
-        this.getPart().getChild("root").yaw = headYaw * 0.017453292F;
-
-        if (ray.isTouchingWater() && !ray.isDead())
-            this.updateAnimation(ray.swimmingAnimationState, MantaRayAnimations.MANTA_RAY_SWIM, ageInTicks, 1.0f);
-        else if (!ray.isDead())
-            this.updateAnimation(ray.flopAnimationState, MantaRayAnimations.MANTA_RAY_FLOP, ageInTicks, 1.0f);
+    public ModelPart getPart() {
+        return root;
     }
 
     @Override
@@ -69,7 +62,14 @@ public class MantaRayModel<T extends MantaRayEntity> extends BestiaryAquaticMode
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
+    public void setAngles(MantaRayEntity ray, float limbAngle, float limbDistance, float ageInTicks, float headYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        this.getPart().getChild("root").pitch = headPitch * 0.017453292F;
+        this.getPart().getChild("root").yaw = headYaw * 0.017453292F;
+
+        if (ray.isTouchingWater() && !ray.isDead())
+            this.updateAnimation(ray.swimmingAnimationState, MantaRayEntityAnimations.MANTA_RAY_SWIM, ageInTicks, 1.0f);
+        else if (!ray.isDead())
+            this.updateAnimation(ray.flopAnimationState, MantaRayEntityAnimations.MANTA_RAY_FLOP, ageInTicks, 1.0f);
     }
 }

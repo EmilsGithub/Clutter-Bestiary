@@ -28,13 +28,13 @@ public class EmperorPenguinRenderer extends MobEntityRenderer<EmperorPenguinEnti
     }
 
     @Override
-    public void render(EmperorPenguinEntity emperorPenguinEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
-        this.model = emperorPenguinEntity.isBaby() ? babyModel : adultModel;
-        super.render(emperorPenguinEntity, f, g, matrixStack, vertexConsumerProvider, i);
+    public Identifier getTexture(EmperorPenguinEntity emperorPenguinEntity) {
+        return emperorPenguinEntity.isBaby() ? BABY_TEXTURE : ADULT_TEXTURE;
     }
 
     @Override
-    public Identifier getTexture(EmperorPenguinEntity emperorPenguinEntity) {
-        return emperorPenguinEntity.isBaby() ? BABY_TEXTURE : ADULT_TEXTURE;
+    public void render(EmperorPenguinEntity emperorPenguinEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
+        this.model = emperorPenguinEntity.isBaby() ? babyModel : adultModel;
+        super.render(emperorPenguinEntity, f, g, matrixStack, vertexConsumerProvider, i);
     }
 }

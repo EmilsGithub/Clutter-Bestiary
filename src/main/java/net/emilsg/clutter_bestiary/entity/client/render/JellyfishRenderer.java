@@ -18,6 +18,11 @@ public class JellyfishRenderer extends MobEntityRenderer<JellyfishEntity, Jellyf
         super(ctx, new JellyfishModel<>(ctx.getPart(ModModelLayers.JELLYFISH)), 0.4f);
     }
 
+    @Override
+    public Identifier getTexture(JellyfishEntity entity) {
+        return entity.getVariant().getTextureLocation();
+    }
+
     @Nullable
     @Override
     protected RenderLayer getRenderLayer(JellyfishEntity entity, boolean showBody, boolean translucent, boolean showOutline) {
@@ -33,10 +38,5 @@ public class JellyfishRenderer extends MobEntityRenderer<JellyfishEntity, Jellyf
         matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(i));
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(j));
         matrices.translate(0.0f, 0.0f, 0.0f);
-    }
-
-    @Override
-    public Identifier getTexture(JellyfishEntity entity) {
-        return entity.getVariant().getTextureLocation();
     }
 }

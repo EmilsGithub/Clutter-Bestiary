@@ -16,14 +16,14 @@ public class ButterflyRenderer extends MobEntityRenderer<ButterflyEntity, Butter
     }
 
     @Override
+    public Identifier getTexture(ButterflyEntity butterflyEntity) {
+        return butterflyEntity.getVariant().getTextureLocation();
+    }
+
+    @Override
     public void render(ButterflyEntity butterflyEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
         this.shadowRadius = 0.2f;
 
         super.render(butterflyEntity, f, g, matrixStack, vertexConsumerProvider, i);
-    }
-
-    @Override
-    public Identifier getTexture(ButterflyEntity butterflyEntity) {
-        return butterflyEntity.getVariant().getTextureLocation();
     }
 }

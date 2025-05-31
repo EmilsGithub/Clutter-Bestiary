@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.KiwiBirdAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.KiwiBirdEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutter_bestiary.entity.custom.KiwiBirdEntity;
 import net.minecraft.client.model.*;
@@ -40,15 +40,8 @@ public class KiwiBirdModel<T extends KiwiBirdEntity> extends BestiaryModel<T> {
     }
 
     @Override
-    public void setAngles(KiwiBirdEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(entity, netHeadYaw, headPitch, ageInTicks);
-
-        if (!entity.isSongPlaying())
-            this.animateMovement(KiwiBirdAnimations.KIWI_BIRD_WALK, limbSwing, limbSwingAmount, 3f, 2f);
-        if (entity.isSongPlaying())
-            this.updateAnimation(entity.dancingAnimationState, KiwiBirdAnimations.KIWI_BIRD_DANCE, ageInTicks, 1f);
-        this.updateAnimation(entity.idleAnimationState, KiwiBirdAnimations.KIWI_BIRD_IDLE, ageInTicks, 1f);
+    public ModelPart getPart() {
+        return root;
     }
 
     @Override
@@ -69,8 +62,15 @@ public class KiwiBirdModel<T extends KiwiBirdEntity> extends BestiaryModel<T> {
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
+    public void setAngles(KiwiBirdEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        this.setHeadAngles(entity, netHeadYaw, headPitch, ageInTicks);
+
+        if (!entity.isSongPlaying())
+            this.animateMovement(KiwiBirdEntityAnimations.KIWI_BIRD_WALK, limbSwing, limbSwingAmount, 3f, 2f);
+        if (entity.isSongPlaying())
+            this.updateAnimation(entity.dancingAnimationState, KiwiBirdEntityAnimations.KIWI_BIRD_DANCE, ageInTicks, 1f);
+        this.updateAnimation(entity.idleAnimationState, KiwiBirdEntityAnimations.KIWI_BIRD_IDLE, ageInTicks, 1f);
     }
 
     @Override

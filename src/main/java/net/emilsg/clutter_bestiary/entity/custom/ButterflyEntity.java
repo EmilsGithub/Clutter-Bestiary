@@ -1,10 +1,10 @@
 package net.emilsg.clutter_bestiary.entity.custom;
 
-import net.emilsg.clutter_bestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutter_bestiary.entity.custom.goal.ButterflyDupeSporeBlossomGoal;
 import net.emilsg.clutter_bestiary.entity.custom.goal.ButterflyPlaceCocoonGoal;
 import net.emilsg.clutter_bestiary.entity.custom.goal.ButterflyWanderNetherGoal;
 import net.emilsg.clutter_bestiary.entity.custom.goal.ButterflyWanderOverworldGoal;
+import net.emilsg.clutter_bestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutter_bestiary.entity.variants.ButterflyVariant;
 import net.emilsg.clutter_bestiary.item.ModItems;
 import net.emilsg.clutter_bestiary.util.ModBlockTags;
@@ -51,7 +51,6 @@ import net.minecraft.world.biome.BiomeKeys;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoField;
 
 public class ButterflyEntity extends ParentAnimalEntity {
     private static final TrackedData<Boolean> HAS_COCOON = DataTracker.registerData(ButterflyEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
@@ -83,102 +82,13 @@ public class ButterflyEntity extends ParentAnimalEntity {
 
     private static boolean isTodayAroundHalloween() {
         LocalDate localDate = LocalDate.now();
-        int i = localDate.get(ChronoField.DAY_OF_MONTH);
-        int j = localDate.get(ChronoField.MONTH_OF_YEAR);
+        int i = localDate.getDayOfMonth();
+        int j = localDate.getMonth().getValue();
         return j == 10 && i >= 20 || j == 11 && i <= 3;
     }
 
     public static boolean isValidSpawn(EntityType<? extends ParentAnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
         return world.getBlockState(pos.down()).isIn(ModBlockTags.BUTTERFLIES_SPAWN_ON);
-    }
-
-    public boolean canSpawn(WorldView world) {
-        return world.doesNotIntersectEntities(this);
-    }
-
-    @Override
-    public boolean canSpawn(WorldAccess world, SpawnReason spawnReason) {
-        return true;
-    }
-
-    private void setupAnimationStates() {
-        if (this.animationTimeout <= 0) {
-            this.animationTimeout = 10;
-            this.flyingAnimState.start(this.age);
-        } else {
-            --this.animationTimeout;
-        }
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        World world = this.getWorld();
-
-        if (world.isClient) {
-            this.setupAnimationStates();
-        }
-    }
-
-    @Override
-    public void tickMovement() {
-        super.tickMovement();
-
-        if (this.getDupeTimer() < 8000) {
-            this.setDupeTimer(this.getDupeTimer() + 1);
-        }
-
-        if (this.isAlive() && (this.isSubmergedIn(FluidTags.LAVA) || this.isSubmergedIn(FluidTags.WATER))) {
-            this.kill();
-        }
-    }
-
-    @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new AnimalMateGoal(this, 1.0));
-        this.goalSelector.add(1, new ButterflyPlaceCocoonGoal(this, 1.0));
-        this.goalSelector.add(2, new TemptGoal(this, 1.25, Ingredient.ofItems(Items.SUGAR), false));
-        this.goalSelector.add(3, new ButterflyDupeSporeBlossomGoal(this, 1, 1200));
-        this.goalSelector.add(4, new ButterflyWanderNetherGoal(this));
-        this.goalSelector.add(4, new ButterflyWanderOverworldGoal(this));
-    }
-
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(HAS_COCOON, false);
-        this.dataTracker.startTracking(DUPE_TIMER, 0);
-        this.dataTracker.startTracking(VARIANT, ButterflyVariant.WHITE.getId());
-        this.dataTracker.startTracking(FLYING_TYPE_VARIANT, 0);
-
-    }
-
-    public float getPathfindingFavor(BlockPos pos, WorldView world) {
-        return world.getBlockState(pos).isAir() ? 10.0F : 0.0F;
-    }
-
-    @Override
-    protected void playStepSound(BlockPos pos, BlockState state) {
-    }
-
-    @Override
-    protected void onKilledBy(@Nullable LivingEntity adversary) {
-        if (isTodayAroundHalloween() && adversary instanceof PlayerEntity && random.nextInt(10) == 0) {
-            adversary.damage(this.getWorld().getDamageSources().magic(), 6.0f);
-        }
-        super.onKilledBy(adversary);
-    }
-
-    @Override
-    public boolean canBeLeashedBy(PlayerEntity player) {
-        return false;
-    }
-
-    @Override
-    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
-        return false;
-    }
-
-    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
     }
 
     @Override
@@ -203,187 +113,17 @@ public class ButterflyEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public boolean isExperienceDroppingDisabled() {
-        return true;
-    }
-
-    protected EntityNavigation createNavigation(World world) {
-        BirdNavigation birdNavigation = new BirdNavigation(this, world) {
-            public boolean isValidPosition(BlockPos pos) {
-                return !this.world.getBlockState(pos.down()).isAir();
-            }
-
-        };
-        birdNavigation.setCanPathThroughDoors(false);
-        birdNavigation.setCanSwim(false);
-        birdNavigation.setCanEnterOpenDoors(true);
-        return birdNavigation;
-    }
-
-    @Override
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        tryBottle(player, hand, this);
-        return super.interactMob(player, hand);
-    }
-
-    @Override
-    public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(Items.SUGAR);
-    }
-
-    @Override
-    public boolean shouldSpawnSprintingParticles() {
+    public boolean canBeLeashedBy(PlayerEntity player) {
         return false;
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putBoolean("HasCocoon", this.hasCocoon());
-        nbt.putString("Variant", this.getTypeVariant());
-        nbt.putInt("DupeTimer", this.getDupeTimer());
-        nbt.putInt("FlyingVariant", this.getFlyingTypeVariant());
+    public boolean canSpawn(WorldView world) {
+        return world.doesNotIntersectEntities(this);
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.setHasCocoon(nbt.getBoolean("HasCocoon"));
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
-        this.setDupeTimer(nbt.getInt("DupeTimer"));
-        this.dataTracker.set(FLYING_TYPE_VARIANT, nbt.getInt("FlyingVariant"));
-
-    }
-
-    @Nullable
-    @Override
-    protected SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.BLOCK_WOOL_HIT;
-    }
-
-    @Override
-    public boolean isFireImmune() {
-        return this.getVariant().isFireImmune();
-    }
-
-    @Nullable
-    @Override
-    protected SoundEvent getDeathSound() {
-        return SoundEvents.BLOCK_WOOL_BREAK;
-    }
-
-    @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
-        RegistryEntry<Biome> registryEntry = world.getBiome(this.getBlockPos());
-        ButterflyVariant variant = ButterflyVariant.getRandom(false);
-
-        if (spawnReason.equals(SpawnReason.SPAWN_EGG)) {
-            variant = Util.getRandom(ButterflyVariant.values(), this.random);
-        }
-
-        if (registryEntry.isIn(BiomeTags.IS_OVERWORLD)) {
-            variant = ButterflyVariant.getRandom(true);
-        } else if (registryEntry.isIn(BiomeTags.IS_NETHER)) {
-            if (registryEntry.matchesKey(BiomeKeys.WARPED_FOREST)) {
-                variant = ButterflyVariant.WARPED;
-            } else if (registryEntry.matchesKey(BiomeKeys.CRIMSON_FOREST)) {
-                variant = ButterflyVariant.CRIMSON;
-            } else if (registryEntry.matchesKey(BiomeKeys.SOUL_SAND_VALLEY)) {
-                variant = ButterflyVariant.SOUL;
-            } else {
-                if (random.nextBoolean()) {
-                    variant = ButterflyVariant.CRIMSON;
-                } else if (random.nextBoolean()) {
-                    variant = ButterflyVariant.WARPED;
-                } else {
-                    variant = ButterflyVariant.SOUL;
-                }
-            }
-        }
-
-        this.setVariant(variant);
-        this.setFlyingVariant(random.nextInt(3));
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
-    }
-
-    public ButterflyVariant getVariant() {
-        return ButterflyVariant.fromId(this.getTypeVariant());
-    }
-
-    public void setVariant(ButterflyVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId());
-    }
-
-    public String getTypeVariant() {
-        return this.dataTracker.get(VARIANT);
-    }
-
-    public void setFlyingVariant(int flyingVariant) {
-        this.dataTracker.set(FLYING_TYPE_VARIANT, flyingVariant);
-    }
-
-    public int getFlyingTypeVariant() {
-        return this.dataTracker.get(FLYING_TYPE_VARIANT);
-    }
-
-    public boolean hasCocoon() {
-        return this.dataTracker.get(HAS_COCOON);
-    }
-
-    public void setHasCocoon(boolean hasCocoon) {
-        this.dataTracker.set(HAS_COCOON, hasCocoon);
-    }
-
-    public int getDupeTimer() {
-        return this.dataTracker.get(DUPE_TIMER);
-    }
-
-    public void setDupeTimer(int time) {
-        this.dataTracker.set(DUPE_TIMER, time);
-    }
-
-    static class ButterflyLookControl extends LookControl {
-        ButterflyLookControl(MobEntity entity) {
-            super(entity);
-        }
-
-        public void tick() {
-            super.tick();
-        }
-
-        protected boolean shouldStayHorizontal() {
-            return true;
-        }
-    }
-
-    public void copyDataToStack(ButterflyEntity entity, ItemStack stack) {
-        NbtCompound nbtCompound = stack.getOrCreateNbt();
-        if (entity.hasCustomName()) {
-            stack.setCustomName(entity.getCustomName());
-        }
-
-        if (entity.isAiDisabled()) {
-            nbtCompound.putBoolean("NoAI", entity.isAiDisabled());
-        }
-
-        if (entity.isSilent()) {
-            nbtCompound.putBoolean("Silent", entity.isSilent());
-        }
-
-        if (entity.hasNoGravity()) {
-            nbtCompound.putBoolean("NoGravity", entity.hasNoGravity());
-        }
-
-        if (entity.isGlowingLocal()) {
-            nbtCompound.putBoolean("Glowing", entity.isGlowingLocal());
-        }
-
-        if (entity.isInvulnerable()) {
-            nbtCompound.putBoolean("Invulnerable", entity.isInvulnerable());
-        }
-
-        nbtCompound.putInt("FlyingVariant", entity.getFlyingTypeVariant());
-        nbtCompound.putString("Variant", entity.getTypeVariant());
-        nbtCompound.putFloat("Health", entity.getHealth());
+    public boolean canSpawn(WorldAccess world, SpawnReason spawnReason) {
+        return true;
     }
 
     public void copyDataFromNbt(ButterflyEntity entity, NbtCompound nbt) {
@@ -421,6 +161,251 @@ public class ButterflyEntity extends ParentAnimalEntity {
 
     }
 
+    public void copyDataToStack(ButterflyEntity entity, ItemStack stack) {
+        NbtCompound nbtCompound = stack.getOrCreateNbt();
+        if (entity.hasCustomName()) {
+            stack.setCustomName(entity.getCustomName());
+        }
+
+        if (entity.isAiDisabled()) {
+            nbtCompound.putBoolean("NoAI", entity.isAiDisabled());
+        }
+
+        if (entity.isSilent()) {
+            nbtCompound.putBoolean("Silent", entity.isSilent());
+        }
+
+        if (entity.hasNoGravity()) {
+            nbtCompound.putBoolean("NoGravity", entity.hasNoGravity());
+        }
+
+        if (entity.isGlowingLocal()) {
+            nbtCompound.putBoolean("Glowing", entity.isGlowingLocal());
+        }
+
+        if (entity.isInvulnerable()) {
+            nbtCompound.putBoolean("Invulnerable", entity.isInvulnerable());
+        }
+
+        nbtCompound.putInt("FlyingVariant", entity.getFlyingTypeVariant());
+        nbtCompound.putString("Variant", entity.getTypeVariant());
+        nbtCompound.putFloat("Health", entity.getHealth());
+    }
+
+    public int getDupeTimer() {
+        return this.dataTracker.get(DUPE_TIMER);
+    }
+
+    public void setDupeTimer(int time) {
+        this.dataTracker.set(DUPE_TIMER, time);
+    }
+
+    public int getFlyingTypeVariant() {
+        return this.dataTracker.get(FLYING_TYPE_VARIANT);
+    }
+
+    public float getPathfindingFavor(BlockPos pos, WorldView world) {
+        return world.getBlockState(pos).isAir() ? 10.0F : 0.0F;
+    }
+
+    public String getTypeVariant() {
+        return this.dataTracker.get(VARIANT);
+    }
+
+    public ButterflyVariant getVariant() {
+        return ButterflyVariant.fromId(this.getTypeVariant());
+    }
+
+    public void setVariant(ButterflyVariant variant) {
+        this.dataTracker.set(VARIANT, variant.getId());
+    }
+
+    @Override
+    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+        return false;
+    }
+
+    public boolean hasCocoon() {
+        return this.dataTracker.get(HAS_COCOON);
+    }
+
+    @Override
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
+        RegistryEntry<Biome> registryEntry = world.getBiome(this.getBlockPos());
+        ButterflyVariant variant = ButterflyVariant.getRandom(false);
+
+        if (spawnReason.equals(SpawnReason.SPAWN_EGG)) {
+            variant = Util.getRandom(ButterflyVariant.values(), this.random);
+        }
+
+        if (registryEntry.isIn(BiomeTags.IS_OVERWORLD)) {
+            variant = ButterflyVariant.getRandom(true);
+        } else if (registryEntry.isIn(BiomeTags.IS_NETHER)) {
+            if (registryEntry.matchesKey(BiomeKeys.WARPED_FOREST)) {
+                variant = ButterflyVariant.WARPED;
+            } else if (registryEntry.matchesKey(BiomeKeys.CRIMSON_FOREST)) {
+                variant = ButterflyVariant.CRIMSON;
+            } else if (registryEntry.matchesKey(BiomeKeys.SOUL_SAND_VALLEY)) {
+                variant = ButterflyVariant.SOUL;
+            } else {
+                if (random.nextBoolean()) {
+                    variant = ButterflyVariant.CRIMSON;
+                } else if (random.nextBoolean()) {
+                    variant = ButterflyVariant.WARPED;
+                } else {
+                    variant = ButterflyVariant.SOUL;
+                }
+            }
+        }
+
+        this.setVariant(variant);
+        this.setFlyingVariant(random.nextInt(3));
+        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+    }
+
+    @Override
+    public ActionResult interactMob(PlayerEntity player, Hand hand) {
+        tryBottle(player, hand, this);
+        return super.interactMob(player, hand);
+    }
+
+    @Override
+    public boolean isBreedingItem(ItemStack stack) {
+        return stack.isOf(Items.SUGAR);
+    }
+
+    @Override
+    public boolean isExperienceDroppingDisabled() {
+        return true;
+    }
+
+    @Override
+    public boolean isFireImmune() {
+        return this.getVariant().isFireImmune();
+    }
+
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.setHasCocoon(nbt.getBoolean("HasCocoon"));
+        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
+        this.setDupeTimer(nbt.getInt("DupeTimer"));
+        this.dataTracker.set(FLYING_TYPE_VARIANT, nbt.getInt("FlyingVariant"));
+
+    }
+
+    public void setFlyingVariant(int flyingVariant) {
+        this.dataTracker.set(FLYING_TYPE_VARIANT, flyingVariant);
+    }
+
+    public void setHasCocoon(boolean hasCocoon) {
+        this.dataTracker.set(HAS_COCOON, hasCocoon);
+    }
+
+    @Override
+    public boolean shouldSpawnSprintingParticles() {
+        return false;
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        World world = this.getWorld();
+
+        if (world.isClient) {
+            this.setupAnimationStates();
+        }
+    }
+
+    @Override
+    public void tickMovement() {
+        super.tickMovement();
+
+        if (this.getDupeTimer() < 8000) {
+            this.setDupeTimer(this.getDupeTimer() + 1);
+        }
+
+        if (this.isAlive() && (this.isSubmergedIn(FluidTags.LAVA) || this.isSubmergedIn(FluidTags.WATER))) {
+            this.kill();
+        }
+    }
+
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putBoolean("HasCocoon", this.hasCocoon());
+        nbt.putString("Variant", this.getTypeVariant());
+        nbt.putInt("DupeTimer", this.getDupeTimer());
+        nbt.putInt("FlyingVariant", this.getFlyingTypeVariant());
+    }
+
+    protected EntityNavigation createNavigation(World world) {
+        BirdNavigation birdNavigation = new BirdNavigation(this, world) {
+            public boolean isValidPosition(BlockPos pos) {
+                return !this.world.getBlockState(pos.down()).isAir();
+            }
+
+        };
+        birdNavigation.setCanPathThroughDoors(false);
+        birdNavigation.setCanSwim(false);
+        birdNavigation.setCanEnterOpenDoors(true);
+        return birdNavigation;
+    }
+
+    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getDeathSound() {
+        return SoundEvents.BLOCK_WOOL_BREAK;
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return SoundEvents.BLOCK_WOOL_HIT;
+    }
+
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(HAS_COCOON, false);
+        this.dataTracker.startTracking(DUPE_TIMER, 0);
+        this.dataTracker.startTracking(VARIANT, ButterflyVariant.WHITE.getId());
+        this.dataTracker.startTracking(FLYING_TYPE_VARIANT, 0);
+
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new AnimalMateGoal(this, 1.0));
+        this.goalSelector.add(1, new ButterflyPlaceCocoonGoal(this, 1.0));
+        this.goalSelector.add(2, new TemptGoal(this, 1.25, Ingredient.ofItems(Items.SUGAR), false));
+        this.goalSelector.add(3, new ButterflyDupeSporeBlossomGoal(this, 1, 1200));
+        this.goalSelector.add(4, new ButterflyWanderNetherGoal(this));
+        this.goalSelector.add(4, new ButterflyWanderOverworldGoal(this));
+    }
+
+    @Override
+    protected void onKilledBy(@Nullable LivingEntity adversary) {
+        if (isTodayAroundHalloween() && adversary instanceof PlayerEntity && random.nextInt(10) == 0) {
+            adversary.damage(this.getWorld().getDamageSources().magic(), 6.0f);
+        }
+        super.onKilledBy(adversary);
+    }
+
+    @Override
+    protected void playStepSound(BlockPos pos, BlockState state) {
+    }
+
+    private void setupAnimationStates() {
+        if (this.animationTimeout <= 0) {
+            this.animationTimeout = 10;
+            this.flyingAnimState.start(this.age);
+        } else {
+            --this.animationTimeout;
+        }
+    }
+
     private void tryBottle(PlayerEntity player, Hand hand, ButterflyEntity entity) {
         ItemStack itemStack = player.getStackInHand(hand);
         if (itemStack.getItem() == Items.GLASS_BOTTLE && entity.isAlive()) {
@@ -434,5 +419,19 @@ public class ButterflyEntity extends ParentAnimalEntity {
             entity.discard();
         }
 
+    }
+
+    static class ButterflyLookControl extends LookControl {
+        ButterflyLookControl(MobEntity entity) {
+            super(entity);
+        }
+
+        public void tick() {
+            super.tick();
+        }
+
+        protected boolean shouldStayHorizontal() {
+            return true;
+        }
     }
 }

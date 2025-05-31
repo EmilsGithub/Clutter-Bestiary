@@ -13,15 +13,32 @@ import org.jetbrains.annotations.Nullable;
 
 public class ParentAnimalEntity extends AnimalEntity {
     private static final TrackedData<Boolean> MOVING = DataTracker.registerData(ParentAnimalEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Boolean> IS_FLEEING = DataTracker.registerData(ParentAnimalEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     protected ParentAnimalEntity(EntityType<? extends AnimalEntity> entityType, World world) {
         super(entityType, world);
     }
 
+    @Nullable
     @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(MOVING, false);
+    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return null;
+    }
+
+    public boolean isFleeing() {
+        return this.dataTracker.get(IS_FLEEING);
+    }
+
+    public boolean isMoving() {
+        return this.dataTracker.get(MOVING);
+    }
+
+    public void setMoving(boolean moving) {
+        this.dataTracker.set(MOVING, moving);
+    }
+
+    public void setIsFleeing(boolean moving) {
+        this.dataTracker.set(IS_FLEEING, moving);
     }
 
     @Override
@@ -34,17 +51,11 @@ public class ParentAnimalEntity extends AnimalEntity {
         super.tickMovement();
     }
 
-    public boolean isMoving() {
-        return this.dataTracker.get(MOVING);
-    }
-
-    public void setMoving(boolean moving) {
-        this.dataTracker.set(MOVING, moving);
-    }
-
-    @Nullable
     @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return null;
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(MOVING, false);
+        this.dataTracker.startTracking(IS_FLEEING, false);
+
     }
 }

@@ -42,21 +42,33 @@ public class MantaRayEntity extends ParentWaterEntity {
         this.lookControl = new YawAdjustingLookControl(this, 10);
     }
 
-    protected void initGoals() {
-        this.goalSelector.add(0, new MoveIntoWaterGoal(this));
-        this.goalSelector.add(1, new SwimAroundGoal(this, 1.0, 10));
-        this.goalSelector.add(2, new LookAroundGoal(this));
-        this.goalSelector.add(3, new MantaRayJumpGoal(this, 10));
-        this.goalSelector.add(4, new MeleeAttackGoal(this, 1.2000000476837158, true));
-        this.goalSelector.add(5, new ChaseBoatGoal(this));
-        this.targetSelector.add(1, new RevengeGoal(this));
-        this.targetSelector.add(2, new ActiveTargetGoal<>(this, JellyfishEntity.class, true));
-    }
-
     public static DefaultAttributeContainer.Builder setAttributes() {
         return ParentWaterEntity.createMobAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 16.0D)
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2.0D);
+    }
+
+    public static boolean isValidNaturalSpawn(EntityType<? extends WaterCreatureEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
+        return world.getBlockState(pos).getFluidState().isOf(Fluids.WATER);
+    }
+
+    @Override
+    public EntityDimensions getDimensions(EntityPose pose) {
+        return super.getDimensions(pose).scaled(0.65f * this.getSize());
+    }
+
+    @Override
+    public EntityGroup getGroup() {
+        return EntityGroup.AQUATIC;
+    }
+
+    public float getSize() {
+        return this.dataTracker.get(SIZE);
+    }
+
+    public void setSize(float size) {
+        this.dataTracker.set(SIZE, MathHelper.clamp(size, 0f, 1.5f));
+        this.calculateDimensions();
     }
 
     @Nullable
@@ -74,29 +86,6 @@ public class MantaRayEntity extends ParentWaterEntity {
         return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
     }
 
-    @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(SIZE, 0f);
-    }
-
-    public static boolean isValidNaturalSpawn(EntityType<? extends WaterCreatureEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos).getFluidState().isOf(Fluids.WATER);
-    }
-
-    public float getSize() {
-        return this.dataTracker.get(SIZE);
-    }
-
-    public void setSize(float size) {
-        this.dataTracker.set(SIZE, MathHelper.clamp(size, 0f, 1.5f));
-        this.calculateDimensions();
-    }
-
-    protected float getActiveEyeHeight(EntityPose pose, EntityDimensions dimensions) {
-        return dimensions.height * 0.4F;
-    }
-
     public void onTrackedDataSet(TrackedData<?> data) {
         if (SIZE.equals(data)) {
             this.calculateDimensions();
@@ -105,24 +94,77 @@ public class MantaRayEntity extends ParentWaterEntity {
         super.onTrackedDataSet(data);
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putFloat("Size", this.getSize());
-    }
-
     public void readCustomDataFromNbt(NbtCompound nbt) {
         super.readCustomDataFromNbt(nbt);
         this.setSize(nbt.getFloat("Size"));
     }
 
     @Override
-    public EntityDimensions getDimensions(EntityPose pose) {
-        return super.getDimensions(pose).scaled(0.65f * this.getSize());
+    public void tick() {
+        super.tick();
+        World world = this.getWorld();
+        if (world.isClient) {
+            this.setupAnimationStates();
+        }
     }
 
     @Override
-    public EntityGroup getGroup() {
-        return EntityGroup.AQUATIC;
+    public void tickMovement() {
+        if (!this.isTouchingWater() && this.isOnGround() && this.verticalCollision) {
+            this.setVelocity(this.getVelocity().add((this.random.nextFloat() * 2.0F - 1.0F) * 0.05F, 0.4000000059604645, (this.random.nextFloat() * 2.0F - 1.0F) * 0.05F));
+            this.setOnGround(false);
+            this.velocityDirty = true;
+            this.playSound(this.getFlopSound(), this.getSoundVolume(), this.getSoundPitch());
+        }
+        super.tickMovement();
+    }
+
+    public void travel(Vec3d movementInput) {
+        if (this.canMoveVoluntarily() && this.isTouchingWater()) {
+            this.updateVelocity(this.getMovementSpeed(), movementInput);
+            this.move(MovementType.SELF, this.getVelocity());
+            this.setVelocity(this.getVelocity().multiply(0.9));
+            if (this.getTarget() == null) {
+                this.setVelocity(this.getVelocity().add(0.0, -0.005, 0.0));
+            }
+        } else {
+            super.travel(movementInput);
+        }
+
+    }
+
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putFloat("Size", this.getSize());
+    }
+
+    protected EntityNavigation createNavigation(World world) {
+        return new SwimNavigation(this, world);
+    }
+
+    protected float getActiveEyeHeight(EntityPose pose, EntityDimensions dimensions) {
+        return dimensions.height * 0.4F;
+    }
+
+    @Override
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(SIZE, 0f);
+    }
+
+    protected void initGoals() {
+        this.goalSelector.add(0, new MoveIntoWaterGoal(this));
+        this.goalSelector.add(1, new SwimAroundGoal(this, 1.0, 10));
+        this.goalSelector.add(2, new LookAroundGoal(this));
+        this.goalSelector.add(3, new MantaRayJumpGoal(this, 10));
+        this.goalSelector.add(4, new MeleeAttackGoal(this, 1.2000000476837158, true));
+        this.goalSelector.add(5, new ChaseBoatGoal(this));
+        this.targetSelector.add(1, new RevengeGoal(this));
+        this.targetSelector.add(2, new ActiveTargetGoal<>(this, JellyfishEntity.class, true));
+    }
+
+    private SoundEvent getFlopSound() {
+        return SoundEvents.ENTITY_GUARDIAN_FLOP;
     }
 
     private void setupAnimationStates() {
@@ -139,48 +181,6 @@ public class MantaRayEntity extends ParentWaterEntity {
         } else {
             --this.flopAnimationTimeout;
         }
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        World world = this.getWorld();
-        if (world.isClient) {
-            this.setupAnimationStates();
-        }
-    }
-
-    private SoundEvent getFlopSound() {
-        return SoundEvents.ENTITY_GUARDIAN_FLOP;
-    }
-
-    @Override
-    public void tickMovement() {
-        if (!this.isTouchingWater() && this.isOnGround() && this.verticalCollision) {
-            this.setVelocity(this.getVelocity().add((this.random.nextFloat() * 2.0F - 1.0F) * 0.05F, 0.4000000059604645, (this.random.nextFloat() * 2.0F - 1.0F) * 0.05F));
-            this.setOnGround(false);
-            this.velocityDirty = true;
-            this.playSound(this.getFlopSound(), this.getSoundVolume(), this.getSoundPitch());
-        }
-        super.tickMovement();
-    }
-
-    protected EntityNavigation createNavigation(World world) {
-        return new SwimNavigation(this, world);
-    }
-
-    public void travel(Vec3d movementInput) {
-        if (this.canMoveVoluntarily() && this.isTouchingWater()) {
-            this.updateVelocity(this.getMovementSpeed(), movementInput);
-            this.move(MovementType.SELF, this.getVelocity());
-            this.setVelocity(this.getVelocity().multiply(0.9));
-            if (this.getTarget() == null) {
-                this.setVelocity(this.getVelocity().add(0.0, -0.005, 0.0));
-            }
-        } else {
-            super.travel(movementInput);
-        }
-
     }
 
 }

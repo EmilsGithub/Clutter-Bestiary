@@ -1,8 +1,8 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.custom.ChameleonEntity;
-import net.emilsg.clutter_bestiary.entity.client.animation.ChameleonAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.ChameleonEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.ParentTameableModel;
+import net.emilsg.clutter_bestiary.entity.custom.ChameleonEntity;
 import net.minecraft.client.model.*;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -55,13 +55,8 @@ public class ChameleonModel<T extends ChameleonEntity> extends ParentTameableMod
     }
 
     @Override
-    public void setAngles(ChameleonEntity chameleon, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        if (!chameleon.isSitting()) {
-            this.animateMovement(ChameleonAnimations.CHAMELEON_WALK, limbAngle, limbDistance, 1.5f, 2f);
-        } else {
-            this.updateAnimation(chameleon.sittingAnimationState, ChameleonAnimations.CHAMELEON_LAY_DOWN, animationProgress, 1.0f);
-        }
+    public ModelPart getPart() {
+        return root;
     }
 
     @Override
@@ -82,8 +77,13 @@ public class ChameleonModel<T extends ChameleonEntity> extends ParentTameableMod
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
+    public void setAngles(ChameleonEntity chameleon, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        if (!chameleon.isSitting()) {
+            this.animateMovement(ChameleonEntityAnimations.CHAMELEON_WALK, limbAngle, limbDistance, 1.5f, 2f);
+        } else {
+            this.updateAnimation(chameleon.sittingAnimationState, ChameleonEntityAnimations.CHAMELEON_LAY_DOWN, animationProgress, 1.0f);
+        }
     }
 
     @Override

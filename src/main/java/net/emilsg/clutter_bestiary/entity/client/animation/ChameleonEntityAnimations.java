@@ -1,4 +1,4 @@
-package net.emilsg.clutter_bestiary.entity.client.animation;// Save this class in your mod and generate all required imports
+package net.emilsg.clutter_bestiary.entity.client.animation;
 
 import net.minecraft.client.render.entity.animation.Animation;
 import net.minecraft.client.render.entity.animation.AnimationHelper;
@@ -6,7 +6,7 @@ import net.minecraft.client.render.entity.animation.Keyframe;
 import net.minecraft.client.render.entity.animation.Transformation;
 
 
-public class ChameleonAnimations {
+public class ChameleonEntityAnimations {
 
     public static final Animation CHAMELEON_LAY_DOWN = Animation.Builder.create(0.25f)
             .addBoneAnimation("all",

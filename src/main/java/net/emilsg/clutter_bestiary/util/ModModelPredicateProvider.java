@@ -1,7 +1,7 @@
 package net.emilsg.clutter_bestiary.util;
 
-import net.emilsg.clutter_bestiary.item.custom.ButterflyBottleItem;
 import net.emilsg.clutter_bestiary.item.custom.BestiaryElytraItem;
+import net.emilsg.clutter_bestiary.item.custom.ButterflyBottleItem;
 import net.emilsg.clutter_bestiary.item.custom.SeahorseBucketItem;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.item.Item;

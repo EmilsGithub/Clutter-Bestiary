@@ -26,6 +26,10 @@ public enum EchofinVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
+    public Identifier getEmissiveTextureLocation() {
+        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/echofin/" + getName() + "_echofin_emissive.png");
+    }
+
     public String getId() {
         return ClutterBestiary.MOD_ID + ":" + this.getName();
     }
@@ -36,9 +40,5 @@ public enum EchofinVariant {
 
     public Identifier getTextureLocation() {
         return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/echofin/" + getName() + "_echofin.png");
-    }
-
-    public Identifier getEmissiveTextureLocation() {
-        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/echofin/" + getName() + "_echofin_emissive.png");
     }
 }

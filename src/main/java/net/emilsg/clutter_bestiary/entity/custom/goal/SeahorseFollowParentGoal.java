@@ -11,9 +11,9 @@ public class SeahorseFollowParentGoal extends Goal {
     public static final int VERTICAL_CHECK_RANGE = 4;
     public static final int MIN_DISTANCE = 3;
     private final SeahorseEntity seahorse;
+    private final double speed;
     @Nullable
     private SeahorseEntity parent;
-    private final double speed;
     private int delay;
 
     public SeahorseFollowParentGoal(SeahorseEntity seahorse, double speed) {

@@ -5,7 +5,7 @@ import net.minecraft.client.render.entity.animation.AnimationHelper;
 import net.minecraft.client.render.entity.animation.Keyframe;
 import net.minecraft.client.render.entity.animation.Transformation;
 
-public class JellyfishAnimations {
+public class JellyfishEntityAnimations {
     public static final Animation JELLYFISH_SWIM = Animation.Builder.create(2f).looping()
             .addBoneAnimation("n",
                     new Transformation(Transformation.Targets.ROTATE,

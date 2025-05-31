@@ -19,6 +19,11 @@ public class MantaRayRenderer extends MobEntityRenderer<MantaRayEntity, MantaRay
     }
 
     @Override
+    public Identifier getTexture(MantaRayEntity entity) {
+        return entity.getSize() >= 1.5f ? OLD_TEXTURE : TEXTURE;
+    }
+
+    @Override
     public void render(MantaRayEntity livingEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
         float scale = livingEntity.getSize();
 
@@ -30,10 +35,5 @@ public class MantaRayRenderer extends MobEntityRenderer<MantaRayEntity, MantaRay
     protected void scale(MantaRayEntity entity, MatrixStack matrices, float amount) {
         float scale = entity.getSize();
         matrices.scale(scale, scale, scale);
-    }
-
-    @Override
-    public Identifier getTexture(MantaRayEntity entity) {
-        return entity.getSize() >= 1.5f ? OLD_TEXTURE : TEXTURE;
     }
 }

@@ -65,39 +65,31 @@ public class CapybaraEntity extends ParentTameableEntity {
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
     }
 
-    private void setupAnimationStates() {
-        if (this.sleepingAnimationTimeout <= 0) {
-            this.sleepingAnimationTimeout = 80;
-            this.sleepingAnimationState.start(this.age);
-        } else {
-            --this.sleepingAnimationTimeout;
-        }
+    public void applyEffectToNearbyEntities(Entity centerEntity, StatusEffectInstance effect, double radius) {
+        Box area = new Box(
+                centerEntity.getX() - radius, centerEntity.getY() - radius, centerEntity.getZ() - radius,
+                centerEntity.getX() + radius, centerEntity.getY() + radius, centerEntity.getZ() + radius
+        );
 
-        if (this.earTwitchAnimationTimeout <= 0 && random.nextInt(100) == 0) {
-            this.earTwitchAnimationTimeout = 3;
-            this.pickRandomIdleAnim(random.nextBoolean());
-        } else {
-            --this.earTwitchAnimationTimeout;
-        }
-    }
+        List<LivingEntity> nearbyEntities = centerEntity.getWorld().getEntitiesByClass(
+                LivingEntity.class,
+                area,
+                e -> e != centerEntity
+        );
 
-    private void pickRandomIdleAnim(boolean bl) {
-        if (bl) {
-            this.earTwitchAnimationStateOne.start(this.age);
-        } else {
-            this.earTwitchAnimationStateTwo.start(this.age);
+        for (LivingEntity entity : nearbyEntities) {
+            entity.addStatusEffect(effect);
         }
     }
 
-    protected void updateLimbs(float v) {
-        float f;
-        if (this.getPose() == EntityPose.STANDING) {
-            f = Math.min(v * 6.0F, 1.0F);
-        } else {
-            f = 0.0F;
-        }
+    public boolean canEat() {
+        return super.canEat() && !this.isSleeping();
+    }
 
-        this.limbAnimator.updateLimbs(f, 0.2F);
+    @Nullable
+    @Override
+    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return ModEntityTypes.CAPYBARA.create(world);
     }
 
     @Override
@@ -111,17 +103,10 @@ public class CapybaraEntity extends ParentTameableEntity {
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(1, new SwimGoal(this));
-        this.goalSelector.add(2, new CapybaraSitGoal(this));
-        this.goalSelector.add(3, new CapybaraEscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(4, new CapybaraMateGoal(this, 1));
-        this.goalSelector.add(5, new CapybaraFollowOwnerGoal(this, 1.2, 10.0F, 2.0F, false));
-        this.goalSelector.add(6, new CapybaraTemptGoal(this, 1.2, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(7, new FollowParentGoal(this, 1.2));
-        this.goalSelector.add(8, new CapybaraWanderGoal(this, 1.0, 0.3f));
-        this.goalSelector.add(9, new CapybaraLookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(10, new CapybaraLookAroundGoal(this));
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
+        int sleeperType = random.nextBetween(0, 2);
+        setSleeperType(sleeperType);
+        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
     }
 
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
@@ -177,27 +162,17 @@ public class CapybaraEntity extends ParentTameableEntity {
         return super.interactMob(player, hand);
     }
 
-
     @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(IS_SLEEPING, false);
-        this.dataTracker.startTracking(FORCE_SLEEPING, false);
-        this.dataTracker.startTracking(SLEEPER, 0);
+    public boolean isBreedingItem(ItemStack stack) {
+        return stack.isOf(Items.MELON);
     }
 
-    @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
-        int sleeperType = random.nextBetween(0, 2);
-        setSleeperType(sleeperType);
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+    public boolean isForceSleeping() {
+        return this.dataTracker.get(FORCE_SLEEPING);
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putBoolean("IsSleeping", this.isSleeping());
-        nbt.putBoolean("IsForceSleeping", this.isForceSleeping());
-        nbt.putInt("Sleeper", this.sleeperType());
+    public boolean isSleeping() {
+        return this.dataTracker.get(IS_SLEEPING);
     }
 
     public void readCustomDataFromNbt(NbtCompound nbt) {
@@ -207,32 +182,18 @@ public class CapybaraEntity extends ParentTameableEntity {
         this.setSleeperType(nbt.getInt("Sleeper"));
     }
 
-    public boolean canEat() {
-        return super.canEat() && !this.isSleeping();
-    }
-
-    public boolean isSleeping() {
-        return this.dataTracker.get(IS_SLEEPING);
-    }
-
-    public boolean isForceSleeping() {
-        return this.dataTracker.get(FORCE_SLEEPING);
-    }
-
     public int sleeperType() {
         return this.dataTracker.get(SLEEPER);
     }
 
-    void setIsSleeping(boolean isSleeping) {
-        this.dataTracker.set(IS_SLEEPING, isSleeping);
-    }
+    @Override
+    public void tick() {
+        super.tick();
+        World world = this.getWorld();
 
-    void setIsForceSleeping(boolean isSleeping) {
-        this.dataTracker.set(FORCE_SLEEPING, isSleeping);
-    }
-
-    void setSleeperType(int type) {
-        this.dataTracker.set(SLEEPER, type);
+        if (world.isClient) {
+            this.setupAnimationStates();
+        }
     }
 
     @Override
@@ -247,41 +208,79 @@ public class CapybaraEntity extends ParentTameableEntity {
         }
     }
 
-    @Override
-    public void tick() {
-        super.tick();
-        World world = this.getWorld();
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putBoolean("IsSleeping", this.isSleeping());
+        nbt.putBoolean("IsForceSleeping", this.isForceSleeping());
+        nbt.putInt("Sleeper", this.sleeperType());
+    }
 
-        if (world.isClient) {
-            this.setupAnimationStates();
+    void setIsForceSleeping(boolean isSleeping) {
+        this.dataTracker.set(FORCE_SLEEPING, isSleeping);
+    }
+
+    void setIsSleeping(boolean isSleeping) {
+        this.dataTracker.set(IS_SLEEPING, isSleeping);
+    }
+
+    void setSleeperType(int type) {
+        this.dataTracker.set(SLEEPER, type);
+    }
+
+    @Override
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(IS_SLEEPING, false);
+        this.dataTracker.startTracking(FORCE_SLEEPING, false);
+        this.dataTracker.startTracking(SLEEPER, 0);
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(1, new SwimGoal(this));
+        this.goalSelector.add(2, new CapybaraSitGoal(this));
+        this.goalSelector.add(3, new CapybaraEscapeDangerGoal(this, 1.25));
+        this.goalSelector.add(4, new CapybaraMateGoal(this, 1));
+        this.goalSelector.add(5, new CapybaraFollowOwnerGoal(this, 1.2, 10.0F, 2.0F, false));
+        this.goalSelector.add(6, new CapybaraTemptGoal(this, 1.2, BREEDING_INGREDIENT, false));
+        this.goalSelector.add(7, new FollowParentGoal(this, 1.2));
+        this.goalSelector.add(8, new CapybaraWanderGoal(this, 1.0, 0.3f));
+        this.goalSelector.add(9, new CapybaraLookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(10, new CapybaraLookAroundGoal(this));
+    }
+
+    protected void updateLimbs(float v) {
+        float f;
+        if (this.getPose() == EntityPose.STANDING) {
+            f = Math.min(v * 6.0F, 1.0F);
+        } else {
+            f = 0.0F;
+        }
+
+        this.limbAnimator.updateLimbs(f, 0.2F);
+    }
+
+    private void pickRandomIdleAnim(boolean bl) {
+        if (bl) {
+            this.earTwitchAnimationStateOne.start(this.age);
+        } else {
+            this.earTwitchAnimationStateTwo.start(this.age);
         }
     }
 
-    @Override
-    public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(Items.MELON);
-    }
+    private void setupAnimationStates() {
+        if (this.sleepingAnimationTimeout <= 0) {
+            this.sleepingAnimationTimeout = 80;
+            this.sleepingAnimationState.start(this.age);
+        } else {
+            --this.sleepingAnimationTimeout;
+        }
 
-    @Nullable
-    @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.CAPYBARA.create(world);
-    }
-
-    public void applyEffectToNearbyEntities(Entity centerEntity, StatusEffectInstance effect, double radius) {
-        Box area = new Box(
-                centerEntity.getX() - radius, centerEntity.getY() - radius, centerEntity.getZ() - radius,
-                centerEntity.getX() + radius, centerEntity.getY() + radius, centerEntity.getZ() + radius
-        );
-
-        List<LivingEntity> nearbyEntities = centerEntity.getWorld().getEntitiesByClass(
-                LivingEntity.class,
-                area,
-                e -> e != centerEntity
-        );
-
-        for (LivingEntity entity : nearbyEntities) {
-            entity.addStatusEffect(effect);
+        if (this.earTwitchAnimationTimeout <= 0 && random.nextInt(100) == 0) {
+            this.earTwitchAnimationTimeout = 3;
+            this.pickRandomIdleAnim(random.nextBoolean());
+        } else {
+            --this.earTwitchAnimationTimeout;
         }
     }
 
@@ -354,11 +353,6 @@ public class CapybaraEntity extends ParentTameableEntity {
         }
 
         @Override
-        public boolean shouldContinue() {
-            return this.capybara.isForceSleeping();
-        }
-
-        @Override
         public boolean canStart() {
             if (!this.capybara.isTamed()) {
                 return false;
@@ -376,6 +370,11 @@ public class CapybaraEntity extends ParentTameableEntity {
             if (this.capybara.squaredDistanceTo(owner) < 144.0 && owner.getAttacker() != null) {
                 return false;
             }
+            return this.capybara.isForceSleeping();
+        }
+
+        @Override
+        public boolean shouldContinue() {
             return this.capybara.isForceSleeping();
         }
 

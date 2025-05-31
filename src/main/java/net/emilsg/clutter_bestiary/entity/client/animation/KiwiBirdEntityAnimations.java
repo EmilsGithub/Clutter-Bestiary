@@ -5,7 +5,7 @@ import net.minecraft.client.render.entity.animation.AnimationHelper;
 import net.minecraft.client.render.entity.animation.Keyframe;
 import net.minecraft.client.render.entity.animation.Transformation;
 
-public class KiwiBirdAnimations {
+public class KiwiBirdEntityAnimations {
 
     public static final Animation KIWI_BIRD_WALK = Animation.Builder.create(0.5f).looping()
             .addBoneAnimation("L_Leg",

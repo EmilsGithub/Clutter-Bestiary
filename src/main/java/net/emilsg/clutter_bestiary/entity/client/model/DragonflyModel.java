@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.DragonflyAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.DragonflyEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutter_bestiary.entity.custom.DragonflyEntity;
 import net.minecraft.client.model.*;
@@ -44,11 +44,8 @@ public class DragonflyModel<T extends DragonflyEntity> extends BestiaryModel<T> 
     }
 
     @Override
-    public void setAngles(DragonflyEntity dragonfly, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(dragonfly, netHeadYaw, headPitch, ageInTicks);
-
-        this.updateAnimation(dragonfly.flyingAnimState, DragonflyAnimations.DRAGONFLY_FLY, ageInTicks, 2.5f);
+    public ModelPart getPart() {
+        return root;
     }
 
     @Override
@@ -63,12 +60,15 @@ public class DragonflyModel<T extends DragonflyEntity> extends BestiaryModel<T> 
     }
 
     @Override
-    protected ModelPart getHeadPart() {
-        return head;
+    public void setAngles(DragonflyEntity dragonfly, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        this.setHeadAngles(dragonfly, netHeadYaw, headPitch, ageInTicks);
+
+        this.updateAnimation(dragonfly.flyingAnimState, DragonflyEntityAnimations.DRAGONFLY_FLY, ageInTicks, 2.5f);
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
+    protected ModelPart getHeadPart() {
+        return head;
     }
 }

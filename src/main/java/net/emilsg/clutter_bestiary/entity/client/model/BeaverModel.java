@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.BeaverAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.BeaverEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutter_bestiary.entity.custom.BeaverEntity;
 import net.minecraft.client.model.*;
@@ -47,6 +47,11 @@ public class BeaverModel<T extends BeaverEntity> extends BestiaryModel<T> {
     }
 
     @Override
+    public ModelPart getPart() {
+        return root;
+    }
+
+    @Override
     public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
         if (this.child) {
             float babyScale = 0.5f;
@@ -65,29 +70,24 @@ public class BeaverModel<T extends BeaverEntity> extends BestiaryModel<T> {
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
-    }
-
-    @Override
-    protected ModelPart getHeadPart() {
-        return head;
-    }
-
-    @Override
     public void setAngles(BeaverEntity beaverEntity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
         this.setHeadAngles(beaverEntity, netHeadYaw, headPitch, ageInTicks);
         boolean isTouchingWater = beaverEntity.isTouchingWater();
 
-        if(!isTouchingWater) {
-            this.animateMovement(BeaverAnimations.BEAVER_WALK, limbSwing, limbSwingAmount, 2.0f, 2.5f);
-            this.updateAnimation(beaverEntity.idleAnimationState, BeaverAnimations.BEAVER_IDLE, ageInTicks, 1.0f);
+        if (!isTouchingWater) {
+            this.animateMovement(BeaverEntityAnimations.BEAVER_WALK, limbSwing, limbSwingAmount, 2.0f, 2.5f);
+            this.updateAnimation(beaverEntity.idleAnimationState, BeaverEntityAnimations.BEAVER_IDLE, ageInTicks, 1.0f);
         } else {
-            float animationSpeed = (float)(beaverEntity.getVelocity().length() * 5) + Math.abs(0.5f);
+            float animationSpeed = (float) (beaverEntity.getVelocity().length() * 5) + Math.abs(0.5f);
             if (animationSpeed >= 1.2f) animationSpeed = 1.2f;
-            this.updateAnimation(beaverEntity.waterAnimationState, BeaverAnimations.BEAVER_SWIM, ageInTicks, animationSpeed);
+            this.updateAnimation(beaverEntity.waterAnimationState, BeaverEntityAnimations.BEAVER_SWIM, ageInTicks, animationSpeed);
         }
 
+    }
+
+    @Override
+    protected ModelPart getHeadPart() {
+        return head;
     }
 }

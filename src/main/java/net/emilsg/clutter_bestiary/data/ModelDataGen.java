@@ -53,10 +53,6 @@ public class ModelDataGen extends FabricModelProvider {
         }
     }
 
-    private void registerSpawnEggItem(ItemModelGenerator itemModelGenerator, Item egg) {
-        itemModelGenerator.register(egg, new Model(Optional.of(new Identifier("item/template_spawn_egg")), Optional.empty()));
-    }
-
     private void registerElytra(ItemModelGenerator itemGen, Item elytra) {
         String idString = ModelIds.getItemModelId(elytra).getPath().replace("item/", "item/broken_");
         TextureMap brokenMap = (new TextureMap()).put(TextureKey.LAYER0, new Identifier(ClutterBestiary.MOD_ID, idString));
@@ -77,5 +73,9 @@ public class ModelDataGen extends FabricModelProvider {
 
             return jsonObject;
         });
+    }
+
+    private void registerSpawnEggItem(ItemModelGenerator itemModelGenerator, Item egg) {
+        itemModelGenerator.register(egg, new Model(Optional.of(new Identifier("item/template_spawn_egg")), Optional.empty()));
     }
 }

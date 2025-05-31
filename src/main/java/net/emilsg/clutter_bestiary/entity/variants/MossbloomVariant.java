@@ -29,6 +29,14 @@ public enum MossbloomVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
+    @Nullable
+    public Identifier getEmissiveTextureLocation() {
+        if (this.getShouldGlow()) {
+            return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/" + getName() + "_mossbloom_emissive.png");
+        }
+        return null;
+    }
+
     public String getId() {
         return ClutterBestiary.MOD_ID + ":" + this.getName();
     }
@@ -37,19 +45,11 @@ public enum MossbloomVariant {
         return name;
     }
 
-    public Identifier getTextureLocation() {
-        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/" + getName() + "_mossbloom.png");
-    }
-
     public boolean getShouldGlow() {
         return shouldGlow;
     }
 
-    @Nullable
-    public Identifier getEmissiveTextureLocation() {
-        if (this.getShouldGlow()) {
-            return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/" + getName() + "_mossbloom_emissive.png");
-        }
-        return null;
+    public Identifier getTextureLocation() {
+        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/" + getName() + "_mossbloom.png");
     }
 }

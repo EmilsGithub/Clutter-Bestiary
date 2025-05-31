@@ -18,6 +18,9 @@ public abstract class AbstractNetherNewtRenderer extends MobEntityRenderer<Abstr
     }
 
     @Override
+    public abstract Identifier getTexture(AbstractNetherNewtEntity entity);
+
+    @Override
     public void render(AbstractNetherNewtEntity livingEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
         float scale = livingEntity.getNewtSize();
         this.shadowRadius = 0.35f * scale;
@@ -30,7 +33,4 @@ public abstract class AbstractNetherNewtRenderer extends MobEntityRenderer<Abstr
         float scale = entity.getNewtSize();
         matrices.scale(scale, scale, scale);
     }
-
-    @Override
-    public abstract Identifier getTexture(AbstractNetherNewtEntity entity);
 }

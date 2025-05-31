@@ -5,7 +5,7 @@ import net.minecraft.client.render.entity.animation.AnimationHelper;
 import net.minecraft.client.render.entity.animation.Keyframe;
 import net.minecraft.client.render.entity.animation.Transformation;
 
-public class EmperorPenguinAnimations {
+public class EmperorPenguinEntityAnimations {
 
     public static final Animation EMPEROR_PENGUIN_WADDLE = Animation.Builder.create(0.6766666f).looping()
             .addBoneAnimation("All",
@@ -156,7 +156,7 @@ public class EmperorPenguinAnimations {
                             new Keyframe(1.4167667f, AnimationHelper.createRotationalVector(0f, 0f, 0f),
                                     Transformation.Interpolations.LINEAR))).build();
 
-      public static final Animation EMPEROR_PENGUIN_WALK = Animation.Builder.create(0.5f).looping()
+    public static final Animation EMPEROR_PENGUIN_WALK = Animation.Builder.create(0.5f).looping()
             .addBoneAnimation("All",
                     new Transformation(Transformation.Targets.ROTATE,
                             new Keyframe(0f, AnimationHelper.createRotationalVector(0f, 0f, 0f),

@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.JellyfishAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.JellyfishEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.custom.JellyfishEntity;
 import net.minecraft.client.model.*;
 import net.minecraft.client.render.VertexConsumer;
@@ -54,9 +54,8 @@ public class JellyfishModel<T extends JellyfishEntity> extends SinglePartEntityM
     }
 
     @Override
-    public void setAngles(JellyfishEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.updateAnimation(entity.swimmingAnimationState, JellyfishAnimations.JELLYFISH_SWIM, animationProgress, 1f);
+    public ModelPart getPart() {
+        return root;
     }
 
     @Override
@@ -64,9 +63,9 @@ public class JellyfishModel<T extends JellyfishEntity> extends SinglePartEntityM
         root.render(matrices, vertexConsumer, light, overlay, red, green, blue, alpha);
     }
 
-
     @Override
-    public ModelPart getPart() {
-        return root;
+    public void setAngles(JellyfishEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        this.updateAnimation(entity.swimmingAnimationState, JellyfishEntityAnimations.JELLYFISH_SWIM, animationProgress, 1f);
     }
 }

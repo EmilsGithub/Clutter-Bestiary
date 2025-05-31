@@ -17,13 +17,6 @@ public class EchofinRenderer extends MobEntityRenderer<EchofinEntity, EchofinMod
         this.addFeature(new EmissiveRenderer<>(this, EchofinRenderer::getEmissiveTexture));
     }
 
-    @Override
-    public void render(EchofinEntity echofinEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
-        this.shadowRadius = 0.2f;
-
-        super.render(echofinEntity, f, g, matrixStack, vertexConsumerProvider, i);
-    }
-
     public static Identifier getEmissiveTexture(EchofinEntity echofinEntity) {
         return echofinEntity.hasAbility() ? echofinEntity.getVariant().getEmissiveTextureLocation() : null;
     }
@@ -31,5 +24,12 @@ public class EchofinRenderer extends MobEntityRenderer<EchofinEntity, EchofinMod
     @Override
     public Identifier getTexture(EchofinEntity echofinEntity) {
         return echofinEntity.getVariant().getTextureLocation();
+    }
+
+    @Override
+    public void render(EchofinEntity echofinEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
+        this.shadowRadius = 0.2f;
+
+        super.render(echofinEntity, f, g, matrixStack, vertexConsumerProvider, i);
     }
 }

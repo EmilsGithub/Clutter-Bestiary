@@ -19,6 +19,11 @@ public class WanderAroundFarOftenGoal extends Goal {
         this.setControls(EnumSet.of(Control.MOVE));
     }
 
+    @Override
+    public boolean canStart() {
+        return this.pathAwareEntity.getNavigation().isIdle() && this.pathAwareEntity.getRandom().nextInt(4) == 0;
+    }
+
     public boolean shouldContinue() {
         return !this.pathAwareEntity.getNavigation().isIdle() && !this.pathAwareEntity.hasPassengers() && this.pathAwareEntity.getNavigation().isFollowingPath();
     }
@@ -33,11 +38,6 @@ public class WanderAroundFarOftenGoal extends Goal {
     public void stop() {
         this.pathAwareEntity.getNavigation().stop();
         super.stop();
-    }
-
-    @Override
-    public boolean canStart() {
-        return this.pathAwareEntity.getNavigation().isIdle() && this.pathAwareEntity.getRandom().nextInt(4) == 0;
     }
 
     @Nullable

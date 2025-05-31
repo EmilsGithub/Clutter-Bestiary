@@ -1,7 +1,6 @@
 package net.emilsg.clutter_bestiary.entity;
 
 import net.emilsg.clutter_bestiary.ClutterBestiary;
-import net.emilsg.clutter_bestiary.entity.custom.ButterflyEntity;
 import net.emilsg.clutter_bestiary.entity.custom.*;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.entity.EntityDimensions;
@@ -67,6 +66,7 @@ public class ModEntityTypes {
     public static final EntityType<BoopletEntity> BOOPLET = Registry.register(Registries.ENTITY_TYPE, new Identifier(ClutterBestiary.MOD_ID, "booplet"),
             FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, BoopletEntity::new).dimensions(EntityDimensions.changing(0.6f, 0.6f)).build());
 
-    public static void register(){}
+    public static void register() {
+    }
 
 }

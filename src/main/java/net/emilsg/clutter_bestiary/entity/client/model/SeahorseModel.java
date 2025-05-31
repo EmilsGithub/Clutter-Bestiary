@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.SeahorseAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.SeahorseEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.ParentFishModel;
 import net.emilsg.clutter_bestiary.entity.custom.SeahorseEntity;
 import net.minecraft.client.model.*;
@@ -49,20 +49,8 @@ public class SeahorseModel<T extends SeahorseEntity> extends ParentFishModel<T> 
     }
 
     @Override
-    public void setAngles(SeahorseEntity seahorse, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.updateParts(seahorse);
-        if (seahorse.isTouchingWater() && !seahorse.isDead())
-            this.updateAnimation(seahorse.swimmingAnimationState, SeahorseAnimations.SEAHORSE_SWIM, ageInTicks, 1.0f);
-        else if (!seahorse.isDead())
-            this.updateAnimation(seahorse.flopAnimationState, SeahorseAnimations.SEAHORSE_FLOP, ageInTicks, 1.0f);
-    }
-
-    private void updateParts(SeahorseEntity seahorse) {
-        boolean hasChildren = seahorse.hasChildren();
-        if (hasChildren) {
-            this.stomach.scale(createVec3f(seahorse.getHasChildrenTimer()));
-        }
+    public ModelPart getPart() {
+        return root;
     }
 
     @Override
@@ -83,12 +71,24 @@ public class SeahorseModel<T extends SeahorseEntity> extends ParentFishModel<T> 
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
+    public void setAngles(SeahorseEntity seahorse, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        this.updateParts(seahorse);
+        if (seahorse.isTouchingWater() && !seahorse.isDead())
+            this.updateAnimation(seahorse.swimmingAnimationState, SeahorseEntityAnimations.SEAHORSE_SWIM, ageInTicks, 1.0f);
+        else if (!seahorse.isDead())
+            this.updateAnimation(seahorse.flopAnimationState, SeahorseEntityAnimations.SEAHORSE_FLOP, ageInTicks, 1.0f);
     }
 
     @Override
     protected ModelPart getHeadPart() {
         return head;
+    }
+
+    private void updateParts(SeahorseEntity seahorse) {
+        boolean hasChildren = seahorse.hasChildren();
+        if (hasChildren) {
+            this.stomach.scale(createVec3f(seahorse.getHasChildrenTimer()));
+        }
     }
 }

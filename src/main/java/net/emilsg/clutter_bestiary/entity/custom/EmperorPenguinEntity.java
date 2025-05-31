@@ -55,45 +55,41 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
     }
 
+    public boolean canEat() {
+        return super.canEat() && !this.hasEgg();
+    }
+
+    @Nullable
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(2, new EmperorPenguinMateGoal(this, 1));
-        this.goalSelector.add(3, new EmperorPenguinLayEggGoal(this, 1, ModBlocks.EMPEROR_PENGUIN_EGG.getDefaultState()));
-        this.goalSelector.add(4, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(5, new FollowParentGoal(this, 1));
-        this.goalSelector.add(6, new WanderAroundFarGoal(this, 1f));
-        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(8, new LookAroundGoal(this));
+    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return ModEntityTypes.EMPEROR_PENGUIN.create(world);
     }
 
-    private void setupAnimationStates() {
-        if (this.flapAnimationTimeout <= 0 && random.nextInt(200) == 0 && this.getNavigation().isIdle() && !this.isMoving()) {
-            this.flapAnimationTimeout = 40;
-            this.pickRandomIdleAnim(random.nextInt(3));
-        } else {
-            --this.flapAnimationTimeout;
-        }
+    public int getEggTimer() {
+        return this.dataTracker.get(EGG_TIMER);
     }
 
-    private void pickRandomIdleAnim(int i) {
-        switch (i) {
-            default -> this.flapAnimationStateOne.startIfNotRunning(this.age);
-            case 1 -> this.flapAnimationStateTwo.startIfNotRunning(this.age);
-            case 2 -> this.preenAnimationState.startIfNotRunning(this.age);
-        };
+    public void setEggTimer(int time) {
+        this.dataTracker.set(EGG_TIMER, time);
     }
 
-    protected void updateLimbs(float v) {
-        float f;
-        if (this.getPose() == EntityPose.STANDING) {
-            f = Math.min(v * 6.0f, 1.0f);
-        } else {
-            f = 0.0f;
-        }
+    public boolean hasEgg() {
+        return this.dataTracker.get(HAS_EGG);
+    }
 
-        this.limbAnimator.updateLimbs(f, 1f);
+    @Override
+    public boolean isBreedingItem(ItemStack stack) {
+        return stack.isIn(ItemTags.FISHES);
+    }
+
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.setHasEgg(nbt.getBoolean("HasEgg"));
+        this.setEggTimer(nbt.getInt("EggTimer"));
+    }
+
+    public void setHasEgg(boolean hasEgg) {
+        this.dataTracker.set(HAS_EGG, hasEgg);
     }
 
     @Override
@@ -107,11 +103,6 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
-        return stack.isIn(ItemTags.FISHES);
-    }
-
-    @Override
     public void tickMovement() {
         super.tickMovement();
 
@@ -121,10 +112,10 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
         }
     }
 
-    @Nullable
-    @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.EMPEROR_PENGUIN.create(world);
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putBoolean("HasEgg", this.hasEgg());
+        nbt.putInt("EggTimer", this.getEggTimer());
     }
 
     protected void initDataTracker() {
@@ -133,35 +124,44 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
         this.dataTracker.startTracking(EGG_TIMER, 0);
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putBoolean("HasEgg", this.hasEgg());
-        nbt.putInt("EggTimer", this.getEggTimer());
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new SwimGoal(this));
+        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
+        this.goalSelector.add(2, new EmperorPenguinMateGoal(this, 1));
+        this.goalSelector.add(3, new EmperorPenguinLayEggGoal(this, 1, ModBlocks.EMPEROR_PENGUIN_EGG.getDefaultState()));
+        this.goalSelector.add(4, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
+        this.goalSelector.add(5, new FollowParentGoal(this, 1));
+        this.goalSelector.add(6, new WanderAroundFarGoal(this, 1f));
+        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(8, new LookAroundGoal(this));
     }
 
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.setHasEgg(nbt.getBoolean("HasEgg"));
-        this.setEggTimer(nbt.getInt("EggTimer"));
+    protected void updateLimbs(float v) {
+        float f;
+        if (this.getPose() == EntityPose.STANDING) {
+            f = Math.min(v * 6.0f, 1.0f);
+        } else {
+            f = 0.0f;
+        }
+
+        this.limbAnimator.updateLimbs(f, 1f);
     }
 
-    public boolean canEat() {
-        return super.canEat() && !this.hasEgg();
+    private void pickRandomIdleAnim(int i) {
+        switch (i) {
+            case 1 -> this.flapAnimationStateTwo.startIfNotRunning(this.age);
+            case 2 -> this.preenAnimationState.startIfNotRunning(this.age);
+            default -> this.flapAnimationStateOne.startIfNotRunning(this.age);
+        }
     }
 
-    public boolean hasEgg() {
-        return this.dataTracker.get(HAS_EGG);
-    }
-
-    public void setHasEgg(boolean hasEgg) {
-        this.dataTracker.set(HAS_EGG, hasEgg);
-    }
-
-    public int getEggTimer() {
-        return this.dataTracker.get(EGG_TIMER);
-    }
-
-    public void setEggTimer(int time) {
-        this.dataTracker.set(EGG_TIMER, time);
+    private void setupAnimationStates() {
+        if (this.flapAnimationTimeout <= 0 && random.nextInt(200) == 0 && this.getNavigation().isIdle() && !this.isMoving()) {
+            this.flapAnimationTimeout = 40;
+            this.pickRandomIdleAnim(random.nextInt(3));
+        } else {
+            --this.flapAnimationTimeout;
+        }
     }
 }

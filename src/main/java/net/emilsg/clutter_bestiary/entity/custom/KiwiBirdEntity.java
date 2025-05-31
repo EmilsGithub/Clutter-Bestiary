@@ -37,36 +37,19 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
     private static final TrackedData<Boolean> HAS_EGG = DataTracker.registerData(KiwiBirdEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Integer> EGG_TIMER = DataTracker.registerData(KiwiBirdEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Boolean> IS_DANCING = DataTracker.registerData(KiwiBirdEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-
-    private boolean songPlaying;
-    @Nullable
-    private BlockPos songSource;
     public final AnimationState idleAnimationState = new AnimationState();
     public final AnimationState dancingAnimationState = new AnimationState();
     public int idleAnimationTimeout = 0;
     public int dancingAnimationTimeout = 0;
+    private boolean songPlaying;
+    @Nullable
+    private BlockPos songSource;
 
     public KiwiBirdEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
         super(entityType, world);
         this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
         this.setPathfindingPenalty(PathNodeType.DAMAGE_FIRE, -1.0F);
         this.setPathfindingPenalty(PathNodeType.COCOA, -1.0F);
-    }
-
-    private void setupAnimationStates() {
-        if (this.idleAnimationTimeout <= 0 && !this.isMoving() && !this.isSongPlaying()) {
-            this.idleAnimationTimeout = 30;
-            this.idleAnimationState.start(this.age);
-        } else {
-            --this.idleAnimationTimeout;
-        }
-
-        if (dancingAnimationTimeout <= 0 && this.isSongPlaying()) {
-            this.dancingAnimationTimeout = 20;
-            this.dancingAnimationState.start(this.age);
-        } else {
-            --this.dancingAnimationTimeout;
-        }
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
@@ -79,32 +62,43 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
     }
 
+    public boolean canEat() {
+        return super.canEat() && !this.hasEgg() && !this.isDancing();
+    }
+
+    @Nullable
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(2, new KiwiBirdMateGoal(this, 1));
-        this.goalSelector.add(3, new KiwiBirdLayEggGoal(this, 1, ModBlocks.KIWI_BIRD_EGG.getDefaultState()));
-        this.goalSelector.add(4, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(5, new FollowParentGoal(this, 1));
-        this.goalSelector.add(6, new KiwiBirdWanderAroundFarGoal(this, this, 1.0, 1));
-        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(8, new LookAroundGoal(this));
+    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return ModEntityTypes.KIWI_BIRD.create(world);
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(HAS_EGG, false);
-        this.dataTracker.startTracking(EGG_TIMER, 0);
-        this.dataTracker.startTracking(IS_DANCING, false);
-
+    public int getEggTimer() {
+        return this.dataTracker.get(EGG_TIMER);
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putBoolean("HasEgg", this.hasEgg());
-        nbt.putInt("EggTimer", this.getEggTimer());
-        nbt.putBoolean("IsDancing", this.isDancing());
+    public void setEggTimer(int time) {
+        this.dataTracker.set(EGG_TIMER, time);
+    }
+
+    public boolean hasEgg() {
+        return this.dataTracker.get(HAS_EGG);
+    }
+
+    @Override
+    public boolean isBreedingItem(ItemStack stack) {
+        return stack.isIn(ModItemTags.C_SEEDS);
+    }
+
+    public boolean isDancing() {
+        return this.dataTracker.get(IS_DANCING);
+    }
+
+    public void setDancing(boolean dancing) {
+        this.dataTracker.set(IS_DANCING, dancing);
+    }
+
+    public boolean isSongPlaying() {
+        return this.songPlaying;
     }
 
     public void readCustomDataFromNbt(NbtCompound nbt) {
@@ -112,6 +106,15 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
         this.setHasEgg(nbt.getBoolean("HasEgg"));
         this.setEggTimer(nbt.getInt("EggTimer"));
         this.setDancing(nbt.getBoolean("IsDancing"));
+    }
+
+    public void setHasEgg(boolean hasEgg) {
+        this.dataTracker.set(HAS_EGG, hasEgg);
+    }
+
+    public void setNearbySongPlaying(BlockPos songPosition, boolean playing) {
+        this.songSource = songPosition;
+        this.songPlaying = playing;
     }
 
     @Override
@@ -142,34 +145,17 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
         super.tickMovement();
     }
 
-    public void setNearbySongPlaying(BlockPos songPosition, boolean playing) {
-        this.songSource = songPosition;
-        this.songPlaying = playing;
-    }
-
-    public boolean isSongPlaying() {
-        return this.songPlaying;
-    }
-
-    public boolean canEat() {
-        return super.canEat() && !this.hasEgg() && !this.isDancing();
-    }
-
-    @Override
-    public boolean isBreedingItem(ItemStack stack) {
-        return stack.isIn(ModItemTags.C_SEEDS);
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putBoolean("HasEgg", this.hasEgg());
+        nbt.putInt("EggTimer", this.getEggTimer());
+        nbt.putBoolean("IsDancing", this.isDancing());
     }
 
     @Nullable
     @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.KIWI_BIRD.create(world);
-    }
-
-    @Nullable
-    @Override
-    protected SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.ENTITY_PARROT_HURT;
+    protected SoundEvent getAmbientSound() {
+        return ModSoundEvents.ENTITY_KIWI_CALL;
     }
 
     @Nullable
@@ -180,8 +166,29 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
 
     @Nullable
     @Override
-    protected SoundEvent getAmbientSound() {
-        return ModSoundEvents.ENTITY_KIWI_CALL;
+    protected SoundEvent getHurtSound(DamageSource source) {
+        return SoundEvents.ENTITY_PARROT_HURT;
+    }
+
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(HAS_EGG, false);
+        this.dataTracker.startTracking(EGG_TIMER, 0);
+        this.dataTracker.startTracking(IS_DANCING, false);
+
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new SwimGoal(this));
+        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
+        this.goalSelector.add(2, new KiwiBirdMateGoal(this, 1));
+        this.goalSelector.add(3, new KiwiBirdLayEggGoal(this, 1, ModBlocks.KIWI_BIRD_EGG.getDefaultState()));
+        this.goalSelector.add(4, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
+        this.goalSelector.add(5, new FollowParentGoal(this, 1));
+        this.goalSelector.add(6, new KiwiBirdWanderAroundFarGoal(this, this, 1.0, 1));
+        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(8, new LookAroundGoal(this));
     }
 
     @Override
@@ -189,28 +196,20 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
         this.playSound(SoundEvents.ENTITY_PARROT_STEP, 0.15F, 0.75F);
     }
 
-    public boolean isDancing () {
-        return this.dataTracker.get(IS_DANCING);
-    }
+    private void setupAnimationStates() {
+        if (this.idleAnimationTimeout <= 0 && !this.isMoving() && !this.isSongPlaying()) {
+            this.idleAnimationTimeout = 30;
+            this.idleAnimationState.start(this.age);
+        } else {
+            --this.idleAnimationTimeout;
+        }
 
-    public void setDancing(boolean dancing) {
-        this.dataTracker.set(IS_DANCING, dancing);
-    }
-
-    public boolean hasEgg() {
-        return this.dataTracker.get(HAS_EGG);
-    }
-
-    public void setHasEgg(boolean hasEgg) {
-        this.dataTracker.set(HAS_EGG, hasEgg);
-    }
-
-    public int getEggTimer() {
-        return this.dataTracker.get(EGG_TIMER);
-    }
-
-    public void setEggTimer(int time) {
-        this.dataTracker.set(EGG_TIMER, time);
+        if (dancingAnimationTimeout <= 0 && this.isSongPlaying()) {
+            this.dancingAnimationTimeout = 20;
+            this.dancingAnimationState.start(this.age);
+        } else {
+            --this.dancingAnimationTimeout;
+        }
     }
 
 }

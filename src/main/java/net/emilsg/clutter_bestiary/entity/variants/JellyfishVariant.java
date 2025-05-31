@@ -31,11 +31,11 @@ public enum JellyfishVariant {
         return ClutterBestiary.MOD_ID + ":" + this.getName();
     }
 
-    public Identifier getTextureLocation() {
-        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/jellyfish/" + getName() + "_jellyfish.png");
-    }
-
     public String getName() {
         return name;
+    }
+
+    public Identifier getTextureLocation() {
+        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/jellyfish/" + getName() + "_jellyfish.png");
     }
 }

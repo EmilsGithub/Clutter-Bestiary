@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.CapybaraAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.CapybaraEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.ParentTameableModel;
 import net.emilsg.clutter_bestiary.entity.custom.CapybaraEntity;
 import net.minecraft.client.model.*;
@@ -49,20 +49,8 @@ public class CapybaraModel<T extends CapybaraEntity> extends ParentTameableModel
     }
 
     @Override
-    public void setAngles(CapybaraEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-
-        if (!entity.isSleeping() && !entity.isForceSleeping())
-            this.setHeadAngles(entity, netHeadYaw, headPitch, ageInTicks);
-
-        if (!entity.isMoving() && (entity.isForceSleeping()) || entity.isSleeping()) {
-            this.updateAnimation(entity.sleepingAnimationState, entity.sleeperType() == 0 ? CapybaraAnimations.CAPYBARA_LAY_DOWN : entity.sleeperType() == 1 ? CapybaraAnimations.CAPYBARA_LAY_DOWN_2 : CapybaraAnimations.CAPYBARA_LAY_DOWN_3, ageInTicks, 1f);
-        } else {
-            this.animateMovement(CapybaraAnimations.CAPYBARA_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
-        }
-
-        this.updateAnimation(entity.earTwitchAnimationStateOne, CapybaraAnimations.CAPYBARA_EAR_TWITCH_ONE, ageInTicks, 1f);
-        this.updateAnimation(entity.earTwitchAnimationStateTwo, CapybaraAnimations.CAPYBARA_EAR_TWITCH_TWO, ageInTicks, 1f);
+    public ModelPart getPart() {
+        return root;
     }
 
     @Override
@@ -84,8 +72,20 @@ public class CapybaraModel<T extends CapybaraEntity> extends ParentTameableModel
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
+    public void setAngles(CapybaraEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+
+        if (!entity.isSleeping() && !entity.isForceSleeping())
+            this.setHeadAngles(entity, netHeadYaw, headPitch, ageInTicks);
+
+        if (!entity.isMoving() && (entity.isForceSleeping()) || entity.isSleeping()) {
+            this.updateAnimation(entity.sleepingAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN : entity.sleeperType() == 1 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_2 : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_3, ageInTicks, 1f);
+        } else {
+            this.animateMovement(CapybaraEntityAnimations.CAPYBARA_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
+        }
+
+        this.updateAnimation(entity.earTwitchAnimationStateOne, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_ONE, ageInTicks, 1f);
+        this.updateAnimation(entity.earTwitchAnimationStateTwo, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_TWO, ageInTicks, 1f);
     }
 
     @Override

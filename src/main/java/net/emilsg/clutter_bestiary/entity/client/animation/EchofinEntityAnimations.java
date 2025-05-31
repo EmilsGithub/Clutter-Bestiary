@@ -5,7 +5,7 @@ import net.minecraft.client.render.entity.animation.AnimationHelper;
 import net.minecraft.client.render.entity.animation.Keyframe;
 import net.minecraft.client.render.entity.animation.Transformation;
 
-public class EchofinAnimations {
+public class EchofinEntityAnimations {
 
     public static final Animation ECHOFIN_SWIMMING = Animation.Builder.create(1f).looping()
             .addBoneAnimation("bodyOne",

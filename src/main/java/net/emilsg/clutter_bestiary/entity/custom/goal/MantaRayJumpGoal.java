@@ -43,22 +43,13 @@ public class MantaRayJumpGoal extends DiveJumpingGoal {
         }
     }
 
-    private boolean isWater(BlockPos pos, int offsetX, int offsetZ, int multiplier) {
-        BlockPos blockPos = pos.add(offsetX * multiplier, 0, offsetZ * multiplier);
-        return this.mantaRay.getWorld().getFluidState(blockPos).isIn(FluidTags.WATER) && !this.mantaRay.getWorld().getBlockState(blockPos).blocksMovement();
-    }
-
-    private boolean isAirAbove(BlockPos pos, int offsetX, int offsetZ, int multiplier) {
-        return this.mantaRay.getWorld().getBlockState(pos.add(offsetX * multiplier, 1, offsetZ * multiplier)).isAir() && this.mantaRay.getWorld().getBlockState(pos.add(offsetX * multiplier, 2, offsetZ * multiplier)).isAir();
+    public boolean canStop() {
+        return false;
     }
 
     public boolean shouldContinue() {
         double d = this.mantaRay.getVelocity().y;
         return (!(d * d < 0.029999999329447746) || this.mantaRay.getPitch() == 0.0F || !(Math.abs(this.mantaRay.getPitch()) < 10.0F) || !this.mantaRay.isTouchingWater()) && !this.mantaRay.isOnGround();
-    }
-
-    public boolean canStop() {
-        return false;
     }
 
     public void start() {
@@ -91,5 +82,14 @@ public class MantaRayJumpGoal extends DiveJumpingGoal {
             this.mantaRay.setPitch((float) e);
         }
 
+    }
+
+    private boolean isAirAbove(BlockPos pos, int offsetX, int offsetZ, int multiplier) {
+        return this.mantaRay.getWorld().getBlockState(pos.add(offsetX * multiplier, 1, offsetZ * multiplier)).isAir() && this.mantaRay.getWorld().getBlockState(pos.add(offsetX * multiplier, 2, offsetZ * multiplier)).isAir();
+    }
+
+    private boolean isWater(BlockPos pos, int offsetX, int offsetZ, int multiplier) {
+        BlockPos blockPos = pos.add(offsetX * multiplier, 0, offsetZ * multiplier);
+        return this.mantaRay.getWorld().getFluidState(blockPos).isIn(FluidTags.WATER) && !this.mantaRay.getWorld().getBlockState(blockPos).blocksMovement();
     }
 }

@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.BoopletAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.BoopletEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutter_bestiary.entity.custom.BoopletEntity;
 import net.minecraft.client.model.*;
@@ -55,6 +55,11 @@ public class BoopletModel<T extends BoopletEntity> extends BestiaryModel<T> {
     }
 
     @Override
+    public ModelPart getPart() {
+        return root;
+    }
+
+    @Override
     public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
         this.getPart().render(matrices, vertexConsumer, light, overlay, red, green, blue, alpha);
     }
@@ -63,16 +68,11 @@ public class BoopletModel<T extends BoopletEntity> extends BestiaryModel<T> {
     public void setAngles(BoopletEntity boopletEntity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
 
-        this.animateMovement(boopletEntity.isFleeing() ? BoopletAnimations.BOOPLET_RUN : BoopletAnimations.BOOPLET_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
-        this.updateAnimation(boopletEntity.boopAnimationState, BoopletAnimations.BOOPLET_BOOP, ageInTicks, 1f);
-        this.updateAnimation(boopletEntity.happyAnimationState, BoopletAnimations.BOOPLET_HAPPY, ageInTicks, 1f);
+        this.animateMovement(boopletEntity.isFleeing() ? BoopletEntityAnimations.BOOPLET_RUN : BoopletEntityAnimations.BOOPLET_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
+        this.updateAnimation(boopletEntity.boopAnimationState, BoopletEntityAnimations.BOOPLET_BOOP, ageInTicks, 1f);
+        this.updateAnimation(boopletEntity.happyAnimationState, BoopletEntityAnimations.BOOPLET_HAPPY, ageInTicks, 1f);
 
         this.fluff.visible = boopletEntity.isFluffy();
-    }
-
-    @Override
-    public ModelPart getPart() {
-        return root;
     }
 
     @Override

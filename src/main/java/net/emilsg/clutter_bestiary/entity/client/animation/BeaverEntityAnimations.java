@@ -5,7 +5,7 @@ import net.minecraft.client.render.entity.animation.AnimationHelper;
 import net.minecraft.client.render.entity.animation.Keyframe;
 import net.minecraft.client.render.entity.animation.Transformation;
 
-public class BeaverAnimations {
+public class BeaverEntityAnimations {
 
 
     public static final Animation BEAVER_IDLE = Animation.Builder.create(2f).looping()

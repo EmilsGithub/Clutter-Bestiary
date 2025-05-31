@@ -14,12 +14,12 @@ public class PotionSacRenderer extends LivingEntityRenderer<PotionSacEntity, Pot
     }
 
     @Override
-    protected boolean hasLabel(PotionSacEntity livingEntity) {
-        return false;
+    public Identifier getTexture(PotionSacEntity potionSac) {
+        return potionSac.getVariant().getTextureLocation();
     }
 
     @Override
-    public Identifier getTexture(PotionSacEntity potionSac) {
-        return potionSac.getVariant().getTextureLocation();
+    protected boolean hasLabel(PotionSacEntity livingEntity) {
+        return false;
     }
 }

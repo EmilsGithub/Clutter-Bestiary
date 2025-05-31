@@ -1,9 +1,9 @@
 package net.emilsg.clutter_bestiary.entity.client.render;
 
 import net.emilsg.clutter_bestiary.ClutterBestiary;
-import net.emilsg.clutter_bestiary.entity.custom.KiwiBirdEntity;
 import net.emilsg.clutter_bestiary.entity.client.layer.ModModelLayers;
 import net.emilsg.clutter_bestiary.entity.client.model.KiwiBirdModel;
+import net.emilsg.clutter_bestiary.entity.custom.KiwiBirdEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.MobEntityRenderer;
@@ -18,14 +18,14 @@ public class KiwiBirdRenderer extends MobEntityRenderer<KiwiBirdEntity, KiwiBird
     }
 
     @Override
+    public Identifier getTexture(KiwiBirdEntity kiwiBirdEntity) {
+        return TEXTURE;
+    }
+
+    @Override
     public void render(KiwiBirdEntity kiwiBirdEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
         this.shadowRadius = 0.3f;
 
         super.render(kiwiBirdEntity, f, g, matrixStack, vertexConsumerProvider, i);
-    }
-
-    @Override
-    public Identifier getTexture(KiwiBirdEntity kiwiBirdEntity) {
-        return TEXTURE;
     }
 }

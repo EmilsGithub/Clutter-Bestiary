@@ -30,13 +30,13 @@ public class CrimsonNewtEntity extends AbstractNetherNewtEntity {
     }
 
     @Override
-    public Item getBreedingItem() {
-        return Items.CRIMSON_ROOTS;
+    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return ModEntityTypes.CRIMSON_NEWT.create(world);
     }
 
     @Override
-    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.CRIMSON_NEWT.create(world);
+    public Item getBreedingItem() {
+        return Items.CRIMSON_ROOTS;
     }
 
     @Override

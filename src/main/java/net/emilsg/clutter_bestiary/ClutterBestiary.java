@@ -17,26 +17,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ClutterBestiary implements ModInitializer {
-	public static final String MOD_ID = "clutter-bestiary";
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-	public static final boolean IS_TRINKETS_LOADED = FabricLoader.getInstance().getModContainer("trinkets").isPresent();
-	public static final boolean IS_ELYTRA_TRINKET_LOADED = FabricLoader.getInstance().getModContainer("elytra_trinket").isPresent();
+    public static final String MOD_ID = "clutter-bestiary";
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    public static final boolean IS_TRINKETS_LOADED = FabricLoader.getInstance().getModContainer("trinkets").isPresent();
+    public static final boolean IS_ELYTRA_TRINKET_LOADED = FabricLoader.getInstance().getModContainer("elytra_trinket").isPresent();
 
-	@Override
-	public void onInitialize() {
-		ModConfigManager.loadConfig();
+    @Override
+    public void onInitialize() {
+        ModConfigManager.loadConfig();
 
-		ModItems.register();
-		ModItemGroups.register();
-		ModBlocks.register();
-		ModEntityTypes.register();
+        ModItems.register();
+        ModItemGroups.register();
+        ModBlocks.register();
+        ModEntityTypes.register();
 
-		BestiaryAttributes.register();
-		ModSoundEvents.register();
+        BestiaryAttributes.register();
+        ModSoundEvents.register();
 
 
-		ModModelPredicateProvider.register();
-		if (ModConfigManager.get(Configs.spawnBestiaryMobs, true)) ModEntitySpawns.register();
-		if (IS_TRINKETS_LOADED && ModConfigManager.get(Configs.doTrinketsElytraFlight, true)) TrinketsElytraUse.doFlight();
-	}
+        ModModelPredicateProvider.register();
+        if (ModConfigManager.get(Configs.spawnBestiaryMobs, true)) ModEntitySpawns.register();
+        if (IS_TRINKETS_LOADED && ModConfigManager.get(Configs.doTrinketsElytraFlight, true))
+            TrinketsElytraUse.doFlight();
+    }
 }

@@ -13,12 +13,12 @@ import java.util.List;
 public class SeahorseMateGoal extends Goal {
     private static final TargetPredicate VALID_MATE_PREDICATE = TargetPredicate.createNonAttackable().setBaseMaxDistance(8.0).ignoreVisibility();
     protected final SeahorseEntity seahorse;
-    private final Class<? extends SeahorseEntity> entityClass;
     protected final World world;
+    private final Class<? extends SeahorseEntity> entityClass;
+    private final double speed;
     @Nullable
     protected SeahorseEntity mate;
     private int timer;
-    private final double speed;
 
     public SeahorseMateGoal(SeahorseEntity seahorse, double speed, Class<? extends SeahorseEntity> entityClass) {
         this.seahorse = seahorse;
@@ -48,13 +48,17 @@ public class SeahorseMateGoal extends Goal {
     }
 
     public void tick() {
-        this.seahorse.getLookControl().lookAt(this.mate, 10.0F, (float)this.seahorse.getMaxLookPitchChange());
+        this.seahorse.getLookControl().lookAt(this.mate, 10.0F, (float) this.seahorse.getMaxLookPitchChange());
         this.seahorse.getNavigation().startMovingTo(this.mate, this.speed);
         ++this.timer;
         if (this.timer >= this.getTickCount(60) && this.seahorse.squaredDistanceTo(this.mate) < 9.0) {
             this.breed();
         }
 
+    }
+
+    protected void breed() {
+        this.seahorse.breed((ServerWorld) this.world, this.mate);
     }
 
     @Nullable
@@ -71,9 +75,5 @@ public class SeahorseMateGoal extends Goal {
         }
 
         return seahorse1;
-    }
-
-    protected void breed() {
-        this.seahorse.breed((ServerWorld)this.world, this.mate);
     }
 }

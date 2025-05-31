@@ -2,7 +2,7 @@ package net.emilsg.clutter_bestiary.entity.custom.goal;
 
 import net.emilsg.clutter_bestiary.entity.custom.BoopletEntity;
 
-public class BoopletWanderGoal extends WanderAroundFarOftenGoal{
+public class BoopletWanderGoal extends WanderAroundFarOftenGoal {
     private final BoopletEntity boopletEntity;
 
     public BoopletWanderGoal(BoopletEntity boopletEntity, float speed) {
@@ -22,7 +22,7 @@ public class BoopletWanderGoal extends WanderAroundFarOftenGoal{
 
     @Override
     public void tick() {
-        if(boopletEntity.getTimeSinceBoop() < 10){
+        if (boopletEntity.getTimeSinceBoop() < 10) {
             this.stop();
             return;
         }

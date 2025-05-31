@@ -34,7 +34,7 @@ public class EscapeWaterGoal extends Goal {
             BlockPos pos = BlockPos.ofFloored(targetedPos.x, targetedPos.y, targetedPos.z);
 
             Path path = animalEntity.getNavigation().findPathTo(pos, 1);
-            if(path != null) animalEntity.getNavigation().startMovingAlong(path, 2);
+            if (path != null) animalEntity.getNavigation().startMovingAlong(path, 2);
         }
         super.start();
     }

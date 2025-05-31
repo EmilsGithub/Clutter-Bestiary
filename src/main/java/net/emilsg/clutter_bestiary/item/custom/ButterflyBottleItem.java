@@ -32,33 +32,8 @@ public class ButterflyBottleItem extends Item {
         super(settings);
     }
 
-    public ActionResult useOnBlock(ItemUsageContext context) {
-        World world = context.getWorld();
-        ItemStack stack = context.getStack();
-        BlockPos pos = context.getBlockPos();
-        PlayerEntity player = context.getPlayer();
-        Hand hand = context.getHand();
-
-        if (player == null) return ActionResult.FAIL;
-
-        if (world instanceof ServerWorld) {
-            this.spawnEntity((ServerWorld)world, stack, pos);
-            world.emitGameEvent(player, GameEvent.ENTITY_PLACE, pos);
-            world.playSound(null, pos, SoundEvents.BLOCK_WOOL_PLACE, SoundCategory.NEUTRAL);
-            player.setStackInHand(hand, getEmptiedStack(stack, player));
-        }
-        return ActionResult.success(world.isClient);
-    }
-
     public static ItemStack getEmptiedStack(ItemStack stack, PlayerEntity player) {
         return !player.getAbilities().creativeMode ? new ItemStack(Items.GLASS_BOTTLE) : stack;
-    }
-
-    private void spawnEntity(ServerWorld world, ItemStack stack, BlockPos pos) {
-        ButterflyEntity butterfly = ModEntityTypes.BUTTERFLY.spawnFromItemStack(world, stack, null, pos, SpawnReason.BUCKET, true, false);
-        if (butterfly != null) {
-            butterfly.copyDataFromNbt(butterfly, stack.getOrCreateNbt());
-        }
     }
 
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
@@ -74,6 +49,31 @@ public class ButterflyBottleItem extends Item {
             MutableText mutableText = Text.translatable(string);
             mutableText.formatted(formatting);
             tooltip.add(mutableText);
+        }
+    }
+
+    public ActionResult useOnBlock(ItemUsageContext context) {
+        World world = context.getWorld();
+        ItemStack stack = context.getStack();
+        BlockPos pos = context.getBlockPos();
+        PlayerEntity player = context.getPlayer();
+        Hand hand = context.getHand();
+
+        if (player == null) return ActionResult.FAIL;
+
+        if (world instanceof ServerWorld) {
+            this.spawnEntity((ServerWorld) world, stack, pos);
+            world.emitGameEvent(player, GameEvent.ENTITY_PLACE, pos);
+            world.playSound(null, pos, SoundEvents.BLOCK_WOOL_PLACE, SoundCategory.NEUTRAL);
+            player.setStackInHand(hand, getEmptiedStack(stack, player));
+        }
+        return ActionResult.success(world.isClient);
+    }
+
+    private void spawnEntity(ServerWorld world, ItemStack stack, BlockPos pos) {
+        ButterflyEntity butterfly = ModEntityTypes.BUTTERFLY.spawnFromItemStack(world, stack, null, pos, SpawnReason.BUCKET, true, false);
+        if (butterfly != null) {
+            butterfly.copyDataFromNbt(butterfly, stack.getOrCreateNbt());
         }
     }
 }

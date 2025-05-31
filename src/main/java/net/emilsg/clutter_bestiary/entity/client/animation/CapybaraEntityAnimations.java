@@ -5,7 +5,7 @@ import net.minecraft.client.render.entity.animation.AnimationHelper;
 import net.minecraft.client.render.entity.animation.Keyframe;
 import net.minecraft.client.render.entity.animation.Transformation;
 
-public class CapybaraAnimations {
+public class CapybaraEntityAnimations {
 
     public static final Animation CAPYBARA_WALK = Animation.Builder.create(0.6766666f).looping()
             .addBoneAnimation("FRLeg",

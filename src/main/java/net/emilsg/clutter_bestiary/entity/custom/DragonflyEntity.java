@@ -54,13 +54,38 @@ public class DragonflyEntity extends ParentAnimalEntity {
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
     }
 
-    private void setupAnimationStates() {
-        if (this.animationTimeout <= 0) {
-            this.animationTimeout = 20;
-            this.flyingAnimState.start(this.age);
-        } else {
-            --this.animationTimeout;
-        }
+    @Override
+    public boolean canBeLeashedBy(PlayerEntity player) {
+        return false;
+    }
+
+    @Override
+    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return ModEntityTypes.DRAGONFLY.create(world);
+    }
+
+    public float getPathfindingFavor(BlockPos pos, WorldView world) {
+        return world.getBlockState(pos).isAir() ? 10.0F : 0.0F;
+    }
+
+    @Override
+    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+        return false;
+    }
+
+    @Override
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
+        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+    }
+
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+    }
+
+    @Override
+    public boolean shouldSpawnSprintingParticles() {
+        return false;
     }
 
     @Override
@@ -73,41 +98,8 @@ public class DragonflyEntity extends ParentAnimalEntity {
         }
     }
 
-    @Override
-    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.DRAGONFLY.create(world);
-    }
-
-    @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new EscapeWaterGoal(this));
-        this.goalSelector.add(1, new HoverGoal(this));
-        this.goalSelector.add(1, new DragonflyFastWanderGoal(this));
-    }
-
-    protected void initDataTracker() {
-        super.initDataTracker();
-    }
-
-    public float getPathfindingFavor(BlockPos pos, WorldView world) {
-        return world.getBlockState(pos).isAir() ? 10.0F : 0.0F;
-    }
-
-    @Override
-    protected void playStepSound(BlockPos pos, BlockState state) {
-    }
-
-    @Override
-    public boolean canBeLeashedBy(PlayerEntity player) {
-        return false;
-    }
-
-    @Override
-    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
-        return false;
-    }
-
-    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
     }
 
     protected EntityNavigation createNavigation(World world) {
@@ -124,23 +116,31 @@ public class DragonflyEntity extends ParentAnimalEntity {
         return birdNavigation;
     }
 
-    @Override
-    public boolean shouldSpawnSprintingParticles() {
-        return false;
+    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-    }
-
-    @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
+    protected void initDataTracker() {
+        super.initDataTracker();
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+    protected void initGoals() {
+        this.goalSelector.add(0, new EscapeWaterGoal(this));
+        this.goalSelector.add(1, new HoverGoal(this));
+        this.goalSelector.add(1, new DragonflyFastWanderGoal(this));
+    }
+
+    @Override
+    protected void playStepSound(BlockPos pos, BlockState state) {
+    }
+
+    private void setupAnimationStates() {
+        if (this.animationTimeout <= 0) {
+            this.animationTimeout = 20;
+            this.flyingAnimState.start(this.age);
+        } else {
+            --this.animationTimeout;
+        }
     }
 
     private static class DragonflyLookControl extends LookControl {

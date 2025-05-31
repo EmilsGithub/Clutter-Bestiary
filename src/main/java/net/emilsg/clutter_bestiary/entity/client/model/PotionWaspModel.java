@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.client.model;
 
-import net.emilsg.clutter_bestiary.entity.client.animation.PotionWaspAnimations;
+import net.emilsg.clutter_bestiary.entity.client.animation.PotionWaspEntityAnimations;
 import net.emilsg.clutter_bestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutter_bestiary.entity.custom.PotionWaspEntity;
 import net.minecraft.client.model.*;
@@ -73,25 +73,6 @@ public class PotionWaspModel<T extends PotionWaspEntity> extends BestiaryModel<T
         ModelPartData outerLeftBackLeg = innerLeftBackLeg.addChild("outerLeftBackLeg", ModelPartBuilder.create().uv(28, 9).cuboid(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(2.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.3963F));
         return TexturedModelData.of(modelData, 64, 64);
     }
-    @Override
-    public void setAngles(PotionWaspEntity potionWasp, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(potionWasp, netHeadYaw, headPitch, ageInTicks);
-
-        this.getPotionSacPart().hidden = !potionWasp.hasPotionSac();
-
-        this.updateAnimation(potionWasp.flyingAnimState, potionWasp.hasPotionSac() ? PotionWaspAnimations.POTIONWASP_FLY : PotionWaspAnimations.POTIONWASP_FLY_NO_SAC, ageInTicks, 1f);
-    }
-
-    @Override
-    public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
-        root.render(matrices, vertexConsumer, light, overlay, red, green, blue, alpha);
-    }
-
-    @Override
-    protected ModelPart getHeadPart() {
-        return head;
-    }
 
     @Override
     public ModelPart getPart() {
@@ -100,5 +81,25 @@ public class PotionWaspModel<T extends PotionWaspEntity> extends BestiaryModel<T
 
     public ModelPart getPotionSacPart() {
         return potionSac;
+    }
+
+    @Override
+    public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
+        root.render(matrices, vertexConsumer, light, overlay, red, green, blue, alpha);
+    }
+
+    @Override
+    public void setAngles(PotionWaspEntity potionWasp, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        this.setHeadAngles(potionWasp, netHeadYaw, headPitch, ageInTicks);
+
+        this.getPotionSacPart().hidden = !potionWasp.hasPotionSac();
+
+        this.updateAnimation(potionWasp.flyingAnimState, potionWasp.hasPotionSac() ? PotionWaspEntityAnimations.POTIONWASP_FLY : PotionWaspEntityAnimations.POTIONWASP_FLY_NO_SAC, ageInTicks, 1f);
+    }
+
+    @Override
+    protected ModelPart getHeadPart() {
+        return head;
     }
 }

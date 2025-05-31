@@ -55,8 +55,8 @@ public enum ButterflyVariant {
         return filtered.get(new Random().nextInt(filtered.size()));
     }
 
-    public Identifier getTextureLocation() {
-        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/butterfly/" + getName() + "_butterfly.png");
+    public Formatting getColorFormatting() {
+        return this.colorFormatting;
     }
 
     public String getId() {
@@ -67,8 +67,8 @@ public enum ButterflyVariant {
         return this.name;
     }
 
-    public Formatting getColorFormatting() {
-        return this.colorFormatting;
+    public Identifier getTextureLocation() {
+        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/butterfly/" + getName() + "_butterfly.png");
     }
 
     public boolean isFireImmune() {
