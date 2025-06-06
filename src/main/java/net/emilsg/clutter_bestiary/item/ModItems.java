@@ -79,6 +79,7 @@ public class ModItems {
     public static final Item POTION_WASP_SPAWN_EGG = registerItem("potion_wasp_spawn_egg", new BestiarySpawnEggItem(ModEntityTypes.POTION_WASP, 867453, 2357421, new FabricItemSettings()));
     public static final Item DRAGONFLY_SPAWN_EGG = registerItem("dragonfly_spawn_egg", new BestiarySpawnEggItem(ModEntityTypes.DRAGONFLY, 2463756, 87652394, new FabricItemSettings()));
     public static final Item BOOPLET_SPAWN_EGG = registerItem("booplet_spawn_egg", new BestiarySpawnEggItem(ModEntityTypes.BOOPLET, 5641645, 4241312, new FabricItemSettings()));
+    public static final Item KOI_SPAWN_EGG = registerItem("koi_spawn_egg", new BestiarySpawnEggItem(ModEntityTypes.KOI, 5641645, 4241312, new FabricItemSettings()));
 
 
     private static Item registerItem(String name, Item item) {

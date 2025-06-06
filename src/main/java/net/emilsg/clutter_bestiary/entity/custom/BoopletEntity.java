@@ -1,6 +1,6 @@
 package net.emilsg.clutter_bestiary.entity.custom;
 
-import net.emilsg.clutter_bestiary.entity.custom.goal.AnimalTrackedFleeGoal;
+import net.emilsg.clutter_bestiary.entity.custom.goal.TrackedFleeGoal;
 import net.emilsg.clutter_bestiary.entity.custom.goal.BoopletWanderGoal;
 import net.emilsg.clutter_bestiary.entity.custom.parent.ParentAnimalEntity;
 import net.minecraft.entity.*;
@@ -177,7 +177,7 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     @Override
     protected void initGoals() {
         this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new AnimalTrackedFleeGoal(this, 1.5f));
+        this.goalSelector.add(1, new TrackedFleeGoal(this, 1.5f));
         this.goalSelector.add(2, new LookAroundGoal(this));
         this.goalSelector.add(3, new LookAtEntityGoal(this, PlayerEntity.class, 4));
         this.goalSelector.add(4, new BoopletWanderGoal(this, 1.0f));

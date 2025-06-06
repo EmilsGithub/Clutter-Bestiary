@@ -4,16 +4,16 @@ import net.emilsg.clutter_bestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutter_bestiary.entity.custom.parent.ParentTameableEntity;
 import net.minecraft.entity.ai.goal.EscapeDangerGoal;
 
-public class AnimalTrackedFleeGoal extends EscapeDangerGoal {
+public class TrackedFleeGoal extends EscapeDangerGoal {
     private ParentAnimalEntity animalEntity = null;
     private ParentTameableEntity tameableEntity = null;
 
-    public AnimalTrackedFleeGoal(ParentAnimalEntity mob, double speed) {
+    public TrackedFleeGoal(ParentAnimalEntity mob, double speed) {
         super(mob, speed);
         this.animalEntity = mob;
     }
 
-    public AnimalTrackedFleeGoal(ParentTameableEntity mob, double speed) {
+    public TrackedFleeGoal(ParentTameableEntity mob, double speed) {
         super(mob, speed);
         this.tameableEntity = mob;
     }

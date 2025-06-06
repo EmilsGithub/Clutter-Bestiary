@@ -66,6 +66,9 @@ public class ModEntityTypes {
     public static final EntityType<BoopletEntity> BOOPLET = Registry.register(Registries.ENTITY_TYPE, new Identifier(ClutterBestiary.MOD_ID, "booplet"),
             FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, BoopletEntity::new).dimensions(EntityDimensions.changing(0.6f, 0.6f)).build());
 
+    public static final EntityType<KoiEntity> KOI = Registry.register(Registries.ENTITY_TYPE, new Identifier(ClutterBestiary.MOD_ID, "koi"),
+            FabricEntityTypeBuilder.create(SpawnGroup.WATER_AMBIENT, KoiEntity::new).dimensions(EntityDimensions.changing(0.7f, 0.5f)).build());
+
     public static void register() {
     }
 

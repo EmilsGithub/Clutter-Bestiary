@@ -1,4 +1,4 @@
-package net.emilsg.clutter_bestiary.entity.client.render;
+package net.emilsg.clutter_bestiary.entity.client.render.parent;
 
 import net.emilsg.clutter_bestiary.ClutterBestiary;
 import net.emilsg.clutter_bestiary.entity.client.layer.ModModelLayers;
@@ -11,7 +11,6 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 
 public abstract class AbstractNetherNewtRenderer extends MobEntityRenderer<AbstractNetherNewtEntity, NetherNewtModel<AbstractNetherNewtEntity>> {
-    private static final Identifier TEXTURE = new Identifier(ClutterBestiary.MOD_ID, "textures/entity/crimson_newt_box.png");
 
     public AbstractNetherNewtRenderer(EntityRendererFactory.Context ctx) {
         super(ctx, new NetherNewtModel<>(ctx.getPart(ModModelLayers.NETHER_NEWT)), 0.4f);

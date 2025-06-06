@@ -39,7 +39,7 @@ public class ClutterBestiaryClient implements ClientModInitializer {
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.POTION_SAC, PotionSacModel::getTexturedModelData);
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.DRAGONFLY, DragonflyModel::getTexturedModelData);
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.BOOPLET, BoopletModel::getTexturedModelData);
-
+        EntityModelLayerRegistry.registerModelLayer(ModModelLayers.KOI, KoiModel::getTexturedModelData);
     }
 
     private void registerEntityRenderers() {
@@ -61,7 +61,6 @@ public class ClutterBestiaryClient implements ClientModInitializer {
         EntityRendererRegistry.register(ModEntityTypes.POTION_SAC, PotionSacRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.DRAGONFLY, DragonflyRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.BOOPLET, BoopletRenderer::new);
-
-
+        EntityRendererRegistry.register(ModEntityTypes.KOI, KoiRenderer::new);
     }
 }

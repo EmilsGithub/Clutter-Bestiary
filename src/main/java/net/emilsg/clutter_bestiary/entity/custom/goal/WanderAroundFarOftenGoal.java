@@ -21,7 +21,7 @@ public class WanderAroundFarOftenGoal extends Goal {
 
     @Override
     public boolean canStart() {
-        return this.pathAwareEntity.getNavigation().isIdle() && this.pathAwareEntity.getRandom().nextInt(4) == 0;
+        return this.pathAwareEntity.getNavigation().isIdle() && this.pathAwareEntity.getRandom().nextInt(4) == 0 && !this.pathAwareEntity.hasPassengers();
     }
 
     public boolean shouldContinue() {

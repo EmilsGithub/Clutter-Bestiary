@@ -23,6 +23,7 @@ public class BestiaryAttributes {
         FabricDefaultAttributeRegistry.register(ModEntityTypes.POTION_SAC, PotionSacEntity.setAttributes());
         FabricDefaultAttributeRegistry.register(ModEntityTypes.DRAGONFLY, DragonflyEntity.setAttributes());
         FabricDefaultAttributeRegistry.register(ModEntityTypes.BOOPLET, BoopletEntity.setAttributes());
+        FabricDefaultAttributeRegistry.register(ModEntityTypes.KOI, KoiEntity.setAttributes());
 
     }
 }

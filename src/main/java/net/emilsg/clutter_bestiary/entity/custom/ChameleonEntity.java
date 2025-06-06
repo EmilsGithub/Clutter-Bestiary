@@ -1,13 +1,15 @@
 package net.emilsg.clutter_bestiary.entity.custom;
 
 import net.emilsg.clutter_bestiary.entity.ModEntityTypes;
+import net.emilsg.clutter_bestiary.entity.custom.goal.ChameleonEscapeDangerGoal;
+import net.emilsg.clutter_bestiary.entity.custom.goal.WanderAroundFarOftenGoal;
 import net.emilsg.clutter_bestiary.entity.custom.parent.ParentTameableEntity;
 import net.emilsg.clutter_bestiary.item.ModItems;
 import net.emilsg.clutter_bestiary.item.custom.ButterflyBottleItem;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.AnimationState;
+import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.ai.pathing.PathNodeType;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
@@ -33,20 +35,71 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
-import java.util.List;
 import java.util.UUID;
 
 public class ChameleonEntity extends ParentTameableEntity {
 
     private static final Ingredient BREEDING_INGREDIENT;
     private static final TrackedData<Boolean> SITTING = DataTracker.registerData(ChameleonEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Boolean> ATTACKING = DataTracker.registerData(ChameleonEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+
+    private int currentColor = 0x90C47C;
+    private int targetColor = 0x90C47C;
+
+    public final AnimationState tailIdleAnimationState = new AnimationState();
+    public final AnimationState toungeIdleAnimationState = new AnimationState();
+
+    public int tailIdleAnimationTimeout = 0;
+    public int toungeIdleAnimationTimeout = 0;
+
+
+    private void setupAnimationStates() {
+        if (this.tailIdleAnimationTimeout <= 0 && !this.isMoving()) {
+            this.tailIdleAnimationTimeout = 40;
+            this.tailIdleAnimationState.start(this.age);
+        } else {
+            --this.tailIdleAnimationTimeout;
+        }
+
+        if (this.toungeIdleAnimationTimeout <= 0) {
+            this.toungeIdleAnimationTimeout = 20 + ((random.nextInt(5) + 3) * 100);
+            this.toungeIdleAnimationState.start(this.age);
+        } else {
+            --this.toungeIdleAnimationTimeout;
+        }
+
+        if (this.isSitting() && !this.sittingAnimationState.isRunning()) {
+            this.sittingAnimationState.start(this.age);
+        } else if (!this.isSitting()) {
+            this.sittingAnimationState.stop();
+        }
+    }
+
+    public boolean isAttacking() {
+        return this.dataTracker.get(ATTACKING);
+    }
+
+    public void setAttacking(boolean attacking) {
+        this.dataTracker.set(ATTACKING, attacking);
+    }
 
     static {
         BREEDING_INGREDIENT = Ingredient.ofItems(ModItems.BUTTERFLY_IN_A_BOTTLE);
     }
 
     public final AnimationState sittingAnimationState = new AnimationState();
+
+    public int getCurrentColor() {
+        return currentColor;
+    }
+
+    public int getTargetColor() {
+        return targetColor;
+    }
+
+    public void setTargetColor(int color) {
+        this.targetColor = color;
+    }
 
     public ChameleonEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
         super(entityType, world);
@@ -58,11 +111,40 @@ public class ChameleonEntity extends ParentTameableEntity {
     public static DefaultAttributeContainer.Builder setAttributes() {
         return AnimalEntity.createMobAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 6.0D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.225f)
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.18f)
                 .add(EntityAttributes.GENERIC_ATTACK_SPEED, 1.0f)
                 .add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.1f)
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 3.0f)
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    }
+
+    protected void updateLimbs(float v) {
+        float f;
+        if (this.getPose() == EntityPose.STANDING) {
+            f = Math.min(v * 6.0F, 1.0F);
+        } else {
+            f = 0.0F;
+        }
+
+        this.limbAnimator.updateLimbs(f * 2.75f, 0.2F);
+    }
+
+    private void updateColorTransition() {
+        int r1 = (currentColor >> 16) & 0xFF;
+        int g1 = (currentColor >> 8) & 0xFF;
+        int b1 = currentColor & 0xFF;
+
+        int r2 = (targetColor >> 16) & 0xFF;
+        int g2 = (targetColor >> 8) & 0xFF;
+        int b2 = targetColor & 0xFF;
+
+        float lerpSpeed = 0.5f;
+
+        int r = (int)(r1 + (r2 - r1) * lerpSpeed);
+        int g = (int)(g1 + (g2 - g1) * lerpSpeed);
+        int b = (int)(b1 + (b2 - b1) * lerpSpeed);
+
+        currentColor = (r << 16) | (g << 8) | b;
     }
 
     @Override
@@ -218,6 +300,7 @@ public class ChameleonEntity extends ParentTameableEntity {
 
         if (world.isClient) {
             this.setupAnimationStates();
+            this.updateColorTransition();
         }
     }
 
@@ -234,96 +317,25 @@ public class ChameleonEntity extends ParentTameableEntity {
     protected void initDataTracker() {
         super.initDataTracker();
         this.dataTracker.startTracking(SITTING, false);
+        this.dataTracker.startTracking(ATTACKING, false);
+
     }
 
     @Override
     protected void initGoals() {
-        this.goalSelector.add(0, new RideAdultChameleonGoal(this));
         this.goalSelector.add(1, new SwimGoal(this));
         this.goalSelector.add(2, new SitGoal(this));
-        this.goalSelector.add(3, new ChameleonEscapeDangerGoal(1.5));
+        this.goalSelector.add(3, new ChameleonEscapeDangerGoal(this, 1.5));
         this.goalSelector.add(4, new FollowOwnerGoal(this, 1.2, 10.0F, 2.0F, false));
         this.goalSelector.add(5, new AnimalMateGoal(this, 1));
         this.goalSelector.add(6, new TemptGoal(this, 1.2, BREEDING_INGREDIENT, false));
         this.goalSelector.add(7, new FollowParentGoal(this, 1.2));
-        this.goalSelector.add(8, new AttackGoal(this, 1.25));
-        this.goalSelector.add(9, new WanderAroundFarGoal(this, 1.0, 1));
-        this.goalSelector.add(10, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(11, new LookAroundGoal(this));
-
+        this.goalSelector.add(8, new PounceAtTargetGoal(this,0.5f));
+        this.goalSelector.add(9, new MeleeAttackGoal(this, 1.0, true));
+        this.goalSelector.add(10, new WanderAroundFarOftenGoal(this, 1.0f));
+        this.goalSelector.add(11, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(12, new LookAroundGoal(this));
         this.targetSelector.add(1, new ActiveTargetGoal<>(this, ButterflyEntity.class, true));
     }
 
-    private void setupAnimationStates() {
-        if (this.isSitting() && !this.sittingAnimationState.isRunning()) {
-            this.sittingAnimationState.start(this.age);
-        } else if (!this.isSitting()) {
-            this.sittingAnimationState.stop();
-        }
-    }
-
-    public static class RideAdultChameleonGoal extends Goal {
-        private final ChameleonEntity babyChameleon;
-        private ChameleonEntity targetChameleon;
-
-        public RideAdultChameleonGoal(ChameleonEntity babyChameleon) {
-            this.babyChameleon = babyChameleon;
-            this.setControls(EnumSet.of(Control.MOVE));
-        }
-
-        @Override
-        public boolean canStart() {
-            if (!babyChameleon.isBaby()) {
-                return false;
-            }
-
-            List<ChameleonEntity> nearbyChameleons = babyChameleon.getWorld().getEntitiesByClass(ChameleonEntity.class, babyChameleon.getBoundingBox().expand(1.0), chameleon -> !chameleon.isBaby());
-
-            if (nearbyChameleons.isEmpty()) {
-                return false;
-            }
-
-            targetChameleon = nearbyChameleons.get(babyChameleon.getRandom().nextInt(nearbyChameleons.size()));
-            return true;
-        }
-
-        @Override
-        public boolean shouldContinue() {
-            return babyChameleon.isBaby() && babyChameleon.hasVehicle() && babyChameleon.getVehicle() instanceof ChameleonEntity;
-        }
-
-        @Override
-        public void start() {
-            if (targetChameleon != null) {
-                babyChameleon.startRiding(targetChameleon);
-            }
-        }
-
-        @Override
-        public void stop() {
-            babyChameleon.stopRiding();
-            targetChameleon = null;
-        }
-    }
-
-    private static class AttackGoal extends MeleeAttackGoal {
-        public AttackGoal(ChameleonEntity chameleon, double speed) {
-            super(chameleon, speed, true);
-        }
-
-        protected double getSquaredMaxAttackDistance(LivingEntity entity) {
-            return 2.0F + entity.getWidth();
-        }
-    }
-
-    class ChameleonEscapeDangerGoal extends EscapeDangerGoal {
-
-        public ChameleonEscapeDangerGoal(double speed) {
-            super(ChameleonEntity.this, speed);
-        }
-
-        protected boolean isInDanger() {
-            return this.mob.shouldEscapePowderSnow() || this.mob.isOnFire();
-        }
-    }
 }

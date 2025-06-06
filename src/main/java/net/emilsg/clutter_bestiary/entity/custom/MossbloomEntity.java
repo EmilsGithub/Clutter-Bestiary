@@ -1,7 +1,7 @@
 package net.emilsg.clutter_bestiary.entity.custom;
 
 import net.emilsg.clutter_bestiary.entity.ModEntityTypes;
-import net.emilsg.clutter_bestiary.entity.custom.goal.AnimalTrackedFleeGoal;
+import net.emilsg.clutter_bestiary.entity.custom.goal.TrackedFleeGoal;
 import net.emilsg.clutter_bestiary.entity.custom.goal.MossbloomDropHornsGoal;
 import net.emilsg.clutter_bestiary.entity.custom.goal.WanderAroundFarOftenGoal;
 import net.emilsg.clutter_bestiary.entity.custom.parent.ParentAnimalEntity;
@@ -79,7 +79,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     public static DefaultAttributeContainer.Builder setAttributes() {
         return ParentAnimalEntity.createMobAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 20D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.2f)
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.15f)
                 .add(EntityAttributes.GENERIC_ATTACK_SPEED, 1.0f)
                 .add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.5f)
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 6.0f)
@@ -129,7 +129,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
 
             child.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
             world.spawnEntityAndPassengers(child);
-            world.sendEntityStatus(this, (byte) 18);
+            world.sendEntityStatus(this, EntityStatuses.ADD_BREEDING_PARTICLES);
             if (world.getGameRules().getBoolean(GameRules.DO_MOB_LOOT)) {
                 world.spawnEntity(new ExperienceOrbEntity(world, this.getX(), this.getY(), this.getZ(), this.getRandom().nextInt(7) + 1));
             }
@@ -191,8 +191,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     @Override
     public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
         MossbloomEntity child = ModEntityTypes.MOSSBLOOM.create(world);
-        assert child != null;
-        child.setVariant(MossbloomVariant.getRandom());
+        if (child != null) child.setVariant(MossbloomVariant.getRandom());
         return child;
     }
 
@@ -438,7 +437,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     protected void initGoals() {
         this.goalSelector.add(0, new MossbloomDropHornsGoal(this));
         this.goalSelector.add(1, new SwimGoal(this));
-        this.goalSelector.add(2, new AnimalTrackedFleeGoal(this, 2));
+        this.goalSelector.add(2, new TrackedFleeGoal(this, 2.5f));
         this.goalSelector.add(3, new AnimalMateGoal(this, 1));
         this.goalSelector.add(4, new TemptGoal(this, 1.25, Ingredient.ofItems(Items.BIG_DRIPLEAF), false));
         this.goalSelector.add(5, new FollowParentGoal(this, 1.0));
@@ -464,7 +463,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
             f = 0.0F;
         }
 
-        this.limbAnimator.updateLimbs(f * 1.5f, 0.3F);
+        this.limbAnimator.updateLimbs(f * 1.5f, 0.5F);
     }
 
     private void pickRandomIdleAnim(int i) {
@@ -499,51 +498,54 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         }
     }
 
-    // Tameable
-
     @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack itemstack = player.getStackInHand(hand);
-        Item item = itemstack.getItem();
+        ItemStack itemStack = player.getStackInHand(hand);
+        Item item = itemStack.getItem();
 
-        Item itemForTaming = tamingItem;
-
-        if(this.isTamed() && hand == Hand.MAIN_HAND && item != itemForTaming) {
-            if (!player.isSneaking() && !this.getIsSaddled()) {
-                if (itemstack.isOf(Items.SADDLE)) {
-                    if (!player.getAbilities().creativeMode) itemstack.decrement(1);
+        if (this.isTamed() && hand == Hand.MAIN_HAND) {
+            if (!player.isSneaking()) {
+                if (!this.getIsSaddled() && itemStack.isOf(Items.SADDLE)) {
+                    if (!player.getAbilities().creativeMode) itemStack.decrement(1);
                     this.setIsSaddled(true);
                     this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_PIG_SADDLE, SoundCategory.NEUTRAL, 0.5f, 1.25f);
                     return ActionResult.SUCCESS;
                 }
-            } else if (!player.isSneaking() && itemstack == ItemStack.EMPTY) {
-                this.setRiding(player);
-                return ActionResult.SUCCESS;
-            } else if (item instanceof ShearsItem) {
-                this.setIsSaddled(false);
-                this.dropStack(new ItemStack(Items.SADDLE));
-                this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_MOOSHROOM_SHEAR, SoundCategory.NEUTRAL, 0.5f, 1.25f);
-                return ActionResult.SUCCESS;
-            }
-        } else if(item == itemForTaming && !isTamed()) {
-            if(this.getWorld().isClient()) {
-                return ActionResult.CONSUME;
-            } else {
-                if (!player.getAbilities().creativeMode) itemstack.decrement(1);
-
-                if (random.nextInt(8) == 0) {
-                    super.setOwner(player);
-                    this.navigation.recalculatePath();
-                    this.setTarget(null);
-                    this.getWorld().sendEntityStatus(this, (byte)7);
+                if (itemStack.isEmpty()) {
+                    this.setRiding(player);
+                    return ActionResult.SUCCESS;
                 }
+            }
 
+            if (item instanceof ShearsItem) {
+                this.setIsSaddled(false);
+                itemStack.damage(1, player, (p) -> p.sendEquipmentBreakStatus(EquipmentSlot.MAINHAND));
+                this.dropStack(new ItemStack(Items.SADDLE), 0.5F);
+                this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_MOOSHROOM_SHEAR, SoundCategory.NEUTRAL, 0.5f, 1.25f);
                 return ActionResult.SUCCESS;
             }
         }
 
+        if (!this.isTamed() && item == tamingItem) {
+            if (this.getWorld().isClient()) return ActionResult.CONSUME;
+
+            if (!player.getAbilities().creativeMode) itemStack.decrement(1);
+            this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_HORSE_EAT, SoundCategory.NEUTRAL, 0.5f, 1.75f);
+
+            if (random.nextInt(8) == 0) {
+                super.setOwner(player);
+                this.navigation.recalculatePath();
+                this.setTarget(null);
+                this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
+            } else {
+                this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_NEGATIVE_PLAYER_REACTION_PARTICLES);
+            }
+            return ActionResult.SUCCESS;
+        }
+
         return super.interactMob(player, hand);
     }
+
 
     @Override
     @Nullable
@@ -590,7 +592,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
 
                 boolean sprinting = MinecraftClient.getInstance().options.sprintKey.isPressed();
 
-                if (sprinting) newSpeed *= 1.5F;
+                if (sprinting) newSpeed *= 1.4F;
                 this.setIsSprinting(sprinting);
 
                 this.setMovementSpeed(newSpeed);

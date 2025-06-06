@@ -3,23 +3,19 @@ package net.emilsg.clutter_bestiary.entity.client.render.feature;
 import net.emilsg.clutter_bestiary.entity.client.model.ChameleonModel;
 import net.emilsg.clutter_bestiary.entity.custom.ChameleonEntity;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.LeavesBlock;
+import net.minecraft.block.FlowerBlock;
 import net.minecraft.block.MapColor;
-import net.minecraft.client.color.world.BiomeColors;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.feature.FeatureRenderer;
 import net.minecraft.client.render.entity.feature.FeatureRendererContext;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
-
-import java.awt.*;
-
 
 public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEntity, ChameleonModel<ChameleonEntity>> {
 
@@ -27,49 +23,58 @@ public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEnti
         super(context);
     }
 
-    public BlockState getBelowState(ChameleonEntity entity) {
-        World world = entity.getEntityWorld();
-        BlockPos entityPos = entity.getBlockPos();
-        BlockPos groundPos = world.raycast(new RaycastContext(
-                entityPos.toCenterPos(),
-                entityPos.add(0, World.MIN_Y - entityPos.getY(), 0).toCenterPos(),
-                RaycastContext.ShapeType.COLLIDER,
-                RaycastContext.FluidHandling.ANY,
-                entity
-        )).getBlockPos();
+    private static int getColor(ChameleonEntity chameleonEntity) {
+        if(chameleonEntity.isDead()) return 0xFF7070;
 
-        return world.getBlockState(groundPos);
-    }
+        World world = chameleonEntity.getWorld();
+        BlockPos entityPos = chameleonEntity.getBlockPos();
 
-    @Override
-    public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, ChameleonEntity entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        Color chameleonColor = getChameleonColor(entity);
-        float red = chameleonColor.getRed() / 255.0f;
-        float green = chameleonColor.getGreen() / 255.0f;
-        float blue = chameleonColor.getBlue() / 255.0f;
+        BlockState blockState = world.getBlockState(entityPos);
+        BlockPos blockColorPos = entityPos;
 
-        VertexConsumer vertexConsumer = vertexConsumers.getBuffer(this.getContextModel().getLayer(this.getTexture(entity)));
-        this.getContextModel().render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, red, green, blue, 0.25f);
-    }
+        if (blockState.isAir() || blockState.getBlock() instanceof FlowerBlock) {
+            BlockPos belowPos = entityPos.down();
+            BlockState belowState = world.getBlockState(belowPos);
 
-    private Color getChameleonColor(ChameleonEntity chameleon) {
-        BlockPos chameleonPos = chameleon.getBlockPos();
-        BlockState belowState = getBelowState(chameleon);
+            if (belowState.isAir()) {
+                return chameleonEntity.getTargetColor();
+            }
 
-        int colorInt = 0;
-        MapColor mapColor = belowState.getBlock().getDefaultMapColor();
-
-        if (belowState.getBlock() instanceof LeavesBlock leavesBlock) {
-            colorInt = BiomeColors.getFoliageColor(chameleon.getWorld(), chameleonPos);
-            if (leavesBlock == Blocks.CHERRY_LEAVES) colorInt = Color.PINK.getRGB();
-        } else if (belowState.isOf(Blocks.GRASS_BLOCK)) {
-            colorInt = BiomeColors.getGrassColor(chameleon.getWorld(), chameleonPos);
-            if (belowState.get(Properties.SNOWY)) colorInt = Color.WHITE.getRGB();
-        } else if (mapColor != null) {
-            colorInt = mapColor.color;
+            blockState = belowState;
+            blockColorPos = belowPos;
         }
 
+        BlockColors blockColorProvider = MinecraftClient.getInstance().getBlockColors();
+        int color = -1;
 
-        return new Color(colorInt);
+        if (blockColorProvider != null) {
+            color = blockColorProvider.getColor(blockState, world, blockColorPos, 1);
+        }
+
+        if (color == -1 || color == 0) {
+            MapColor mapColor = blockState.getMapColor(world, blockColorPos);
+            color = (mapColor != null && mapColor.color != 0) ? mapColor.color : 0x90C47C;
+        }
+        return color;
     }
+
+
+    @Override
+    public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, ChameleonEntity chameleonEntity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
+        int color = getColor(chameleonEntity);
+
+        if (color != chameleonEntity.getTargetColor()) {
+            chameleonEntity.setTargetColor(color);
+        }
+
+        int currentColor = chameleonEntity.getCurrentColor();
+
+        float r = ((currentColor >> 16) & 0xFF) / 255.0f;
+        float g = ((currentColor >> 8) & 0xFF) / 255.0f;
+        float b = (currentColor & 0xFF) / 255.0f;
+
+        VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(this.getTexture(chameleonEntity)));
+        this.getContextModel().render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, r, g, b, 1.0f);
+    }
+
 }

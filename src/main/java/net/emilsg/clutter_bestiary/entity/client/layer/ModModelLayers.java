@@ -23,5 +23,7 @@ public class ModModelLayers {
     public static final EntityModelLayer POTION_SAC = new EntityModelLayer(new Identifier(ClutterBestiary.MOD_ID, "potion_sac"), "main");
     public static final EntityModelLayer DRAGONFLY = new EntityModelLayer(new Identifier(ClutterBestiary.MOD_ID, "dragonfly"), "main");
     public static final EntityModelLayer BOOPLET = new EntityModelLayer(new Identifier(ClutterBestiary.MOD_ID, "booplet"), "main");
+    public static final EntityModelLayer KOI = new EntityModelLayer(new Identifier(ClutterBestiary.MOD_ID, "koi"), "main");
+    public static final EntityModelLayer KOI_PATTERN = new EntityModelLayer(new Identifier(ClutterBestiary.MOD_ID, "koi"), "pattern");
 
 }

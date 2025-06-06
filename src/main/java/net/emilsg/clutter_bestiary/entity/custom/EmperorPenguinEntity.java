@@ -145,7 +145,7 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
             f = 0.0f;
         }
 
-        this.limbAnimator.updateLimbs(f, 1f);
+        this.limbAnimator.updateLimbs(f * 1.5f, 0.3F);
     }
 
     private void pickRandomIdleAnim(int i) {

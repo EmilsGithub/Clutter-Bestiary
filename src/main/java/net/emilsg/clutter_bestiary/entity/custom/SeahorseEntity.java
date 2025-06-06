@@ -64,8 +64,7 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
-        return SeahorseEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 2D);
+        return SeahorseEntity.createMobAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 2D);
     }
 
     public static boolean isValidNaturalSpawn(EntityType<? extends WaterCreatureEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
