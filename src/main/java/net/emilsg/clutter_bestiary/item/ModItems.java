@@ -31,6 +31,7 @@ public class ModItems {
     public static final Item LEVITATING_ECHOFIN_BUCKET = registerItem("levitating_echofin_bucket", new EchofinBucketItem(new FabricItemSettings().recipeRemainder(Items.BUCKET).maxCount(1), EchofinVariant.LEVITATING));
     public static final Item CHORUS_ECHOFIN_BUCKET = registerItem("chorus_echofin_bucket", new EchofinBucketItem(new FabricItemSettings().recipeRemainder(Items.BUCKET).maxCount(1), EchofinVariant.CHORUS));
     public static final Item SEAHORSE_BUCKET = registerItem("seahorse_bucket", new SeahorseBucketItem(ModEntityTypes.SEAHORSE, Fluids.WATER, SoundEvents.ITEM_BUCKET_EMPTY_FISH, new Item.Settings().maxCount(1)));
+    public static final Item KOI_BUCKET = registerItem("koi_bucket", new KoiBucketItem(ModEntityTypes.KOI, Fluids.WATER, SoundEvents.ITEM_BUCKET_EMPTY_FISH, new Item.Settings().maxCount(1)));
 
     public static final Item BUTTERFLY_COCOON = registerItem("butterfly_cocoon", new AliasedBlockItem(ModBlocks.BUTTERFLY_COCOON, new FabricItemSettings()));
     public static final Item KIWI_BIRD_EGG = registerItem("kiwi_bird_egg", new AliasedBlockItem(ModBlocks.KIWI_BIRD_EGG, new FabricItemSettings()));
@@ -79,11 +80,11 @@ public class ModItems {
     public static final Item POTION_WASP_SPAWN_EGG = registerItem("potion_wasp_spawn_egg", new BestiarySpawnEggItem(ModEntityTypes.POTION_WASP, 867453, 2357421, new FabricItemSettings()));
     public static final Item DRAGONFLY_SPAWN_EGG = registerItem("dragonfly_spawn_egg", new BestiarySpawnEggItem(ModEntityTypes.DRAGONFLY, 2463756, 87652394, new FabricItemSettings()));
     public static final Item BOOPLET_SPAWN_EGG = registerItem("booplet_spawn_egg", new BestiarySpawnEggItem(ModEntityTypes.BOOPLET, 5641645, 4241312, new FabricItemSettings()));
-    public static final Item KOI_SPAWN_EGG = registerItem("koi_spawn_egg", new BestiarySpawnEggItem(ModEntityTypes.KOI, 5641645, 4241312, new FabricItemSettings()));
+    public static final Item KOI_SPAWN_EGG = registerItem("koi_spawn_egg", new BestiarySpawnEggItem(ModEntityTypes.KOI, 0x3E4549, 0xFF2632, new FabricItemSettings()));
 
 
     private static Item registerItem(String name, Item item) {
-        return Registry.register(Registries.ITEM, new Identifier(ClutterBestiary.MOD_ID, name), item);
+        return Registry.register(Registries.ITEM, Identifier.of(ClutterBestiary.MOD_ID, name), item);
     }
 
     public static void register() {

@@ -84,6 +84,11 @@ public abstract class AbstractNetherNewtEntity extends ParentAnimalEntity implem
         world.spawnEntityAndPassengers(crimsonNewtEntity);
     }
 
+    @Override
+    protected void playHurtSound(DamageSource source) {
+        super.playHurtSound(source);
+    }
+
     public boolean canBeLeashedBy(PlayerEntity player) {
         return !this.hasAngerTime() && super.canBeLeashedBy(player);
     }

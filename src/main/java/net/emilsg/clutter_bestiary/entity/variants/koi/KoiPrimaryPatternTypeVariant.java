@@ -1,6 +1,7 @@
 package net.emilsg.clutter_bestiary.entity.variants.koi;
 
 import net.emilsg.clutter_bestiary.ClutterBestiary;
+import net.emilsg.clutter_bestiary.entity.variants.BestiaryBasicVariant;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
@@ -8,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public enum KoiPrimaryPatternTypeVariant {
+public enum KoiPrimaryPatternTypeVariant implements BestiaryBasicVariant {
     NONE("none", Formatting.STRIKETHROUGH),
     PATCHES("patches", Formatting.ITALIC),
     SPOTTED("spotted", Formatting.ITALIC),
@@ -23,7 +24,7 @@ public enum KoiPrimaryPatternTypeVariant {
     }
 
     public static KoiPrimaryPatternTypeVariant fromId(String id) {
-        return Arrays.stream(values()).filter(v -> v.getId().equals(id)).findFirst().orElse(NONE);
+        return Arrays.stream(values()).filter(v -> v.getID().equals(id)).findFirst().orElse(NONE);
     }
 
     public static KoiPrimaryPatternTypeVariant getRandom() {
@@ -31,7 +32,7 @@ public enum KoiPrimaryPatternTypeVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
-    public String getId() {
+    public String getID() {
         return ClutterBestiary.MOD_ID + ":" + this.getName();
     }
 
@@ -44,6 +45,6 @@ public enum KoiPrimaryPatternTypeVariant {
     }
 
     public Identifier getTextureLocation() {
-        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/koi/koi_primary_pattern_" + getName() + ".png");
+        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/koi/koi_primary_pattern_" + getName() + ".png");
     }
 }

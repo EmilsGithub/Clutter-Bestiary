@@ -24,7 +24,7 @@ public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEnti
     }
 
     private static int getColor(ChameleonEntity chameleonEntity) {
-        if(chameleonEntity.isDead()) return 0xFF7070;
+        if (chameleonEntity.isDead()) return 0xFF7070;
 
         World world = chameleonEntity.getWorld();
         BlockPos entityPos = chameleonEntity.getBlockPos();

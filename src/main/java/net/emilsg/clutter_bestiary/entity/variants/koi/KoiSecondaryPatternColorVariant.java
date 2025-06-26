@@ -1,14 +1,15 @@
 package net.emilsg.clutter_bestiary.entity.variants.koi;
 
 import net.emilsg.clutter_bestiary.ClutterBestiary;
+import net.emilsg.clutter_bestiary.entity.variants.BestiaryBasicVariant;
 import net.minecraft.util.Formatting;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public enum KoiSecondaryPatternColorVariant {
-    BLACK("black", Formatting.BLACK,0x1C2226),
+public enum KoiSecondaryPatternColorVariant implements BestiaryBasicVariant {
+    BLACK("black", Formatting.DARK_GRAY,0x1C2226),
     WHITE("white", Formatting.WHITE,0xC3C3E5);
 
     private final String name;
@@ -22,7 +23,7 @@ public enum KoiSecondaryPatternColorVariant {
     }
 
     public static KoiSecondaryPatternColorVariant fromId(String id) {
-        return Arrays.stream(values()).filter(v -> v.getId().equals(id)).findFirst().orElse(BLACK);
+        return Arrays.stream(values()).filter(v -> v.getID().equals(id)).findFirst().orElse(BLACK);
     }
 
     public static KoiSecondaryPatternColorVariant getRandom() {
@@ -30,7 +31,7 @@ public enum KoiSecondaryPatternColorVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
-    public String getId() {
+    public String getID() {
         return ClutterBestiary.MOD_ID + ":" + this.getName();
     }
 
@@ -39,7 +40,7 @@ public enum KoiSecondaryPatternColorVariant {
         return this.name;
     }
 
-    public Formatting getColorFormatting() {
+    public Formatting getFormatting() {
         return this.colorFormatting;
     }
 

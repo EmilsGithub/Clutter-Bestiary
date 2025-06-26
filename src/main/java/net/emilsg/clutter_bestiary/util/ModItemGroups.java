@@ -16,7 +16,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public class ModItemGroups {
-    public static final RegistryKey<ItemGroup> CLUTTER_BESTIARY = RegistryKey.of(RegistryKeys.ITEM_GROUP, new Identifier(ClutterBestiary.MOD_ID, "clutter-bestiary"));
+    public static final RegistryKey<ItemGroup> CLUTTER_BESTIARY = RegistryKey.of(RegistryKeys.ITEM_GROUP, Identifier.of(ClutterBestiary.MOD_ID, "clutter-bestiary"));
 
     public static void register() {
 
@@ -25,6 +25,7 @@ public class ModItemGroups {
                 .icon(() -> new ItemStack(ModItems.MOSSBLOOM_SPAWN_EGG))
                 .entries((displayContext, entries) -> {
 
+                    entries.add(ModItems.KOI_BUCKET);
                     entries.add(ModItems.SEAHORSE_BUCKET);
                     entries.add(ModItems.CHORUS_ECHOFIN_BUCKET);
                     entries.add(ModItems.LEVITATING_ECHOFIN_BUCKET);

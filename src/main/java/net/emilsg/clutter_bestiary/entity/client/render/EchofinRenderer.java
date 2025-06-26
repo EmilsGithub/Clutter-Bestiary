@@ -14,7 +14,7 @@ public class EchofinRenderer extends MobEntityRenderer<EchofinEntity, EchofinMod
 
     public EchofinRenderer(EntityRendererFactory.Context ctx) {
         super(ctx, new EchofinModel<>(ctx.getPart(ModModelLayers.ECHOFIN)), 0.4f);
-        this.addFeature(new EmissiveRenderer<>(this, EchofinRenderer::getEmissiveTexture));
+        this.addFeature(new EmissiveRenderer<>(this, EchofinRenderer::getEmissiveTexture, 1f));
     }
 
     public static Identifier getEmissiveTexture(EchofinEntity echofinEntity) {

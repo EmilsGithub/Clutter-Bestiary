@@ -11,8 +11,6 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.passive.AnimalEntity;
@@ -65,20 +63,20 @@ public class CapybaraEntity extends ParentTameableEntity {
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
     }
 
-    public void applyEffectToNearbyEntities(Entity centerEntity, StatusEffectInstance effect, double radius) {
+    public void healNearbyEntities(Entity centerEntity, double radius) {
+        if (random.nextInt(1000) != 0) return;
+
         Box area = new Box(
                 centerEntity.getX() - radius, centerEntity.getY() - radius, centerEntity.getZ() - radius,
                 centerEntity.getX() + radius, centerEntity.getY() + radius, centerEntity.getZ() + radius
         );
 
-        List<LivingEntity> nearbyEntities = centerEntity.getWorld().getEntitiesByClass(
-                LivingEntity.class,
-                area,
-                e -> e != centerEntity
-        );
+        List<LivingEntity> nearbyEntities = centerEntity.getWorld().getEntitiesByClass(LivingEntity.class, area, e -> e != centerEntity);
 
         for (LivingEntity entity : nearbyEntities) {
-            entity.addStatusEffect(effect);
+            if (entity.getHealth() < entity.getMaxHealth()) {
+                entity.heal(1);
+            }
         }
     }
 
@@ -204,7 +202,7 @@ public class CapybaraEntity extends ParentTameableEntity {
         if (!this.getWorld().isClient && this.isTamed()) this.setIsSleeping(isForceSleeping());
 
         if (this.isSleeping()) {
-            applyEffectToNearbyEntities(this, new StatusEffectInstance(StatusEffects.REGENERATION, 100, 0), 4);
+            healNearbyEntities(this, 4);
         }
     }
 
@@ -257,7 +255,7 @@ public class CapybaraEntity extends ParentTameableEntity {
             f = 0.0F;
         }
 
-        this.limbAnimator.updateLimbs(f, 0.2F);
+        this.limbAnimator.updateLimbs(f * 2f, 0.3F);
     }
 
     private void pickRandomIdleAnim(boolean bl) {
@@ -293,6 +291,15 @@ public class CapybaraEntity extends ParentTameableEntity {
         @Override
         public boolean canStart() {
             return super.canStart() && !isSleeping();
+        }
+
+        @Override
+        public void tick() {
+            if (isSleeping()) {
+                this.stop();
+                mob.getNavigation().stop();
+            }
+            super.tick();
         }
     }
 

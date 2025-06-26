@@ -68,7 +68,7 @@ public enum ButterflyVariant {
     }
 
     public Identifier getTextureLocation() {
-        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/butterfly/" + getName() + "_butterfly.png");
+        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/butterfly/" + getName() + "_butterfly.png");
     }
 
     public boolean isFireImmune() {

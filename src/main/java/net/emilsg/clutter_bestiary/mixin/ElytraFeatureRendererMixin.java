@@ -44,7 +44,7 @@ public abstract class ElytraFeatureRendererMixin {
 
         if (elytraItem instanceof ButterflyElytraItem butterflyElytraItem) {
             String type = butterflyElytraItem.getType();
-            return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/elytra/" + type + ".png");
+            return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/elytra/" + type + ".png");
         }
 
         return value;

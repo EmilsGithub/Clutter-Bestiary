@@ -83,6 +83,11 @@ public class ModEntitySpawns {
                     ModEntityTypes.MANTA_RAY, 20, 1, 3);
         }
 
+        if (ModConfigManager.get(Configs.spawnKoi, true)) {
+            BiomeModifications.addSpawn(BiomeSelectors.tag(ModBiomeTags.SPAWNS_KOI), SpawnGroup.WATER_AMBIENT,
+                    ModEntityTypes.KOI, 20, 4, 7);
+        }
+
         SpawnRestriction.register(ModEntityTypes.MOSSBLOOM, SpawnRestriction.Location.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, MossbloomEntity::isValidNaturalSpawn);
         SpawnRestriction.register(ModEntityTypes.CHAMELEON, SpawnRestriction.Location.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, ChameleonEntity::isValidNaturalSpawn);
         SpawnRestriction.register(ModEntityTypes.KIWI_BIRD, SpawnRestriction.Location.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, KiwiBirdEntity::isValidNaturalSpawn);
@@ -92,6 +97,7 @@ public class ModEntitySpawns {
         SpawnRestriction.register(ModEntityTypes.JELLYFISH, SpawnRestriction.Location.IN_WATER, Heightmap.Type.OCEAN_FLOOR, JellyfishEntity::isValidNaturalSpawn);
         SpawnRestriction.register(ModEntityTypes.SEAHORSE, SpawnRestriction.Location.IN_WATER, Heightmap.Type.OCEAN_FLOOR, SeahorseEntity::isValidNaturalSpawn);
         SpawnRestriction.register(ModEntityTypes.MANTA_RAY, SpawnRestriction.Location.IN_WATER, Heightmap.Type.OCEAN_FLOOR, MantaRayEntity::isValidNaturalSpawn);
+        SpawnRestriction.register(ModEntityTypes.KOI, SpawnRestriction.Location.IN_WATER, Heightmap.Type.OCEAN_FLOOR, KoiEntity::isValidNaturalSpawn);
 
         SpawnRestriction.register(ModEntityTypes.BUTTERFLY, SpawnRestriction.Location.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, ButterflyEntity::isValidSpawn);
         SpawnRestriction.register(ModEntityTypes.CRIMSON_NEWT, SpawnRestriction.Location.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, CrimsonNewtEntity::isValidNaturalSpawn);

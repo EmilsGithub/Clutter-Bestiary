@@ -44,7 +44,8 @@ public class ItemTagDataGen extends FabricTagProvider<Item> {
         );
 
         getOrCreateTagBuilder(ModItemTags.C_ENTITY_WATER_BUCKETS).add(
-                ModItems.SEAHORSE_BUCKET
+                ModItems.SEAHORSE_BUCKET,
+                ModItems.KOI_BUCKET
         );
 
         getOrCreateTagBuilder(ModItemTags.C_SEEDS).add(

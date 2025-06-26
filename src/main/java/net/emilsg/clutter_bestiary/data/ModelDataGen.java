@@ -55,9 +55,9 @@ public class ModelDataGen extends FabricModelProvider {
 
     private void registerElytra(ItemModelGenerator itemGen, Item elytra) {
         String idString = ModelIds.getItemModelId(elytra).getPath().replace("item/", "item/broken_");
-        TextureMap brokenMap = (new TextureMap()).put(TextureKey.LAYER0, new Identifier(ClutterBestiary.MOD_ID, idString));
+        TextureMap brokenMap = (new TextureMap()).put(TextureKey.LAYER0, Identifier.of(ClutterBestiary.MOD_ID, idString));
 
-        Models.GENERATED.upload(new Identifier(ClutterBestiary.MOD_ID, idString), brokenMap, itemGen.writer);
+        Models.GENERATED.upload(Identifier.of(ClutterBestiary.MOD_ID, idString), brokenMap, itemGen.writer);
 
         Models.GENERATED.upload(ModelIds.getItemModelId(elytra), TextureMap.layer0(elytra), itemGen.writer, (id, textures) -> {
             JsonObject jsonObject = Models.GENERATED.createJson(id, textures);
@@ -76,6 +76,6 @@ public class ModelDataGen extends FabricModelProvider {
     }
 
     private void registerSpawnEggItem(ItemModelGenerator itemModelGenerator, Item egg) {
-        itemModelGenerator.register(egg, new Model(Optional.of(new Identifier("item/template_spawn_egg")), Optional.empty()));
+        itemModelGenerator.register(egg, new Model(Optional.of(Identifier.of("minecraft","item/template_spawn_egg")), Optional.empty()));
     }
 }

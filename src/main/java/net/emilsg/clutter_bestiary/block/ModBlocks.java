@@ -20,7 +20,7 @@ public class ModBlocks {
     public static final Block EMPEROR_PENGUIN_EGG = registerBlockWithoutItem("emperor_penguin_egg", new HatchingEggBlock(FabricBlockSettings.copy(Blocks.SNIFFER_EGG).nonOpaque(), ModEntityTypes.EMPEROR_PENGUIN, 8, ModBlockTags.EMPEROR_PENGUIN_EGG_HATCH_BOOST, 6.5, 5));
 
     private static Block registerBlockWithoutItem(String name, Block block) {
-        return Registry.register(Registries.BLOCK, new Identifier(ClutterBestiary.MOD_ID, name), block);
+        return Registry.register(Registries.BLOCK, Identifier.of(ClutterBestiary.MOD_ID, name), block);
     }
 
     public static void register() {

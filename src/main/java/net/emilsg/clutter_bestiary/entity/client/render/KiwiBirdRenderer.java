@@ -11,7 +11,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 
 public class KiwiBirdRenderer extends MobEntityRenderer<KiwiBirdEntity, KiwiBirdModel<KiwiBirdEntity>> {
-    public static final Identifier TEXTURE = new Identifier(ClutterBestiary.MOD_ID, "textures/entity/kiwi_bird/kiwi_bird.png");
+    public static final Identifier TEXTURE = Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/kiwi_bird/kiwi_bird.png");
 
     public KiwiBirdRenderer(EntityRendererFactory.Context ctx) {
         super(ctx, new KiwiBirdModel<>(ctx.getPart(ModModelLayers.KIWI_BIRD)), 0.2f);

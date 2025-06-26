@@ -7,6 +7,7 @@ import net.emilsg.clutter_bestiary.entity.custom.goal.WanderAroundFarOftenGoal;
 import net.emilsg.clutter_bestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutter_bestiary.entity.custom.parent.ParentTameableEntity;
 import net.emilsg.clutter_bestiary.entity.variants.MossbloomVariant;
+import net.emilsg.clutter_bestiary.sound.ModSoundEvents;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -32,7 +33,9 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.stat.Stats;
 import net.minecraft.util.ActionResult;
@@ -64,6 +67,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     public int shakingAnimationTimeout = 0;
     public int earTwitchAnimationTimeout = 0;
 
+    protected int soundTicks;
     protected boolean inAir;
     protected float jumpStrength;
 
@@ -142,9 +146,44 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         return true;
     }
 
+    protected void playStepSound(BlockPos pos, BlockState state) {
+        if (!state.isLiquid()) {
+            BlockState blockState = this.getWorld().getBlockState(pos.up());
+            BlockSoundGroup blockSoundGroup = state.getSoundGroup();
+            if (blockState.isOf(Blocks.SNOW)) {
+                blockSoundGroup = blockState.getSoundGroup();
+            }
+
+            if (this.hasPassengers()) {
+                ++this.soundTicks;
+                if (this.soundTicks > 5 && this.soundTicks % 3 == 0) {
+                    this.playWalkSound(blockSoundGroup);
+                } else if (this.soundTicks <= 5) {
+                    this.playSound(SoundEvents.ENTITY_HORSE_STEP_WOOD, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
+                }
+            } else if (this.isWooden(blockSoundGroup)) {
+                this.playSound(SoundEvents.ENTITY_HORSE_STEP_WOOD, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
+            } else {
+                this.playSound(SoundEvents.ENTITY_HORSE_STEP, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
+            }
+
+        }
+    }
+
+    protected void playWalkSound(BlockSoundGroup group) {
+        this.playSound(SoundEvents.ENTITY_HORSE_GALLOP, group.getVolume() * 0.05F, group.getPitch() + 0.25f);
+        if (this.random.nextInt(10) == 0) {
+            this.playSound(SoundEvents.ENTITY_HORSE_BREATHE, group.getVolume() * 0.6F, group.getPitch() + 0.5f);
+        }
+    }
+
+    private boolean isWooden(BlockSoundGroup soundGroup) {
+        return soundGroup == BlockSoundGroup.WOOD || soundGroup == BlockSoundGroup.NETHER_WOOD || soundGroup == BlockSoundGroup.NETHER_STEM || soundGroup == BlockSoundGroup.CHERRY_WOOD || soundGroup == BlockSoundGroup.BAMBOO_WOOD;
+    }
+
     public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
         if (fallDistance > 1.0F) {
-            this.playSound(SoundEvents.ENTITY_HORSE_LAND, 0.4F, 1.5F);
+            this.playSound(SoundEvents.ENTITY_HORSE_LAND, 0.4F, 1.75F);
         }
 
         int i = this.computeFallDamage(fallDistance, damageMultiplier);
@@ -217,6 +256,11 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
 
     public void setIsShaking(boolean isShaking) {
         this.dataTracker.set(IS_SHAKING, isShaking);
+    }
+
+    @Override
+    protected @Nullable SoundEvent getHurtSound(DamageSource source) {
+        return ModSoundEvents.ENTITY_MOSSBLOOM_HURT;
     }
 
     @Override
@@ -573,7 +617,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
 
     @Override
     public void travel(Vec3d movementInput) {
-        if(this.hasPassengers() && getControllingPassenger() instanceof PlayerEntity) {
+        if (this.hasPassengers() && getControllingPassenger() instanceof PlayerEntity) {
             LivingEntity livingentity = this.getControllingPassenger();
             this.setYaw(livingentity.getYaw());
             this.prevYaw = this.getYaw();

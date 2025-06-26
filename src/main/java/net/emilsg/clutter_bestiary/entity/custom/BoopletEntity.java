@@ -1,8 +1,9 @@
 package net.emilsg.clutter_bestiary.entity.custom;
 
-import net.emilsg.clutter_bestiary.entity.custom.goal.TrackedFleeGoal;
 import net.emilsg.clutter_bestiary.entity.custom.goal.BoopletWanderGoal;
+import net.emilsg.clutter_bestiary.entity.custom.goal.TrackedFleeGoal;
 import net.emilsg.clutter_bestiary.entity.custom.parent.ParentAnimalEntity;
+import net.emilsg.clutter_bestiary.sound.ModSoundEvents;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.goal.LookAroundGoal;
 import net.minecraft.entity.ai.goal.LookAtEntityGoal;
@@ -31,10 +32,12 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
 
     public final AnimationState happyAnimationState = new AnimationState();
     public final AnimationState boopAnimationState = new AnimationState();
+    public final AnimationState swimAnimationState = new AnimationState();
     private boolean isBooped = false;
     private int timeSinceBoop = 0;
     private int happyDanceTimer = 0;
     private int happyAnimationTimer = 0;
+    private int swimAnimationTimeout = 0;
     private boolean isHappy = false;
     private PlayerEntity lastPetPlayer = null;
 
@@ -85,6 +88,10 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
         } else if (player.getStackInHand(Hand.MAIN_HAND).isEmpty()) {
             player.swingHand(Hand.MAIN_HAND);
 
+            if(!player.getWorld().isClient) {
+                this.playSound(ModSoundEvents.ENTITY_BOOPLET_SQUEAK, this.getSoundVolume(), this.getSoundPitch());
+            }
+
             if (this.canBeHappy()) {
                 this.lastPetPlayer = player;
                 this.isHappy = true;
@@ -94,6 +101,7 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
                 this.timeSinceBoop = 0;
             }
             this.getNavigation().stop();
+            return ActionResult.SUCCESS;
         }
         return super.interactMob(player, hand);
     }
@@ -197,6 +205,13 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     private void setupAnimationStates() {
         if (happyAnimationTimer > 0) happyAnimationTimer--;
         if (happyAnimationTimer <= 0 || this.hurtTime > 0) this.happyAnimationState.stop();
+
+        if(swimAnimationTimeout <= 0 && this.isTouchingWater()) {
+            this.swimAnimationTimeout = 20;
+            this.swimAnimationState.start(this.age);
+        } else {
+            --this.swimAnimationTimeout;
+        }
     }
 
     private void stopAndOrRestartBoopAnimation(boolean restart) {

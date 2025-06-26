@@ -18,9 +18,11 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
+import org.jetbrains.annotations.Nullable;
 
 public class HatchingEggBlock extends Block {
     public static final IntProperty HATCH = Properties.HATCH;
@@ -30,7 +32,7 @@ public class HatchingEggBlock extends Block {
     private final double height;
     private final double width;
 
-    public HatchingEggBlock(Settings settings, EntityType<?> type, float averageHatchTimeInMinutes, TagKey<Block> hatchBoostTag, double height, double width) {
+    public HatchingEggBlock(Settings settings, EntityType<?> type, float averageHatchTimeInMinutes, @Nullable TagKey<Block> hatchBoostTag, double height, double width) {
         super(settings);
         this.setDefaultState((this.stateManager.getDefaultState()).with(HATCH, 0));
         this.type = type;
@@ -46,6 +48,7 @@ public class HatchingEggBlock extends Block {
 
     @Override
     public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+        if (width <= 0 || height <= 0) return VoxelShapes.fullCube();
         return Block.createCuboidShape(8 - (width / 2), 0, 8 - (width / 2), 8 + (width / 2), height, 8 + (width / 2));
     }
 
@@ -60,6 +63,7 @@ public class HatchingEggBlock extends Block {
     }
 
     public boolean isAboveHatchBooster(BlockView world, BlockPos pos) {
+        if(hatchBoostTag == null) return false;
         return world.getBlockState(pos.down()).isIn(hatchBoostTag);
     }
 

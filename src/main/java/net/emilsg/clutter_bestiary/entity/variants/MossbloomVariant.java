@@ -32,7 +32,7 @@ public enum MossbloomVariant {
     @Nullable
     public Identifier getEmissiveTextureLocation() {
         if (this.getShouldGlow()) {
-            return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/" + getName() + "_mossbloom_emissive.png");
+            return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/" + getName() + "_mossbloom_emissive.png");
         }
         return null;
     }
@@ -50,6 +50,6 @@ public enum MossbloomVariant {
     }
 
     public Identifier getTextureLocation() {
-        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/" + getName() + "_mossbloom.png");
+        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/" + getName() + "_mossbloom.png");
     }
 }

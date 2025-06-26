@@ -37,6 +37,7 @@ public class ButterflyBottleItem extends Item {
     }
 
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+        super.appendTooltip(stack, world, tooltip, context);
         NbtCompound nbtCompound = stack.getNbt();
         if (nbtCompound != null && nbtCompound.contains("Variant")) {
             String variantStringId = nbtCompound.getString("Variant");

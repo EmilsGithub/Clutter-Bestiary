@@ -14,7 +14,7 @@ public class MossbloomRenderer extends MobEntityRenderer<MossbloomEntity, Mossbl
 
     public MossbloomRenderer(EntityRendererFactory.Context ctx) {
         super(ctx, new MossbloomModel<>(ctx.getPart(ModModelLayers.MOSSBLOOM)), 0.5f);
-        this.addFeature(new EmissiveRenderer<>(this, MossbloomRenderer::getEmissiveTexture));
+        this.addFeature(new EmissiveRenderer<>(this, MossbloomRenderer::getEmissiveTexture, 1f));
     }
 
     private static Identifier getEmissiveTexture(MossbloomEntity mossbloomEntity) {

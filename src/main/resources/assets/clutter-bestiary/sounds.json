@@ -12,10 +12,25 @@
       "clutter-bestiary:nether_newt_hurt"
     ]
   },
-  "potion_wasp_fly": {
-    "subtitle": "sounds.clutter-bestiary.potion_wasp_fly",
+  "entity_potion_wasp_fly": {
+    "subtitle": "sounds.clutter-bestiary.entity_potion_wasp_fly",
     "sounds": [
       "clutter-bestiary:potion_wasp_fly"
+    ]
+  },
+  "entity_booplet_squeak": {
+    "subtitle": "sounds.clutter-bestiary.entity_booplet_squeak",
+    "sounds": [
+      "clutter-bestiary:booplet_squeak_one",
+      "clutter-bestiary:booplet_squeak_two",
+      "clutter-bestiary:booplet_squeak_three"
+    ]
+  },
+  "entity_mossbloom_hurt": {
+    "subtitle": "sounds.clutter-bestiary.entity_mossbloom_hurt",
+    "sounds": [
+      "clutter-bestiary:mossbloom_hurt_one",
+      "clutter-bestiary:mossbloom_hurt_two"
     ]
   }
 }

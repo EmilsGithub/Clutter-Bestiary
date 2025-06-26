@@ -127,6 +127,13 @@ public class BiomeTagDataGen extends FabricTagProvider<Biome> {
                 BiomeKeys.LUSH_CAVES
         );
 
+        getOrCreateTagBuilder(ModBiomeTags.SPAWNS_KOI)
+                .add(
+                        BiomeKeys.MANGROVE_SWAMP
+                )
+                .addOptional(Identifier.of("biomesoplenty", "hot_springs"))
+        ;
+
     }
 
     @Override

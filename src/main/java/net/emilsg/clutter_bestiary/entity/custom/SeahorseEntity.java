@@ -57,7 +57,6 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
     private int swimmingAnimationTimeout = 0;
     private int flopAnimationTimeout = 0;
 
-
     public SeahorseEntity(EntityType<? extends FishEntity> entityType, World world) {
         super(entityType, world);
         this.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
@@ -457,6 +456,17 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
         this.goalSelector.add(4, new TemptGoal(this, 1.25D, Ingredient.ofItems(Items.SEA_PICKLE), false));
         this.goalSelector.add(5, new SwimToRandomPlaceGoal(this, 0.5D));
         this.goalSelector.add(6, new SeahorseMoveToCoralGoal(this, 0.5D, 8));
+    }
+
+    @Nullable
+    @Override
+    protected SoundEvent getDeathSound() {
+        return SoundEvents.ENTITY_SALMON_DEATH;
+    }
+
+    @Override
+    protected @Nullable SoundEvent getHurtSound(DamageSource source) {
+        return SoundEvents.ENTITY_SALMON_HURT;
     }
 
     @Override

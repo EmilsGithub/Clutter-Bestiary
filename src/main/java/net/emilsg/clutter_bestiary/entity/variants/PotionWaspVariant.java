@@ -57,6 +57,6 @@ public enum PotionWaspVariant {
     }
 
     public Identifier getTextureLocation() {
-        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/potion_wasp/" + getName() + "_potion_wasp.png");
+        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/potion_wasp/" + getName() + "_potion_wasp.png");
     }
 }

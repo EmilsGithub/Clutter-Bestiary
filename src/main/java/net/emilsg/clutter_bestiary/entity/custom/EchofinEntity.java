@@ -76,6 +76,8 @@ public class EchofinEntity extends ParentAnimalEntity {
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
     }
 
+
+
     public static boolean isValidSpawn(EntityType<? extends ParentAnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
         return world.getBlockState(pos.down()).isIn(ModBlockTags.ECHOFINS_SPAWN_ON);
     }
@@ -274,13 +276,12 @@ public class EchofinEntity extends ParentAnimalEntity {
     @Nullable
     @Override
     protected SoundEvent getDeathSound() {
-        return SoundEvents.ENTITY_COD_DEATH;
+        return SoundEvents.ENTITY_SALMON_DEATH;
     }
 
-    @Nullable
     @Override
-    protected SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.BLOCK_WOOL_HIT;
+    protected @Nullable SoundEvent getHurtSound(DamageSource source) {
+        return SoundEvents.ENTITY_SALMON_HURT;
     }
 
     protected void initDataTracker() {

@@ -27,7 +27,7 @@ public enum EchofinVariant {
     }
 
     public Identifier getEmissiveTextureLocation() {
-        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/echofin/" + getName() + "_echofin_emissive.png");
+        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/echofin/" + getName() + "_echofin_emissive.png");
     }
 
     public String getId() {
@@ -39,6 +39,6 @@ public enum EchofinVariant {
     }
 
     public Identifier getTextureLocation() {
-        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/echofin/" + getName() + "_echofin.png");
+        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/echofin/" + getName() + "_echofin.png");
     }
 }

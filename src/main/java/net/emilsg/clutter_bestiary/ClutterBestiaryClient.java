@@ -1,22 +1,30 @@
 package net.emilsg.clutter_bestiary;
 
+import net.emilsg.clutter_bestiary.block.custom.ITranslucentRenderer;
 import net.emilsg.clutter_bestiary.entity.ModEntityTypes;
 import net.emilsg.clutter_bestiary.entity.client.layer.ModModelLayers;
 import net.emilsg.clutter_bestiary.entity.client.model.*;
 import net.emilsg.clutter_bestiary.entity.client.player.RendererRegistration;
 import net.emilsg.clutter_bestiary.entity.client.render.*;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.minecraft.block.Block;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.registry.Registries;
 
 public class ClutterBestiaryClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-
         RendererRegistration.register();
         registerEntityModelLayers();
         registerEntityRenderers();
+
+        for (Block block : Registries.BLOCK) {
+            if (block instanceof ITranslucentRenderer) BlockRenderLayerMap.INSTANCE.putBlock(block, RenderLayer.getTranslucent());
+        }
     }
 
 
@@ -40,6 +48,8 @@ public class ClutterBestiaryClient implements ClientModInitializer {
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.DRAGONFLY, DragonflyModel::getTexturedModelData);
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.BOOPLET, BoopletModel::getTexturedModelData);
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.KOI, KoiModel::getTexturedModelData);
+        EntityModelLayerRegistry.registerModelLayer(ModModelLayers.KOI_EGGS, KoiEggsModel::getTexturedModelData);
+
     }
 
     private void registerEntityRenderers() {
@@ -62,5 +72,7 @@ public class ClutterBestiaryClient implements ClientModInitializer {
         EntityRendererRegistry.register(ModEntityTypes.DRAGONFLY, DragonflyRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.BOOPLET, BoopletRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.KOI, KoiRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.KOI_EGGS, KoiEggsRenderer::new);
+
     }
 }

@@ -41,7 +41,7 @@ public class CrimsonNewtEntity extends AbstractNetherNewtEntity {
 
     @Override
     public StatusEffect getOnAttackEffect() {
-        return Registries.STATUS_EFFECT.get(new Identifier("clutter", "vulnerability"));
+        return Registries.STATUS_EFFECT.get(Identifier.of("clutter", "vulnerability"));
     }
 
     @Override

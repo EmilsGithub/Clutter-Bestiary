@@ -15,10 +15,12 @@ import java.util.function.Function;
 
 public class EmissiveRenderer<E extends Entity, EM extends EntityModel<E>> extends FeatureRenderer<E, EM> {
     private final Function<E, Identifier> emissiveTextureProvider;
+    private final float emissiveness;
 
-    public EmissiveRenderer(FeatureRendererContext<E, EM> context, Function<E, Identifier> emissiveTextureProvider) {
+    public EmissiveRenderer(FeatureRendererContext<E, EM> context, Function<E, Identifier> emissiveTextureProvider, float emissiveness) {
         super(context);
         this.emissiveTextureProvider = emissiveTextureProvider;
+        this.emissiveness = emissiveness;
     }
 
     @Override
@@ -27,6 +29,6 @@ public class EmissiveRenderer<E extends Entity, EM extends EntityModel<E>> exten
         if (emissiveTexture == null) return;
         RenderLayer emissiveLayer = RenderLayer.getEyes(emissiveTexture);
         VertexConsumer vertexConsumer = vertexConsumers.getBuffer(emissiveLayer);
-        this.getContextModel().render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 0.25f);
+        this.getContextModel().render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, emissiveness, emissiveness, emissiveness, 1.0f);
     }
 }

@@ -56,6 +56,5 @@ public class ParentAnimalEntity extends AnimalEntity {
         super.initDataTracker();
         this.dataTracker.startTracking(MOVING, false);
         this.dataTracker.startTracking(IS_FLEEING, false);
-
     }
 }

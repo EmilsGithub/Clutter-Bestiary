@@ -36,6 +36,6 @@ public enum JellyfishVariant {
     }
 
     public Identifier getTextureLocation() {
-        return new Identifier(ClutterBestiary.MOD_ID, "textures/entity/jellyfish/" + getName() + "_jellyfish.png");
+        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/jellyfish/" + getName() + "_jellyfish.png");
     }
 }

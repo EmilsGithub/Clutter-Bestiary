@@ -29,7 +29,8 @@ public class BoopletModel<T extends BoopletEntity> extends BestiaryModel<T> {
 
         ModelPartData body = all.addChild("body", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, -5.0F, 0.0F));
 
-        ModelPartData main = body.addChild("main", ModelPartBuilder.create().uv(0, 0).cuboid(-4.0F, -4.0F, -4.0F, 8.0F, 8.0F, 8.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+        ModelPartData main = body.addChild("main", ModelPartBuilder.create().uv(31, 47).cuboid(-4.0F, -4.0F, -4.0F, 8.0F, 8.0F, 8.0F, new Dilation(0.0F))
+                .uv(0, 0).cuboid(-4.0F, -4.0F, -4.0F, 8.0F, 8.0F, 8.0F, new Dilation(0.125F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
 
         ModelPartData leftEar = main.addChild("leftEar", ModelPartBuilder.create().uv(0, 32).cuboid(0.0F, 0.0F, -1.0F, 1.0F, 3.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(4.0F, -2.0F, 0.0F));
 
@@ -39,6 +40,22 @@ public class BoopletModel<T extends BoopletEntity> extends BestiaryModel<T> {
                 .uv(34, 28).cuboid(-1.0F, -1.0F, 0.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.125F)), ModelTransform.of(0.0F, 2.0F, 3.5F, -0.4363F, 0.0F, 0.0F));
 
         ModelPartData fluff = main.addChild("fluff", ModelPartBuilder.create().uv(0, 16).cuboid(-4.0F, -4.0F, -4.0F, 8.0F, 8.0F, 8.0F, new Dilation(0.25F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+
+        ModelPartData eyes = main.addChild("eyes", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 5.0F, 0.0F));
+
+        ModelPartData leftEye = eyes.addChild("leftEye", ModelPartBuilder.create().uv(57, 48).cuboid(-1.0F, -1.0F, 0.2667F, 2.0F, 2.0F, 0.0F, new Dilation(0.0F))
+                .uv(58, 47).cuboid(1.0F, -1.0F, -0.7333F, 0.0F, 2.0F, 1.0F, new Dilation(0.0F))
+                .uv(54, 48).cuboid(-1.0F, -1.0F, -0.7333F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F))
+                .uv(58, 47).cuboid(-1.0F, -1.0F, -0.7333F, 0.0F, 2.0F, 1.0F, new Dilation(0.0F))
+                .uv(56, 48).cuboid(-1.0F, 1.0F, -0.7333F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F))
+                .uv(57, 51).cuboid(-0.5F, -0.5F, 0.1667F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.pivot(2.0F, -5.0F, -3.2667F));
+
+        ModelPartData rightEye = eyes.addChild("rightEye", ModelPartBuilder.create().uv(57, 48).cuboid(-1.0F, -1.0F, 0.2667F, 2.0F, 2.0F, 0.0F, new Dilation(0.0F))
+                .uv(58, 47).cuboid(-1.0F, -1.0F, -0.7333F, 0.0F, 2.0F, 1.0F, new Dilation(0.0F))
+                .uv(56, 48).cuboid(-1.0F, 1.0F, -0.7333F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F))
+                .uv(54, 48).cuboid(-1.0F, -1.0F, -0.7333F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F))
+                .uv(58, 47).cuboid(1.0F, -1.0F, -0.7333F, 0.0F, 2.0F, 1.0F, new Dilation(0.0F))
+                .uv(57, 51).cuboid(-0.5F, -0.5F, 0.1667F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.pivot(-2.0F, -5.0F, -3.2667F));
 
         ModelPartData leftHorn = body.addChild("leftHorn", ModelPartBuilder.create().uv(19, 38).cuboid(-1.0F, -1.5F, -3.0F, 2.0F, 4.0F, 4.0F, new Dilation(0.0F)), ModelTransform.pivot(4.0F, -3.5F, -2.0F));
 
@@ -68,7 +85,11 @@ public class BoopletModel<T extends BoopletEntity> extends BestiaryModel<T> {
     public void setAngles(BoopletEntity boopletEntity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
 
-        this.animateMovement(boopletEntity.isFleeing() ? BoopletEntityAnimations.BOOPLET_RUN : BoopletEntityAnimations.BOOPLET_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
+        if (!boopletEntity.isTouchingWater()) {
+            this.animateMovement(boopletEntity.isFleeing() ? BoopletEntityAnimations.BOOPLET_RUN : BoopletEntityAnimations.BOOPLET_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
+        }
+
+        this.updateAnimation(boopletEntity.swimAnimationState, BoopletEntityAnimations.BOOPLET_SWIM, ageInTicks, 1f);
         this.updateAnimation(boopletEntity.boopAnimationState, BoopletEntityAnimations.BOOPLET_BOOP, ageInTicks, 1f);
         this.updateAnimation(boopletEntity.happyAnimationState, BoopletEntityAnimations.BOOPLET_HAPPY, ageInTicks, 1f);
 

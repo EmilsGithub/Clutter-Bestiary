@@ -7,6 +7,7 @@ import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
@@ -18,15 +19,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PotionSacEntity extends LivingEntity {
+public class PotionSacEntity extends MobEntity {
     private static final TrackedData<String> VARIANT = DataTracker.registerData(PotionSacEntity.class, TrackedDataHandlerRegistry.STRING);
 
-    public PotionSacEntity(EntityType<? extends LivingEntity> entityType, World world) {
+    public PotionSacEntity(EntityType<? extends MobEntity> entityType, World world) {
         super(entityType, world);
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
-        return LivingEntity.createLivingAttributes()
+        return MobEntity.createMobAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 1D);
     }
 

@@ -43,6 +43,7 @@ public class Configs {
     public static final String spawnJellyfishes = ModConfigManager.register("spawn_jellyfishes", true, "Spawn Jellyfishes.").getKey();
     public static final String spawnSeahorses = ModConfigManager.register("spawn_seahorses", true, "Spawn Seahorses.").getKey();
     public static final String spawnMantaRays = ModConfigManager.register("spawn_manta_rays", true, "Spawn Manta Rays.").getKey();
+    public static final String spawnKoi = ModConfigManager.register("spawn_koi", true, "Spawn Koi.").getKey();
     public static final String doTrinketsElytraFlight = ModConfigManager.register("do_trinkets_elytra_flight", true, "Will the Elytra and it´s variants work while worn in the cape slot provided by Trinkets?").getKey();
 
     public static void initConfigs() {

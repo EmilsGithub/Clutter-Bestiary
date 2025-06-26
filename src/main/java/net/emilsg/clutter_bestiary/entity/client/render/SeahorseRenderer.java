@@ -11,10 +11,10 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 
 public class SeahorseRenderer extends MobEntityRenderer<SeahorseEntity, SeahorseModel<SeahorseEntity>> {
-    public static final Identifier YELLOW_TEXTURE = new Identifier(ClutterBestiary.MOD_ID, "textures/entity/seahorse/yellow_seahorse.png");
-    public static final Identifier LIGHT_BLUE_TEXTURE = new Identifier(ClutterBestiary.MOD_ID, "textures/entity/seahorse/light_blue_seahorse.png");
-    public static final Identifier RED_TEXTURE = new Identifier(ClutterBestiary.MOD_ID, "textures/entity/seahorse/red_seahorse.png");
-    public static final Identifier PURPLE_TEXTURE = new Identifier(ClutterBestiary.MOD_ID, "textures/entity/seahorse/purple_seahorse.png");
+    public static final Identifier YELLOW_TEXTURE = Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/seahorse/yellow_seahorse.png");
+    public static final Identifier LIGHT_BLUE_TEXTURE = Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/seahorse/light_blue_seahorse.png");
+    public static final Identifier RED_TEXTURE = Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/seahorse/red_seahorse.png");
+    public static final Identifier PURPLE_TEXTURE = Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/seahorse/purple_seahorse.png");
 
 
     public SeahorseRenderer(EntityRendererFactory.Context ctx) {

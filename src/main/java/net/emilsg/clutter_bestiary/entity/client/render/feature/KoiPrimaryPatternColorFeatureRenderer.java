@@ -20,7 +20,8 @@ public class KoiPrimaryPatternColorFeatureRenderer extends FeatureRenderer<KoiEn
 
     @Override
     public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, KoiEntity koiEntity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
-        if(koiEntity.getPrimaryPatternTypeVariant() == KoiPrimaryPatternTypeVariant.NONE) return;
+        if (koiEntity.getBaseColorVariant().hasSeparateTexture()) return;
+        if (koiEntity.getPrimaryPatternTypeVariant() == KoiPrimaryPatternTypeVariant.NONE) return;
         int patternColor = koiEntity.getPrimaryPatternColorVariant().getColorHex();
 
         float r = ((patternColor >> 16) & 0xFF) / 255.0F;
