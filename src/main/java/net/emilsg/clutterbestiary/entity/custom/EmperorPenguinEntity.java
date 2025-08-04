@@ -1,0 +1,187 @@
+package net.emilsg.clutterbestiary.entity.custom;
+
+import net.emilsg.clutterbestiary.block.ModBlocks;
+import net.emilsg.clutterbestiary.entity.ModEntityTypes;
+import net.emilsg.clutterbestiary.entity.custom.goal.EmperorPenguinLayEggGoal;
+import net.emilsg.clutterbestiary.entity.custom.goal.EmperorPenguinMateGoal;
+import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
+import net.emilsg.clutterbestiary.sound.ModSoundEvents;
+import net.minecraft.entity.AnimationState;
+import net.minecraft.entity.EntityPose;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.goal.*;
+import net.minecraft.entity.ai.pathing.PathNodeType;
+import net.minecraft.entity.attribute.DefaultAttributeContainer;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
+import net.minecraft.entity.passive.PassiveEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.recipe.Ingredient;
+import net.minecraft.registry.tag.ItemTags;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
+
+public class EmperorPenguinEntity extends ParentAnimalEntity {
+    private static final Ingredient BREEDING_INGREDIENT = Ingredient.fromTag(ItemTags.FISHES);
+    private static final TrackedData<Boolean> HAS_EGG = DataTracker.registerData(EmperorPenguinEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final TrackedData<Integer> EGG_TIMER = DataTracker.registerData(EmperorPenguinEntity.class, TrackedDataHandlerRegistry.INTEGER);
+
+    public final AnimationState flapAnimationStateOne = new AnimationState();
+    public final AnimationState flapAnimationStateTwo = new AnimationState();
+    public final AnimationState preenAnimationState = new AnimationState();
+
+    public int randomAnimationTimeout = 0;
+
+    public EmperorPenguinEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
+        super(entityType, world);
+        this.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
+        this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
+        this.setPathfindingPenalty(PathNodeType.DAMAGE_FIRE, -1.0F);
+        this.setPathfindingPenalty(PathNodeType.COCOA, -1.0F);
+        this.setStepHeight(1.0f);
+    }
+
+    public static DefaultAttributeContainer.Builder setAttributes() {
+        return ParentAnimalEntity.createMobAttributes()
+                .add(EntityAttributes.GENERIC_MAX_HEALTH, 16.0D)
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.14f)
+                .add(EntityAttributes.GENERIC_ATTACK_SPEED, 0.5f)
+                .add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.1f)
+                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 4.0f)
+                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    }
+
+    public boolean canEat() {
+        return super.canEat() && !this.hasEgg();
+    }
+
+    @Nullable
+    @Override
+    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return ModEntityTypes.EMPEROR_PENGUIN.create(world);
+    }
+
+    @Override
+    public int getMinAmbientSoundDelay() {
+        return 240;
+    }
+
+    @Override
+    public void playAmbientSound() {
+        SoundEvent soundEvent = this.getAmbientSound();
+        if (soundEvent != null) {
+            this.playSound(soundEvent, this.getSoundVolume(), this.getSoundPitch() + 0.3f);
+        }
+
+    }
+
+    @Override
+    protected @Nullable SoundEvent getAmbientSound() {
+        return ModSoundEvents.ENTITY_EMPEROR_PENGUIN_AMBIENT;
+    }
+
+    public int getEggTimer() {
+        return this.dataTracker.get(EGG_TIMER);
+    }
+
+    public void setEggTimer(int time) {
+        this.dataTracker.set(EGG_TIMER, time);
+    }
+
+    public boolean hasEgg() {
+        return this.dataTracker.get(HAS_EGG);
+    }
+
+    @Override
+    public boolean isBreedingItem(ItemStack stack) {
+        return stack.isIn(ItemTags.FISHES);
+    }
+
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.setHasEgg(nbt.getBoolean("HasEgg"));
+        this.setEggTimer(nbt.getInt("EggTimer"));
+    }
+
+    public void setHasEgg(boolean hasEgg) {
+        this.dataTracker.set(HAS_EGG, hasEgg);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        World world = this.getWorld();
+
+        if (world.isClient) {
+            this.setupAnimationStates();
+        }
+    }
+
+    @Override
+    public void tickMovement() {
+        super.tickMovement();
+
+        if (!this.getWorld().isClient) {
+            if (this.hasEgg()) this.setEggTimer(this.getEggTimer() + 1);
+        }
+    }
+
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putBoolean("HasEgg", this.hasEgg());
+        nbt.putInt("EggTimer", this.getEggTimer());
+    }
+
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(HAS_EGG, false);
+        this.dataTracker.startTracking(EGG_TIMER, 0);
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new SwimGoal(this));
+        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
+        this.goalSelector.add(2, new EmperorPenguinMateGoal(this, 1));
+        this.goalSelector.add(3, new EmperorPenguinLayEggGoal(this, 1, ModBlocks.EMPEROR_PENGUIN_EGG.getDefaultState()));
+        this.goalSelector.add(4, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
+        this.goalSelector.add(5, new FollowParentGoal(this, 1));
+        this.goalSelector.add(6, new WanderAroundFarGoal(this, 1f));
+        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(8, new LookAroundGoal(this));
+    }
+
+    protected void updateLimbs(float v) {
+        float f;
+        if (this.getPose() == EntityPose.STANDING) {
+            f = Math.min(v * 6.0f, 1.0f);
+        } else {
+            f = 0.0f;
+        }
+
+        this.limbAnimator.updateLimbs(f * 1.5f, 0.3F);
+    }
+
+    private void pickRandomIdleAnim(int i) {
+        switch (i) {
+            case 1 -> this.flapAnimationStateTwo.startIfNotRunning(this.age);
+            case 2 -> this.preenAnimationState.startIfNotRunning(this.age);
+            default -> this.flapAnimationStateOne.startIfNotRunning(this.age);
+        }
+    }
+
+    private void setupAnimationStates() {
+        if (this.randomAnimationTimeout <= 0 && random.nextInt(400) == 0 && this.getNavigation().isIdle()) {
+            this.randomAnimationTimeout = 400;
+            this.pickRandomIdleAnim(random.nextInt(3));
+        } else {
+            --this.randomAnimationTimeout;
+        }
+    }
+}

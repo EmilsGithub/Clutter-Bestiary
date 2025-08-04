@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": {
+    "item": "minecraft:cyan_dye"
+  },
+  "base": {
+    "tag": "c:elytra"
+  },
+  "result": {
+    "item": "clutterbestiary:cyan_butterfly_elytra"
+  },
+  "template": {
+    "item": "clutterbestiary:butterfly_elytra_smithing_template"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:campfire_cooking",
+  "category": "food",
+  "cookingtime": 600,
+  "experience": 0.4,
+  "group": "venison_ribs",
+  "ingredient": {
+    "item": "clutterbestiary:raw_venison_ribs"
+  },
+  "result": "clutterbestiary:cooked_venison_ribs"
+}

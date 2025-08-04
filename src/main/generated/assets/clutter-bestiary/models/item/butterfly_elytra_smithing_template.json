@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "clutter-bestiary:item/butterfly_elytra_smithing_template"
-  }
-}

@@ -1,7 +1,7 @@
 {
   "replace": false,
   "values": [
-    "clutter-bestiary:seahorse_bucket",
-    "clutter-bestiary:koi_bucket"
+    "clutterbestiary:seahorse_bucket",
+    "clutterbestiary:koi_bucket"
   ]
 }

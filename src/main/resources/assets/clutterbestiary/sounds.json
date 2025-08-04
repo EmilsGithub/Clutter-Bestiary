@@ -1,0 +1,57 @@
+{
+  "entity_kiwi_call": {
+    "subtitle": "sounds.clutterbestiary.entity_kiwi_call",
+    "sounds": [
+      "clutterbestiary:kiwi_call_one",
+      "clutterbestiary:kiwi_call_two"
+    ]
+  },
+  "entity_nether_newt_hurt": {
+    "subtitle": "sounds.clutterbestiary.entity_nether_newt_hurt",
+    "sounds": [
+      "clutterbestiary:nether_newt_hurt"
+    ]
+  },
+  "entity_nether_newt_ambient": {
+    "subtitle": "sounds.clutterbestiary.entity_nether_newt_ambient",
+    "sounds": [
+      "clutterbestiary:nether_newt_ambient_one",
+      "clutterbestiary:nether_newt_ambient_two",
+      "clutterbestiary:nether_newt_ambient_three",
+      "clutterbestiary:nether_newt_ambient_four"
+    ]
+  },
+  "entity_potion_wasp_fly": {
+    "subtitle": "sounds.clutterbestiary.entity_potion_wasp_fly",
+    "sounds": [
+      "clutterbestiary:potion_wasp_fly"
+    ]
+  },
+  "entity_booplet_squeak": {
+    "subtitle": "sounds.clutterbestiary.entity_booplet_squeak",
+    "sounds": [
+      "clutterbestiary:booplet_squeak_one",
+      "clutterbestiary:booplet_squeak_two",
+      "clutterbestiary:booplet_squeak_three"
+    ]
+  },
+  "entity_mossbloom_hurt": {
+    "subtitle": "sounds.clutterbestiary.entity_mossbloom_hurt",
+    "sounds": [
+      "clutterbestiary:mossbloom_hurt_one",
+      "clutterbestiary:mossbloom_hurt_two"
+    ]
+  },
+  "entity_emperor_penguin_ambient": {
+    "subtitle": "sounds.clutterbestiary.entity_emperor_penguin_ambient",
+    "sounds": [
+      "clutterbestiary:emperor_penguin_ambient_one"
+    ]
+  },
+  "entity_ember_tortoise_hurt": {
+    "subtitle": "sounds.clutterbestiary.entity_ember_tortoise_hurt",
+    "sounds": [
+      "clutterbestiary:ember_tortoise_hurt"
+    ]
+  }
+}
