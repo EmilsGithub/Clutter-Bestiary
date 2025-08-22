@@ -3,7 +3,7 @@
 	"id": "clutterbestiary",
 	"version": "${version}",
 	"name": "Clutter: Bestiary",
-	"description": "Part of Clutter, adds a bunch of mobs to the game.",
+	"description": "The entities from Clutter, plus more, updated, improved and split into a separate mod.",
 	"authors": [
 		"EmilSG"
 	],
