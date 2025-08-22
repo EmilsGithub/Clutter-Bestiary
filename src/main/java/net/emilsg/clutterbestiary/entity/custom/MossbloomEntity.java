@@ -9,8 +9,10 @@ import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
 import net.emilsg.clutterbestiary.entity.variants.MossbloomVariant;
 import net.emilsg.clutterbestiary.sound.ModSoundEvents;
 import net.minecraft.advancement.criterion.Criteria;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.Fertilizable;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.goal.*;
@@ -25,12 +27,10 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.ShearsItem;
+import net.minecraft.item.*;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.recipe.Ingredient;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.BlockSoundGroup;
@@ -435,6 +435,10 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         super.tick();
         World world = this.getWorld();
 
+        if (this.getVariant() == MossbloomVariant.FLOWERING && this.getRandom().nextInt(4800) == 0) {
+            this.tickFertilize(world);
+        }
+
         if (world.isClient) {
             this.setupAnimationStates();
         }
@@ -450,6 +454,54 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
 
         this.jumping = false;
     }
+
+    private void tickFertilize(World world) {
+        BlockPos origin = this.getBlockPos();
+        int ox = origin.getX(), oy = origin.getY(), oz = origin.getZ();
+        BlockPos.Mutable pos = new BlockPos.Mutable();
+        Random rand = this.getRandom();
+
+        int dyStart = rand.nextInt(3);
+        int dyStep  = rand.nextBoolean() ? 1 : 2;
+        int dxStart = rand.nextInt(11);
+        int dxStep  = rand.nextInt(10) + 1;
+        int dzStart = rand.nextInt(11);
+        int dzStep  = rand.nextInt(10) + 1;
+
+        int maxChecks = 32;
+
+        outer:
+        for (int yi = 0; yi < 3; yi++) {
+            int dy = ((dyStart + yi * dyStep) % 3) - 1;
+
+            for (int xi = 0; xi < 11; xi++) {
+                int dx = ((dxStart + xi * dxStep) % 11) - 5;
+
+                for (int zi = 0; zi < 11; zi++) {
+                    if (--maxChecks < 0) break outer;
+
+                    int dz = ((dzStart + zi * dzStep) % 11) - 5;
+                    pos.set(ox + dx, oy + dy, oz + dz);
+
+                    BlockState state = world.getBlockState(pos);
+                    if (state.isAir()) continue;
+
+                    Block block = state.getBlock();
+                    if (state.isIn(BlockTags.BEE_GROWABLES) && block instanceof Fertilizable fertilizable && fertilizable.isFertilizable(world, pos, state, false) && fertilizable.canGrow(world, rand, pos, state)) {
+
+                        if (world instanceof ServerWorld serverWorld) {
+                            fertilizable.grow(serverWorld, rand, pos, state);
+                        } else {
+                            BoneMealItem.createParticles(world, pos, 15);
+                        }
+                        break outer;
+                    }
+                }
+            }
+        }
+    }
+
+
 
     @Override
     public void tickMovement() {

@@ -47,7 +47,7 @@
   "clutterbestiary.crimson.butterfly": "Crimson Butterfly",
   "clutterbestiary.soul.butterfly": "Soul Butterfly",
 
-  "itemgroup.clutterbestiary.item_group": "[Clutter] Bestiary",
+  "itemgroup.clutterbestiary.item_group": "Clutter: Bestiary",
 
   "item.clutterbestiary.white_butterfly_elytra": "White Butterfly Elytra",
   "item.clutterbestiary.light_gray_butterfly_elytra": "Light Gray Butterfly Elytra",
@@ -140,8 +140,17 @@
   "advancements.bestiary.boop.title": "Boop",
   "advancements.bestiary.boop.description": "Boop a Booplet",
   "advancements.bestiary.hot_hot_hot.title": "Hot Hot Hot",
-  "advancements.bestiary.hot_hot_hot.description": "Get lit on fire by an Ember Tortoise"
-
-
-
+  "advancements.bestiary.hot_hot_hot.description": "Get lit on fire by an Ember Tortoise",
+  "advancements.bestiary.flutter_collector.title": "Flutter Collector",
+  "advancements.bestiary.flutter_collector.description": "Capture a Butterfly in a bottle",
+  "advancements.bestiary.that_stings.title": "That Stings",
+  "advancements.bestiary.that_stings.description": "Get stung by a Jellyfish",
+  "advancements.bestiary.large_egg_small_bird.title": "Large Egg, Small Bird",
+  "advancements.bestiary.large_egg_small_bird.description": "Collect a Kiwi's massive egg",
+  "advancements.bestiary.large_bird_small_egg.title": "Large Bird, Small Egg",
+  "advancements.bestiary.large_bird_small_egg.description": "Collect an Emperor Penguin's small egg",
+  "advancements.bestiary.fishy_business.title": "Fishy Business",
+  "advancements.bestiary.fishy_business.description": "Capture a Koi with a water bucket",
+  "advancements.bestiary.makes_sense.title": "Makes Sense",
+  "advancements.bestiary.makes_sense.description": "Capture an Echofin with an empty bucket"
 }

@@ -27,10 +27,15 @@ public class CapybaraModel<T extends CapybaraEntity> extends ParentTameableModel
 
         ModelPartData torso = all.addChild("torso", ModelPartBuilder.create(), ModelTransform.pivot(-2.25F, 4.5F, 3.5F));
 
-        ModelPartData body = torso.addChild("body", ModelPartBuilder.create().uv(0, 16).cuboid(-4.5F, -4.5F, -7.0F, 9.0F, 9.0F, 14.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -8.5F, 1.0F));
+        ModelPartData body = torso.addChild("body", ModelPartBuilder.create().uv(0, 16).cuboid(-4.5F, -4.5F, -7.0F, 9.0F, 9.0F, 14.0F, new Dilation(0.0F))
+                .uv(0, 39).cuboid(-4.5F, -4.5F, -7.0F, 9.0F, 5.0F, 14.0F, new Dilation(0.125F))
+                .uv(0, 61).cuboid(-4.5F, 4.5F, -7.0F, 9.0F, 1.0F, 0.0F, new Dilation(0.0F))
+                .uv(0, 60).cuboid(-4.5F, 4.5F, 7.0F, 9.0F, 1.0F, 0.0F, new Dilation(0.0F))
+                .uv(0, 49).cuboid(-4.5F, 4.5F, -7.0F, 0.0F, 1.0F, 14.0F, new Dilation(0.0F))
+                .uv(0, 48).cuboid(4.5F, 4.5F, -7.0F, 0.0F, 1.0F, 14.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -8.5F, 1.0F));
 
         ModelPartData head = torso.addChild("head", ModelPartBuilder.create().uv(0, 0).cuboid(-3.0F, -3.0F, -7.5F, 6.0F, 6.0F, 9.0F, new Dilation(0.0F))
-                .uv(33, 23).cuboid(-3.0F, -4.0F, -3.5F, 6.0F, 1.0F, 5.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -12.0F, -5.5F));
+                .uv(33, 23).cuboid(-3.0F, -4.0F, -3.5F, 6.0F, 1.0F, 5.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -12.25F, -5.5F));
 
         ModelPartData rightEar = head.addChild("rightEar", ModelPartBuilder.create(), ModelTransform.pivot(-2.5F, -4.0F, 0.5F));
 

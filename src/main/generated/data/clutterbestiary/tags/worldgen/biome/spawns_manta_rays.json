@@ -2,6 +2,10 @@
   "replace": false,
   "values": [
     "minecraft:warm_ocean",
-    "minecraft:lukewarm_ocean"
+    "minecraft:lukewarm_ocean",
+    {
+      "id": "regions_unexplored:rocky_reef",
+      "required": false
+    }
   ]
 }

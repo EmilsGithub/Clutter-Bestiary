@@ -1,0 +1,18 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:jungle",
+    {
+      "id": "terralith:tropical_jungle",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:rainforest",
+      "required": false
+    },
+    {
+      "id": "regions_unexplored:rainforest",
+      "required": false
+    }
+  ]
+}

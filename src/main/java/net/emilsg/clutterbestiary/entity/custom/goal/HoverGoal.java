@@ -16,7 +16,7 @@ public class HoverGoal extends Goal {
 
     @Override
     public boolean canStart() {
-        return animalEntity.getNavigation().isIdle() && animalEntity.getRandom().nextInt(32) == 0;
+        return animalEntity.getNavigation().isIdle() && animalEntity.getRandom().nextInt(24) == 0;
     }
 
     @Override

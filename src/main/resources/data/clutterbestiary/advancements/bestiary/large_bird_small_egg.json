@@ -1,0 +1,38 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "large_bird_small_egg": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "clutterbestiary:emperor_penguin_egg"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.bestiary.large_bird_small_egg.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "clutterbestiary:emperor_penguin_egg"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.bestiary.large_bird_small_egg.title"
+    }
+  },
+  "requirements": [
+    [
+      "large_bird_small_egg"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

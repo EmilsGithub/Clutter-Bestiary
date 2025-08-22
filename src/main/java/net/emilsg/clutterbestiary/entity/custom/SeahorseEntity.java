@@ -32,7 +32,6 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.*;
@@ -266,7 +265,7 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
         }
 
         passiveData.countSpawned();
-        SeahorseVariant variant = Util.getRandom(SeahorseVariant.values(), this.random);
+        SeahorseVariant variant = SeahorseVariant.getRandom();
         this.setVariant(variant);
         return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
     }

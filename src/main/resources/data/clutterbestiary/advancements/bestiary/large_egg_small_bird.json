@@ -1,0 +1,38 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "large_egg_small_bird": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "clutterbestiary:kiwi_bird_egg"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.bestiary.large_egg_small_bird.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "clutterbestiary:kiwi_bird_egg"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.bestiary.large_egg_small_bird.title"
+    }
+  },
+  "requirements": [
+    [
+      "large_egg_small_bird"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

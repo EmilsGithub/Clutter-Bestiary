@@ -28,7 +28,6 @@ package net.emilsg.clutterbestiary.config;
  */
 public class Configs {
 
-    public static final String spawnBestiaryMobs = ModConfigManager.register("spawn_bestiary_mobs", true, "Spawn Clutter Mobs.").getKey();
     public static final String spawnButterflies = ModConfigManager.register("spawn_butterflies", true, "Spawn Butterflies.").getKey();
     public static final String spawnChameleons = ModConfigManager.register("spawn_chameleons", true, "Spawn Chameleons.").getKey();
     public static final String spawnEchofins = ModConfigManager.register("spawn_echofins", true, "Spawn Echofins.").getKey();
@@ -44,6 +43,10 @@ public class Configs {
     public static final String spawnSeahorses = ModConfigManager.register("spawn_seahorses", true, "Spawn Seahorses.").getKey();
     public static final String spawnMantaRays = ModConfigManager.register("spawn_manta_rays", true, "Spawn Manta Rays.").getKey();
     public static final String spawnKoi = ModConfigManager.register("spawn_koi", true, "Spawn Koi.").getKey();
+    public static final String spawnDragonflies = ModConfigManager.register("spawn_dragonflies", true, "Spawn Dragonflies.").getKey();
+    public static final String spawnBooplets = ModConfigManager.register("spawn_booplets", true, "Spawn Booplets.").getKey();
+    public static final String spawnPotionWasps = ModConfigManager.register("spawn_potion_wasps", true, "Spawn Potion Wasps.").getKey();
+
     public static final String doTrinketsElytraFlight = ModConfigManager.register("do_trinkets_elytra_flight", true, "Will the Elytra and it´s variants work while worn in the cape slot provided by Trinkets?").getKey();
 
     public static void initConfigs() {

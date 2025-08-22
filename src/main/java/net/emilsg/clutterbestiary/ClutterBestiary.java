@@ -27,17 +27,15 @@ public class ClutterBestiary implements ModInitializer {
         ModConfigManager.loadConfig();
 
         ModItems.register();
-        ModItemGroups.register();
         ModBlocks.register();
+
+        ModItemGroups.register();
         ModEntityTypes.register();
-
-        BestiaryAttributes.register();
         ModSoundEvents.register();
-
-
+        BestiaryAttributes.register();
         ModModelPredicateProvider.register();
-        if (ModConfigManager.get(Configs.spawnBestiaryMobs, true)) ModEntitySpawns.register();
-        if (IS_TRINKETS_LOADED && ModConfigManager.get(Configs.doTrinketsElytraFlight, true))
-            TrinketsElytraUse.doFlight();
+        ModEntitySpawns.register();
+
+        if (IS_TRINKETS_LOADED && ModConfigManager.get(Configs.doTrinketsElytraFlight, true)) TrinketsElytraUse.doFlight();
     }
 }

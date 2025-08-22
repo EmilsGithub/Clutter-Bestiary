@@ -3,7 +3,7 @@
 	"id": "clutterbestiary",
 	"version": "${version}",
 	"name": "Clutter: Bestiary",
-	"description": "Part of the [Clutter] series, adds a bunch of mobs to the game.",
+	"description": "Part of Clutter, adds a bunch of mobs to the game.",
 	"authors": [
 		"EmilSG"
 	],

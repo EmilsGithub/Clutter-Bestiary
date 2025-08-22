@@ -141,11 +141,33 @@ public class BiomeTagDataGen extends FabricTagProvider<Biome> {
                 BiomeKeys.LUSH_CAVES
         );
 
+        getOrCreateTagBuilder(ModBiomeTags.SPAWNS_DRAGONFLIES).add(
+                BiomeKeys.SWAMP,
+                BiomeKeys.MANGROVE_SWAMP
+        );
+
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_KOI)
                 .add(
                         BiomeKeys.MANGROVE_SWAMP
                 )
                 .addOptional(Identifier.of("biomesoplenty", "hot_springs"))
+        ;
+
+        getOrCreateTagBuilder(ModBiomeTags.SPAWNS_BOOPLETS).add(
+                BiomeKeys.SNOWY_PLAINS,
+                BiomeKeys.SNOWY_TAIGA,
+                BiomeKeys.TAIGA
+                )
+                .addOptional(Identifier.of("terralith", "muskeg"))
+                .addOptional(Identifier.of("regions_unexplored","frozen_tundra"))
+        ;
+
+        getOrCreateTagBuilder(ModBiomeTags.SPAWNS_POTION_WASPS).add(
+                BiomeKeys.JUNGLE
+                )
+                .addOptional(Identifier.of("terralith", "tropical_jungle"))
+                .addOptional(Identifier.of("biomesoplenty", "rainforest"))
+                .addOptional(Identifier.of("regions_unexplored","rainforest"))
         ;
 
     }

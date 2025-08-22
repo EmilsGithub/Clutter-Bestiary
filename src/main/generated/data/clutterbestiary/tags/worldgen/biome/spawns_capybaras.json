@@ -19,6 +19,10 @@
     {
       "id": "terralith:lush_desert",
       "required": false
+    },
+    {
+      "id": "regions_unexplored:steppe",
+      "required": false
     }
   ]
 }

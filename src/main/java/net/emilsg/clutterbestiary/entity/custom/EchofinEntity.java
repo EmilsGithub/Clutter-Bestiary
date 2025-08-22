@@ -233,10 +233,10 @@ public class EchofinEntity extends ParentAnimalEntity {
         World world = this.getWorld();
         if (world instanceof ServerWorld) {
             setEntityAbilityTimer(getAbilityTimerEntitiesTimer() + random.nextInt(3));
-        }
 
-        if (hasAbility() && random.nextInt(1000) == 0) {
-            setEntityAbilityTimer(0);
+            if (hasAbility() && random.nextInt(1000) == 0) {
+                setEntityAbilityTimer(0);
+            }
         }
 
         if (world.isClient) {
@@ -305,6 +305,7 @@ public class EchofinEntity extends ParentAnimalEntity {
 
     private void levitatePlayer(PlayerEntity player) {
         player.addStatusEffect(new StatusEffectInstance(StatusEffects.LEVITATION, 100, 2), this);
+        if (random.nextBoolean()) this.setEntityAbilityTimer(0);
     }
 
     private void setupAnimationStates() {

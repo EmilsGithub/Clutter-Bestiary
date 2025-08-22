@@ -23,6 +23,11 @@ public class ModBiomeTags {
     public static final TagKey<Biome> SPAWNS_CHAMELEONS = create(ClutterBestiary.MOD_ID, "spawns_chameleons");
     public static final TagKey<Biome> SPAWNS_MOSSBLOOMS = create(ClutterBestiary.MOD_ID, "spawns_mossblooms");
     public static final TagKey<Biome> SPAWNS_KOI = create(ClutterBestiary.MOD_ID, "spawns_koi");
+    public static final TagKey<Biome> SPAWNS_DRAGONFLIES = create(ClutterBestiary.MOD_ID, "spawns_dragonflies");
+    public static final TagKey<Biome> SPAWNS_POTION_WASPS = create(ClutterBestiary.MOD_ID, "spawns_potion_wasps");
+    public static final TagKey<Biome> SPAWNS_BOOPLETS = create(ClutterBestiary.MOD_ID, "spawns_booplets");
+
+
 
     private static TagKey<Biome> create(String namespace, String path) {
         return TagKey.of(RegistryKeys.BIOME, Identifier.of(namespace, path));

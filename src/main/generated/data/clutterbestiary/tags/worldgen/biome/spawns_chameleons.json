@@ -31,6 +31,18 @@
     {
       "id": "biomesoplenty:tropics",
       "required": false
+    },
+    {
+      "id": "regions_unexplored:rainforest",
+      "required": false
+    },
+    {
+      "id": "regions_unexplored:sparse_rainforest",
+      "required": false
+    },
+    {
+      "id": "regions_unexplored:tropics",
+      "required": false
     }
   ]
 }
