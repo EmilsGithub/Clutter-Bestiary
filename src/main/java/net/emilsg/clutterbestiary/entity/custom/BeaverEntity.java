@@ -61,7 +61,6 @@ public class BeaverEntity extends ParentAnimalEntity {
         this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
         this.setPathfindingPenalty(PathNodeType.DAMAGE_FIRE, -1.0F);
         this.setPathfindingPenalty(PathNodeType.COCOA, -1.0F);
-        this.setStepHeight(1.0f);
         this.moveControl = new BeaverMoveControl(this);
         this.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
         this.waterNavigation = new SwimNavigation(this, world);
@@ -81,6 +80,11 @@ public class BeaverEntity extends ParentAnimalEntity {
         return Ingredient.ofItems(items.toArray(new Item[0]));
     }
 
+    @Override
+    public float getStepHeight() {
+        return 1.0f;
+    }
+
     public static DefaultAttributeContainer.Builder setAttributes() {
         return ParentAnimalEntity.createMobAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 10.0D)
@@ -96,8 +100,9 @@ public class BeaverEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public boolean canBreatheInWater() {
-        return true;
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+        this.setHomePos(this.getBlockPos());
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
     @Nullable
@@ -115,12 +120,6 @@ public class BeaverEntity extends ParentAnimalEntity {
     @Override
     public float getScaleFactor() {
         return this.isBaby() ? 0.6F : 1.0F;
-    }
-
-    @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
-        this.setHomePos(this.getBlockPos());
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
     }
 
     @Override
@@ -142,8 +141,12 @@ public class BeaverEntity extends ParentAnimalEntity {
             return ActionResult.SUCCESS;
         }
 
-        String strippedPath = itemID.replace(":", ":stripped_");
-        Identifier strippedID = new Identifier(strippedPath);
+        String[] parts = itemID.split(":", 2);
+        String namespace = parts[0];
+        String path = parts[1];
+
+        String strippedPath = "stripped_" + path;
+        Identifier strippedID = Identifier.of(namespace, strippedPath);
         if (Registries.ITEM.containsId(strippedID)) {
             this.dropStack(new ItemStack(Registries.ITEM.get(strippedID)));
             this.getWorld().addBlockBreakParticles(this.getBlockPos(), heldBlock.getDefaultState());
@@ -155,6 +158,11 @@ public class BeaverEntity extends ParentAnimalEntity {
         }
 
         return ActionResult.PASS;
+    }
+
+    @Override
+    protected int getNextAirUnderwater(int air) {
+        return air;
     }
 
     @Override
@@ -219,9 +227,10 @@ public class BeaverEntity extends ParentAnimalEntity {
         return new BeaverSwimNavigation(this, world);
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(HOME_POS, BlockPos.ORIGIN);
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(HOME_POS, BlockPos.ORIGIN);
     }
 
     @Override

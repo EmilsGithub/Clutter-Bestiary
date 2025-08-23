@@ -8,6 +8,7 @@ import net.minecraft.entity.ai.control.YawAdjustingLookControl;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.ai.pathing.EntityNavigation;
 import net.minecraft.entity.ai.pathing.SwimNavigation;
+import net.minecraft.entity.attribute.AttributeContainer;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.data.DataTracker;
@@ -61,13 +62,8 @@ public class MantaRayEntity extends ParentWaterEntity {
     }
 
     @Override
-    public EntityDimensions getDimensions(EntityPose pose) {
-        return super.getDimensions(pose).scaled(0.65f * this.getSize());
-    }
-
-    @Override
-    public EntityGroup getGroup() {
-        return EntityGroup.AQUATIC;
+    public double getEyeY() {
+        return super.getEyeY() * 0.4F;
     }
 
     public float getSize() {
@@ -79,19 +75,10 @@ public class MantaRayEntity extends ParentWaterEntity {
         this.calculateDimensions();
     }
 
-    @Nullable
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
-        this.setPitch(0.0F);
-        float scaledSize;
-        float chance = random.nextFloat();
-
-        if (chance < 0.31) scaledSize = 0.8f;
-        else if (chance < 0.62) scaledSize = 1.0f;
-        else if (chance < 0.95) scaledSize = 1.2f;
-        else scaledSize = 1.5f;
-
-        this.setSize(scaledSize);
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+    @Override
+    public float getScale() {
+        AttributeContainer attributeContainer = this.getAttributes();
+        return attributeContainer == null ? 0.65f * this.getSize() : this.clampScale((float)attributeContainer.getValue(EntityAttributes.GENERIC_SCALE) * (0.65f * this.getSize()));
     }
 
     public void onTrackedDataSet(TrackedData<?> data) {
@@ -150,14 +137,25 @@ public class MantaRayEntity extends ParentWaterEntity {
         return new SwimNavigation(this, world);
     }
 
-    protected float getActiveEyeHeight(EntityPose pose, EntityDimensions dimensions) {
-        return dimensions.height * 0.4F;
+    @Override
+    public @Nullable EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+        this.setPitch(0.0F);
+        float scaledSize;
+        float chance = random.nextFloat();
+
+        if (chance < 0.31) scaledSize = 0.8f;
+        else if (chance < 0.62) scaledSize = 1.0f;
+        else if (chance < 0.95) scaledSize = 1.2f;
+        else scaledSize = 1.5f;
+
+        this.setSize(scaledSize);
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
     @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(SIZE, 0f);
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(SIZE, 0f);
     }
 
     protected void updateLimbs(float v) {

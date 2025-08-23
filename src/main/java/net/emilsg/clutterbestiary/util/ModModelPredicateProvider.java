@@ -1,16 +1,19 @@
 package net.emilsg.clutterbestiary.util;
 
+import net.emilsg.clutterbestiary.entity.variants.ButterflyVariant;
 import net.emilsg.clutterbestiary.entity.variants.SeahorseVariant;
-import net.emilsg.clutterbestiary.entity.variants.koi.KoiBaseColorVariant;
 import net.emilsg.clutterbestiary.item.custom.BestiaryElytraItem;
 import net.emilsg.clutterbestiary.item.custom.ButterflyBottleItem;
 import net.emilsg.clutterbestiary.item.custom.KoiBucketItem;
 import net.emilsg.clutterbestiary.item.custom.SeahorseBucketItem;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.item.Item;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
+
+import java.util.Optional;
 
 public class ModModelPredicateProvider {
 
@@ -32,29 +35,30 @@ public class ModModelPredicateProvider {
     }
 
     private static void registerButterflyInABottle(Item bottle) {
-        ModelPredicateProviderRegistry.register(bottle, Identifier.of("minecraft","type"), (stack, world, entity, seed) -> {
+        ModelPredicateProviderRegistry.register(bottle, Identifier.of("type"), (stack, world, entity, seed) -> {
             if (!(stack.getItem() instanceof ButterflyBottleItem)) return 0;
+            NbtComponent nbtComponent = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
+            Optional<ButterflyVariant> optional = nbtComponent.get(ButterflyBottleItem.BUTTERFLY_VARIANT_MAP_CODEC).result();
 
-            NbtCompound nbtCompound = stack.getNbt();
+            if (optional.isEmpty()) return 0;
 
-            if (nbtCompound == null || !nbtCompound.contains("Variant")) return 0;
-
-            int id = nbtCompound.getInt("Variant");
+            int id = optional.get().getOrderedID();
 
             return (float) id / 100;
         });
     }
 
     private static void registerSeahorseBucket(Item bucket) {
-        ModelPredicateProviderRegistry.register(bucket, Identifier.of("minecraft","type"), (stack, world, entity, seed) -> {
+        ModelPredicateProviderRegistry.register(bucket, Identifier.of("type"), (stack, world, entity, seed) -> {
             if (!(stack.getItem() instanceof SeahorseBucketItem)) return 0;
+            NbtComponent nbtComponent = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
+            Optional<SeahorseVariant> optional = nbtComponent.get(SeahorseBucketItem.SEAHORSE_VARIANT_MAP_CODEC).result();
 
-            NbtCompound nbtCompound = stack.getNbt();
-            if (nbtCompound == null || !nbtCompound.contains("Variant")) return 0;
+            if (optional.isEmpty()) return 0;
 
             float type;
 
-            SeahorseVariant seahorseVariant = SeahorseVariant.fromId(nbtCompound.getString("Variant"));
+            SeahorseVariant seahorseVariant = optional.get();
 
             type = switch (seahorseVariant) {
                 case LIGHT_BLUE -> 0.1f;
@@ -68,24 +72,24 @@ public class ModModelPredicateProvider {
     }
 
     private static void registerKoiBucket(Item bucket) {
-        ModelPredicateProviderRegistry.register(bucket, Identifier.of("minecraft","type"), (stack, world, entity, seed) -> {
-            if (!(stack.getItem() instanceof KoiBucketItem)) return 0;
+        ModelPredicateProviderRegistry.register(
+                bucket,
+                Identifier.of("type"),
+                (stack, world, entity, seed) -> {
+                    if (!(stack.getItem() instanceof KoiBucketItem)) return 0f;
 
-            NbtCompound nbtCompound = stack.getNbt();
+                    var cmp = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
+                    var base = cmp.get(KoiBucketItem.BASE_COLOR_CODEC).result();
+                    if (base.isEmpty()) return 0f;
 
-            if (nbtCompound == null || !nbtCompound.contains("BaseColor")) return 0;
-            float type;
-            KoiBaseColorVariant id = KoiBaseColorVariant.fromId(nbtCompound.getString("BaseColor"));
-
-            type = switch (id) {
-                case ORANGE -> 0.1f;
-                case YELLOW -> 0.2f;
-                case BLACK -> 0.3f;
-                case PEARL -> 0.4f;
-                default -> 0.0f;
-            };
-
-            return type;
-        });
+                    return switch (base.get()) {
+                        case ORANGE -> 0.1f;
+                        case YELLOW -> 0.2f;
+                        case BLACK -> 0.3f;
+                        case PEARL -> 0.4f;
+                        default -> 0.0f;
+                    };
+                }
+        );
     }
 }

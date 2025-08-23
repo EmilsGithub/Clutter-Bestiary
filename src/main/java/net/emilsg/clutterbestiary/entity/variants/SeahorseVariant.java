@@ -1,10 +1,13 @@
 package net.emilsg.clutterbestiary.entity.variants;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.minecraft.util.Identifier;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public enum SeahorseVariant {
@@ -14,6 +17,23 @@ public enum SeahorseVariant {
     PURPLE("purple");
 
     private final String name;
+
+    private static final Map<Identifier, SeahorseVariant> BY_ID =
+            Arrays.stream(values()).collect(java.util.stream.Collectors.toMap(
+                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName()),
+                    v -> v
+            ));
+
+    public static final Codec<SeahorseVariant> CODEC =
+            Identifier.CODEC.comapFlatMap(
+                    id -> {
+                        var v = BY_ID.get(id);
+                        return v != null
+                                ? DataResult.success(v)
+                                : DataResult.error(() -> "Unknown seahorse variant: " + id);
+                    },
+                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName())
+            );
 
     SeahorseVariant(String name) {
         this.name = name;

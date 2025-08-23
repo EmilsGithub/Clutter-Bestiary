@@ -3,11 +3,14 @@ package net.emilsg.clutterbestiary.data;
 import net.emilsg.clutterbestiary.block.ModBlocks;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricBlockLootTableProvider;
+import net.minecraft.registry.RegistryWrapper;
+
+import java.util.concurrent.CompletableFuture;
 
 public class BlockLootTableDataGen extends FabricBlockLootTableProvider {
 
-    public BlockLootTableDataGen(FabricDataOutput dataOutput) {
-        super(dataOutput);
+    public BlockLootTableDataGen(FabricDataOutput dataOutput, CompletableFuture<RegistryWrapper.WrapperLookup> registryLookup) {
+        super(dataOutput, registryLookup);
     }
 
     @Override

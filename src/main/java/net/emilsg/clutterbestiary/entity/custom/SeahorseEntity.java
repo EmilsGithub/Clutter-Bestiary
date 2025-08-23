@@ -5,6 +5,8 @@ import net.emilsg.clutterbestiary.entity.custom.goal.*;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentFishEntity;
 import net.emilsg.clutterbestiary.entity.variants.SeahorseVariant;
 import net.emilsg.clutterbestiary.item.ModItems;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.goal.EscapeDangerGoal;
 import net.minecraft.entity.ai.goal.TemptGoal;
@@ -123,9 +125,8 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
 
     @Override
     public void copyDataToStack(ItemStack stack) {
-        NbtCompound nbtCompound = stack.getOrCreateNbt();
-        nbtCompound.putString("Variant", this.getTypeVariant());
         super.copyDataToStack(stack);
+        NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, (nbtCompound) -> nbtCompound.putString("Variant", this.getTypeVariant()));
     }
 
     @Nullable
@@ -254,7 +255,7 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
+    public @Nullable EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
         if (entityData == null) {
             entityData = new PassiveEntity.PassiveData(true);
         }
@@ -267,7 +268,8 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
         passiveData.countSpawned();
         SeahorseVariant variant = SeahorseVariant.getRandom();
         this.setVariant(variant);
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
@@ -438,12 +440,13 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
         return SoundEvents.ENTITY_TROPICAL_FISH_FLOP;
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(VARIANT, SeahorseVariant.YELLOW.getId());
-        this.dataTracker.startTracking(HAS_CHILDREN, false);
-        this.dataTracker.startTracking(HAS_CHILDREN_TIMER, 0.0f);
-        this.dataTracker.startTracking(CHILD, false);
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(VARIANT, SeahorseVariant.YELLOW.getId());
+        builder.add(HAS_CHILDREN, false);
+        builder.add(HAS_CHILDREN_TIMER, 0.0f);
+        builder.add(CHILD, false);
     }
 
     protected void initGoals() {

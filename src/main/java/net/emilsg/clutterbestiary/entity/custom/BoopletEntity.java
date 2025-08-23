@@ -52,29 +52,6 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
         this.setPathfindingPenalty(PathNodeType.FENCE, -1.0F);
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentAnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 8D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.18f)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
-    }
-
-    public boolean canBeHappy() {
-        return this.hurtTime <= 0 && this.random.nextInt(20) == 0 && this.happyDanceTimer <= 0 && !this.isTouchingWaterOrRain();
-    }
-
-    public int getFluffTimer() {
-        return this.dataTracker.get(FLUFF_TIMER);
-    }
-
-    public void setFluffTimer(int fluffTimer) {
-        this.dataTracker.set(FLUFF_TIMER, fluffTimer);
-    }
-
-    public int getTimeSinceBoop() {
-        return this.timeSinceBoop;
-    }
-
     @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
         ItemStack itemStack = player.getStackInHand(hand);
@@ -82,7 +59,7 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
             if (!this.getWorld().isClient && this.isFluffy()) {
                 this.sheared(SoundCategory.PLAYERS);
                 this.emitGameEvent(GameEvent.SHEAR, player);
-                itemStack.damage(1, player, (playerEntity) -> playerEntity.sendToolBreakStatus(hand));
+                itemStack.damage(1, player, LivingEntity.getSlotForHand(hand));
                 return ActionResult.SUCCESS;
             } else {
                 return ActionResult.CONSUME;
@@ -110,6 +87,34 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
             return ActionResult.SUCCESS;
         }
         return super.interactMob(player, hand);
+    }
+
+    public static DefaultAttributeContainer.Builder setAttributes() {
+        return ParentAnimalEntity.createMobAttributes()
+                .add(EntityAttributes.GENERIC_MAX_HEALTH, 8D)
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.18f)
+                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    }
+
+    public boolean canBeHappy() {
+        return this.hurtTime <= 0 && this.random.nextInt(20) == 0 && this.happyDanceTimer <= 0 && !this.isTouchingWaterOrRain();
+    }
+
+    public int getFluffTimer() {
+        return this.dataTracker.get(FLUFF_TIMER);
+    }
+
+    public void setFluffTimer(int fluffTimer) {
+        this.dataTracker.set(FLUFF_TIMER, fluffTimer);
+    }
+
+    public int getTimeSinceBoop() {
+        return this.timeSinceBoop;
+    }
+
+    @Override
+    public boolean isBreedingItem(ItemStack stack) {
+        return false;
     }
 
     public boolean isFluffy() {
@@ -182,10 +187,10 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     }
 
     @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(IS_FLUFFY, true);
-        this.dataTracker.startTracking(FLUFF_TIMER, 0);
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(IS_FLUFFY, true);
+        builder.add(FLUFF_TIMER, 0);
     }
 
     @Override

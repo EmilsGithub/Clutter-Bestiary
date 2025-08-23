@@ -28,6 +28,7 @@ import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -73,10 +74,10 @@ public class DragonflyEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
         DragonflyVariant variant = DragonflyVariant.getRandom();
         this.setVariant(variant);
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
     @Override
@@ -90,19 +91,20 @@ public class DragonflyEntity extends ParentAnimalEntity {
         nbt.putString("Variant", this.getTypeVariant());
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(VARIANT, SeahorseVariant.YELLOW.getId());
-    }
-
     @Override
-    public boolean canBeLeashedBy(PlayerEntity player) {
+    public boolean isBreedingItem(ItemStack stack) {
         return false;
     }
 
     @Override
     public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
         return ModEntityTypes.DRAGONFLY.create(world);
+    }
+
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(VARIANT, SeahorseVariant.YELLOW.getId());
     }
 
     public float getPathfindingFavor(BlockPos pos, WorldView world) {

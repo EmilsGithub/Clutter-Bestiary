@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:smoking",
+  "category": "food",
+  "cookingtime": 100,
+  "experience": 0.4,
+  "group": "venison",
+  "ingredient": {
+    "item": "clutterbestiary:raw_venison"
+  },
+  "result": {
+    "id": "clutterbestiary:cooked_venison"
+  }
+}

@@ -5,6 +5,7 @@ import net.emilsg.clutterbestiary.entity.custom.ButterflyEntity;
 import net.emilsg.clutterbestiary.entity.variants.ButterflyVariant;
 import net.emilsg.clutterbestiary.item.ModItems;
 import net.minecraft.block.*;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -77,20 +78,21 @@ public class ButterflyCocoonBlock extends Block {
     }
 
     @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+    protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+        Hand hand = player.getActiveHand();
         ItemStack heldItem = player.getStackInHand(hand);
         if (world.isClient && heldItem.isOf(Items.SHEARS) && state.get(CAN_HATCH)) {
             return ActionResult.SUCCESS;
         }
         if (!world.isClient && heldItem.isOf(Items.SHEARS) && state.get(CAN_HATCH)) {
-            player.playSound(SoundEvents.ENTITY_SHEEP_SHEAR, SoundCategory.PLAYERS, 1.0f, 1.0f);
+            player.playSound(SoundEvents.ENTITY_SHEEP_SHEAR, 1.0f, 1.0f);
             if (!player.getAbilities().creativeMode) {
-                heldItem.damage(1, player, playerEntity -> playerEntity.sendToolBreakStatus(hand));
+                heldItem.damage(1, player, LivingEntity.getSlotForHand(hand));
             }
             world.setBlockState(pos, state.with(CAN_HATCH, false).with(HATCH, 0), Block.NOTIFY_ALL);
             return ActionResult.SUCCESS;
         }
-        return ActionResult.PASS;
+        return super.onUse(state, world, pos, player, hit);
     }
 
     @Override
@@ -154,7 +156,7 @@ public class ButterflyCocoonBlock extends Block {
 
     private boolean shouldHatchProgress(World world, BlockState state) {
         boolean isDay = world.isDay();
-        boolean isNether = world.getDimensionKey() == DimensionTypes.THE_NETHER;
+        boolean isNether = world.getDimensionEntry().matchesKey(DimensionTypes.THE_NETHER);
         if ((isDay && state.get(CAN_HATCH)) || isNether) {
             return true;
         } else if (state.get(CAN_HATCH)) {

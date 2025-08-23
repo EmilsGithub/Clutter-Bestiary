@@ -1,16 +1,18 @@
 package net.emilsg.clutterbestiary.item.custom;
 
+import com.mojang.serialization.MapCodec;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.ButterflyEntity;
 import net.emilsg.clutterbestiary.entity.variants.ButterflyVariant;
-import net.minecraft.client.item.TooltipContext;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -22,11 +24,12 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 public class ButterflyBottleItem extends Item {
+    public static final MapCodec<ButterflyVariant> BUTTERFLY_VARIANT_MAP_CODEC = ButterflyVariant.CODEC.fieldOf("Variant");
 
     public ButterflyBottleItem(Settings settings) {
         super(settings);
@@ -36,16 +39,16 @@ public class ButterflyBottleItem extends Item {
         return !player.getAbilities().creativeMode ? new ItemStack(Items.GLASS_BOTTLE) : stack;
     }
 
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        super.appendTooltip(stack, world, tooltip, context);
-        NbtCompound nbtCompound = stack.getNbt();
-        if (nbtCompound != null && nbtCompound.contains("Variant")) {
-            String variantStringId = nbtCompound.getString("Variant");
-            ButterflyVariant butterflyVariant = ButterflyVariant.fromId(variantStringId);
+    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
+        NbtComponent nbtComponent = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
+        Optional<ButterflyVariant> optional = nbtComponent.get(BUTTERFLY_VARIANT_MAP_CODEC).result();
 
-            Formatting formatting = butterflyVariant.getColorFormatting();
+        if (optional.isPresent()) {
+            ButterflyVariant variant = optional.get();
 
-            String string = "clutterbestiary." + butterflyVariant.getName() + ".butterfly";
+            Formatting formatting = variant.getColorFormatting();
+
+            String string = "clutterbestiary." + variant.getName() + ".butterfly";
 
             MutableText mutableText = Text.translatable(string);
             mutableText.formatted(formatting);
@@ -73,8 +76,7 @@ public class ButterflyBottleItem extends Item {
 
     private void spawnEntity(ServerWorld world, ItemStack stack, BlockPos pos) {
         ButterflyEntity butterfly = ModEntityTypes.BUTTERFLY.spawnFromItemStack(world, stack, null, pos, SpawnReason.BUCKET, true, false);
-        if (butterfly != null) {
-            butterfly.copyDataFromNbt(butterfly, stack.getOrCreateNbt());
-        }
+        NbtComponent nbtComponent = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
+        if(butterfly != null) butterfly.copyDataFromNbt(butterfly, nbtComponent.copyNbt());
     }
 }

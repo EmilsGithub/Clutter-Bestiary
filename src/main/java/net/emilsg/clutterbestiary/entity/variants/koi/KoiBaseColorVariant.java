@@ -1,5 +1,7 @@
 package net.emilsg.clutterbestiary.entity.variants.koi;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.entity.custom.KoiEntity;
 import net.emilsg.clutterbestiary.entity.variants.BestiaryBasicVariant;
@@ -8,7 +10,9 @@ import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public enum KoiBaseColorVariant implements BestiaryBasicVariant {
     ORANGE("orange", Formatting.GOLD, 0xFF6416, 100, false),
@@ -21,6 +25,23 @@ public enum KoiBaseColorVariant implements BestiaryBasicVariant {
     IRIDESCENT_PURPLE("iridescent_purple", Formatting.DARK_PURPLE, new int[]{0xFAF8FF, 0xF2E9FF, 0xDDD8FF, 0xD7D2FF, 0xCECBFF, 0xBBBCFF}, 2, true),
     IRIDESCENT_RAINBOW("iridescent_rainbow", Formatting.WHITE, new int[]{0xFF0000, 0xFFA500, 0xFFFF00, 0x008000, 0x0000FF, 0x4B0082, 0x8B00FF}, 1, true),
     PEARL("pearl", Formatting.DARK_AQUA, new int[]{0xFFFFFF, 0xDBECE9, 0xD2D4D6, 0xCCB2B8, 0x8AB6C9, 0x779FC6}, 1, true);
+
+    private static final Map<Identifier, KoiBaseColorVariant> BY_ID =
+            java.util.Arrays.stream(values()).collect(Collectors.toMap(
+                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName()),
+                    v -> v
+            ));
+
+    public static final Codec<KoiBaseColorVariant> CODEC =
+            Identifier.CODEC.comapFlatMap(
+                    id -> {
+                        var v = BY_ID.get(id);
+                        return v != null
+                                ? DataResult.success(v)
+                                : DataResult.error(() -> "Unknown koi base color: " + id);
+                    },
+                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName())
+            );
 
     private final String name;
     private final Formatting formatting;

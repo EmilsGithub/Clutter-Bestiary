@@ -15,5 +15,6 @@ public class ClutterBestiaryDataGenerator implements DataGeneratorEntrypoint {
         pack.addProvider(ModelDataGen::new);
         pack.addProvider(BiomeTagDataGen::new);
         pack.addProvider(RecipeDataGen::new);
+        pack.addProvider(EntityTypeTagDatagen::new);
     }
 }

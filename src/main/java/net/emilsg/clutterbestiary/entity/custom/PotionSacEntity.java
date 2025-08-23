@@ -1,6 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom;
 
 import net.emilsg.clutterbestiary.entity.variants.PotionWaspVariant;
+import net.minecraft.component.type.PotionContentsComponent;
 import net.minecraft.entity.AreaEffectCloudEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -90,7 +91,7 @@ public class PotionSacEntity extends MobEntity {
             World world = this.getWorld();
             AreaEffectCloudEntity potionCloud = EntityType.AREA_EFFECT_CLOUD.create(world);
             if (this.getWorld() instanceof ServerWorld serverWorld && potionCloud != null) {
-                potionCloud.setPotion(this.getVariant().getPotionEffect());
+                potionCloud.setPotionContents(new PotionContentsComponent(this.getVariant().getPotionEffect()));
                 potionCloud.setDuration(300);
                 potionCloud.setRadius(1.5f);
                 potionCloud.setPosition(this.getPos());
@@ -112,8 +113,8 @@ public class PotionSacEntity extends MobEntity {
     }
 
     @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(VARIANT, PotionWaspVariant.REGENERATION.getId());
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(VARIANT, PotionWaspVariant.REGENERATION.getId());
     }
 }

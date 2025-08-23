@@ -1,0 +1,39 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "makes_sense": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "clutterbestiary:chorus_echofin_bucket",
+              "clutterbestiary:levitating_echofin_bucket"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.bestiary.makes_sense.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "id": "clutterbestiary:chorus_echofin_bucket"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.bestiary.makes_sense.title"
+    }
+  },
+  "requirements": [
+    [
+      "makes_sense"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

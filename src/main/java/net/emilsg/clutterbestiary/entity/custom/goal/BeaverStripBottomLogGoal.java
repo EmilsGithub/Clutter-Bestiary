@@ -68,7 +68,12 @@ public class BeaverStripBottomLogGoal extends MoveToTargetPosGoal {
         Identifier blockID = Identifier.tryParse(raw);
         if (blockID == null) return false;
 
-        Identifier strippedID = new Identifier(blockID.toString().replace(":", ":stripped_"));
+        String[] parts = raw.split(":", 2);
+        String namespace = parts[0];
+        String path = parts[1];
+
+        String strippedPath = "stripped_" + path;
+        Identifier strippedID = Identifier.of(namespace, strippedPath);
         if(!Registries.BLOCK.containsId(strippedID)) return false;
 
         targetBlock = state.getBlock();

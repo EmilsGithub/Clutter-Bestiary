@@ -10,6 +10,8 @@ import net.emilsg.clutterbestiary.item.ModItems;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.BlockState;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.control.FlightMoveControl;
 import net.minecraft.entity.ai.control.LookControl;
@@ -112,11 +114,6 @@ public class ButterflyEntity extends ParentAnimalEntity {
         world.sendEntityStatus(this, (byte) 18);
     }
 
-    @Override
-    public boolean canBeLeashedBy(PlayerEntity player) {
-        return false;
-    }
-
     public boolean canSpawn(WorldView world) {
         return world.doesNotIntersectEntities(this);
     }
@@ -162,34 +159,31 @@ public class ButterflyEntity extends ParentAnimalEntity {
     }
 
     public void copyDataToStack(ButterflyEntity entity, ItemStack stack) {
-        NbtCompound nbtCompound = stack.getOrCreateNbt();
-        if (entity.hasCustomName()) {
-            stack.setCustomName(entity.getCustomName());
-        }
+        stack.set(DataComponentTypes.CUSTOM_NAME, entity.getCustomName());
+        NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, (nbtCompound) -> {
+            if (entity.isAiDisabled()) {
+                nbtCompound.putBoolean("NoAI", entity.isAiDisabled());
+            }
 
-        if (entity.isAiDisabled()) {
-            nbtCompound.putBoolean("NoAI", entity.isAiDisabled());
-        }
+            if (entity.isSilent()) {
+                nbtCompound.putBoolean("Silent", entity.isSilent());
+            }
 
-        if (entity.isSilent()) {
-            nbtCompound.putBoolean("Silent", entity.isSilent());
-        }
+            if (entity.hasNoGravity()) {
+                nbtCompound.putBoolean("NoGravity", entity.hasNoGravity());
+            }
 
-        if (entity.hasNoGravity()) {
-            nbtCompound.putBoolean("NoGravity", entity.hasNoGravity());
-        }
+            if (entity.isGlowing()) {
+                nbtCompound.putBoolean("Glowing", entity.isGlowing());
+            }
 
-        if (entity.isGlowingLocal()) {
-            nbtCompound.putBoolean("Glowing", entity.isGlowingLocal());
-        }
+            if (entity.isInvulnerable()) {
+                nbtCompound.putBoolean("Invulnerable", entity.isInvulnerable());
+            }
 
-        if (entity.isInvulnerable()) {
-            nbtCompound.putBoolean("Invulnerable", entity.isInvulnerable());
-        }
-
-        nbtCompound.putInt("FlyingVariant", entity.getFlyingTypeVariant());
-        nbtCompound.putString("Variant", entity.getTypeVariant());
-        nbtCompound.putFloat("Health", entity.getHealth());
+            nbtCompound.putFloat("Health", entity.getHealth());
+            nbtCompound.putString("Variant", entity.getTypeVariant());
+        });
     }
 
     public int getDupeTimer() {
@@ -230,7 +224,7 @@ public class ButterflyEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
         RegistryEntry<Biome> registryEntry = world.getBiome(this.getBlockPos());
         ButterflyVariant variant = ButterflyVariant.getRandom(false);
 
@@ -260,7 +254,7 @@ public class ButterflyEntity extends ParentAnimalEntity {
 
         this.setVariant(variant);
         this.setFlyingVariant(random.nextInt(3));
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
     @Override
@@ -366,13 +360,13 @@ public class ButterflyEntity extends ParentAnimalEntity {
         return SoundEvents.BLOCK_WOOL_HIT;
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(HAS_COCOON, false);
-        this.dataTracker.startTracking(DUPE_TIMER, 0);
-        this.dataTracker.startTracking(VARIANT, ButterflyVariant.WHITE.getId());
-        this.dataTracker.startTracking(FLYING_TYPE_VARIANT, 0);
-
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(HAS_COCOON, false);
+        builder.add(DUPE_TIMER, 0);
+        builder.add(VARIANT, ButterflyVariant.WHITE.getId());
+        builder.add(FLYING_TYPE_VARIANT, 0);
     }
 
     @Override

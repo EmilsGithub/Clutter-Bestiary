@@ -1,16 +1,14 @@
 package net.emilsg.clutterbestiary.item.custom;
 
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.client.item.TooltipContext;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
-import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -26,8 +24,9 @@ public class ButterflyElytraSmithingTemplateItem extends Item {
         super(settings);
     }
 
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        super.appendTooltip(stack, world, tooltip, context);
+    @Override
+    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
+        super.appendTooltip(stack, context, tooltip, type);
         tooltip.add(ELYTRA_UPGRADE_TEXT);
         tooltip.add(ScreenTexts.EMPTY);
         tooltip.add(APPLIES_TO_TEXT);

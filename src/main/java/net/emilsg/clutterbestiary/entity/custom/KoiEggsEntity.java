@@ -2,7 +2,10 @@ package net.emilsg.clutterbestiary.entity.custom;
 
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.variants.koi.*;
-import net.minecraft.entity.*;
+import net.minecraft.entity.EntityStatuses;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
@@ -43,8 +46,8 @@ public class KoiEggsEntity extends MobEntity {
     }
 
     @Override
-    public boolean canBreatheInWater() {
-        return true;
+    protected int getNextAirUnderwater(int air) {
+        return air;
     }
 
     @Override
@@ -72,11 +75,6 @@ public class KoiEggsEntity extends MobEntity {
     @Override
     public ItemStack getEquippedStack(EquipmentSlot slot) {
         return ItemStack.EMPTY;
-    }
-
-    @Override
-    public EntityGroup getGroup() {
-        return EntityGroup.AQUATIC;
     }
 
     @Override
@@ -152,13 +150,13 @@ public class KoiEggsEntity extends MobEntity {
     }
 
     @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(BASE_COLOR, KoiBaseColorVariant.ORANGE.getID());
-        this.dataTracker.startTracking(PRIMARY_PATTERN_COLOR, KoiPrimaryPatternColorVariant.WHITE.getID());
-        this.dataTracker.startTracking(PRIMARY_PATTERN_TYPE, KoiPrimaryPatternTypeVariant.SPOTTED.getID());
-        this.dataTracker.startTracking(SECONDARY_PATTERN_COLOR, KoiSecondaryPatternColorVariant.BLACK.getID());
-        this.dataTracker.startTracking(SECONDARY_PATTERN_TYPE, KoiSecondaryPatternTypeVariant.SMALL_SPOTS.getID());
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(BASE_COLOR, KoiBaseColorVariant.ORANGE.getID());
+        builder.add(PRIMARY_PATTERN_COLOR, KoiPrimaryPatternColorVariant.WHITE.getID());
+        builder.add(PRIMARY_PATTERN_TYPE, KoiPrimaryPatternTypeVariant.SPOTTED.getID());
+        builder.add(SECONDARY_PATTERN_COLOR, KoiSecondaryPatternColorVariant.BLACK.getID());
+        builder.add(SECONDARY_PATTERN_TYPE, KoiSecondaryPatternTypeVariant.SMALL_SPOTS.getID());
     }
 
     private void hatch(World world) {

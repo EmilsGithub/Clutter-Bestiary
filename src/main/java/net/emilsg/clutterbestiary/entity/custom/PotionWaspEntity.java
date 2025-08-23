@@ -4,7 +4,10 @@ import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.entity.variants.PotionWaspVariant;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.*;
+import net.minecraft.entity.AnimationState;
+import net.minecraft.entity.EntityData;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.AboveGroundTargeting;
 import net.minecraft.entity.ai.NoPenaltySolidTargeting;
 import net.minecraft.entity.ai.control.FlightMoveControl;
@@ -22,7 +25,9 @@ import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.math.BlockPos;
@@ -49,6 +54,15 @@ public class PotionWaspEntity extends ParentAnimalEntity {
         this.lookControl = new PotionWaspLookControl(this);
     }
 
+    @Override
+    public boolean canHaveStatusEffect(StatusEffectInstance effectInstance) {
+        List<RegistryEntry<StatusEffect>> potionEffects = PotionWaspVariant.getAllStatusEffects();
+        for (RegistryEntry<StatusEffect> effect : potionEffects) {
+            if (effectInstance.getEffectType() == effect) return false;
+        }
+        return true;
+    }
+
     public static DefaultAttributeContainer.Builder setAttributes() {
         return ParentAnimalEntity.createMobAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 10D)
@@ -58,12 +72,12 @@ public class PotionWaspEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public boolean canHaveStatusEffect(StatusEffectInstance effectInstance) {
-        List<StatusEffect> potionEffects = PotionWaspVariant.getAllStatusEffects();
-        for (StatusEffect effect : potionEffects) {
-            if (effectInstance.getEffectType() == effect) return false;
-        }
-        return true;
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+        PotionWaspVariant variant = PotionWaspVariant.getRandom();
+        this.setVariant(variant);
+        this.setHasPotionSac(true);
+
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
     @Override
@@ -83,11 +97,6 @@ public class PotionWaspEntity extends ParentAnimalEntity {
             }
         }
         return super.damage(source, amount);
-    }
-
-    @Override
-    public EntityGroup getGroup() {
-        return EntityGroup.ARTHROPOD;
     }
 
     public float getPathfindingFavor(BlockPos pos, WorldView world) {
@@ -116,12 +125,8 @@ public class PotionWaspEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
-        PotionWaspVariant variant = PotionWaspVariant.getRandom();
-        this.setVariant(variant);
-        this.setHasPotionSac(true);
-
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+    public boolean isBreedingItem(ItemStack stack) {
+        return false;
     }
 
     @Override
@@ -178,10 +183,11 @@ public class PotionWaspEntity extends ParentAnimalEntity {
         return null;
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(VARIANT, PotionWaspVariant.REGENERATION.getId());
-        this.dataTracker.startTracking(HAS_POTION_SAC, true);
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(VARIANT, PotionWaspVariant.REGENERATION.getId());
+        builder.add(HAS_POTION_SAC, true);
     }
 
     @Override

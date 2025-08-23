@@ -7,6 +7,8 @@ import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
 import net.emilsg.clutterbestiary.item.ModItems;
 import net.emilsg.clutterbestiary.item.custom.ButterflyBottleItem;
 import net.minecraft.block.BlockState;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.FoodComponent;
 import net.minecraft.entity.AnimationState;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.EntityType;
@@ -34,7 +36,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.UUID;
 
 public class ChameleonEntity extends ParentTameableEntity {
@@ -131,6 +132,44 @@ public class ChameleonEntity extends ParentTameableEntity {
         this.limbAnimator.updateLimbs(f * 2.75f, 0.2F);
     }
 
+    @Nullable
+    public ChameleonEntity createChild(ServerWorld serverWorld, PassiveEntity passiveEntity) {
+        ChameleonEntity chameleonEntity = ModEntityTypes.CHAMELEON.create(serverWorld);
+        if (chameleonEntity != null) {
+            UUID uUID = this.getOwnerUuid();
+            if (uUID != null) {
+                chameleonEntity.setOwnerUuid(uUID);
+                chameleonEntity.setTamed(true, true);
+            }
+        }
+
+        return chameleonEntity;
+    }
+
+    @Override
+    public void breed(ServerWorld world, AnimalEntity other) {
+        super.breed(world, other);
+    }
+
+    @Override
+    public boolean canBreedWith(AnimalEntity other) {
+        if (other == this) {
+            return false;
+        } else if (!this.isTamed()) {
+            return false;
+        } else if (!(other instanceof ChameleonEntity chameleonEntity)) {
+            return false;
+        } else {
+            if (!chameleonEntity.isTamed()) {
+                return false;
+            } else if (chameleonEntity.isInSittingPose()) {
+                return false;
+            } else {
+                return this.isInLove() && chameleonEntity.isInLove();
+            }
+        }
+    }
+
     @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
         ItemStack stackInHand = player.getStackInHand(hand);
@@ -143,7 +182,9 @@ public class ChameleonEntity extends ParentTameableEntity {
                 stackInHand.decrement(1);
             }
 
-            this.heal((float) Objects.requireNonNull(item.getFoodComponent()).getHunger());
+            FoodComponent foodComponent = stackInHand.get(DataComponentTypes.FOOD);
+            float nutrition = foodComponent != null ? (float)foodComponent.nutrition() : 1.0F;
+            this.heal(2.0F * nutrition);
             return ActionResult.SUCCESS;
         }
 
@@ -181,53 +222,6 @@ public class ChameleonEntity extends ParentTameableEntity {
         }
 
         return super.interactMob(player, hand);
-    }
-
-    @Override
-    public void breed(ServerWorld world, AnimalEntity other) {
-        super.breed(world, other);
-    }
-
-    public boolean canBeLeashedBy(PlayerEntity player) {
-        return !this.isSitting() && this.isOwner(player);
-    }
-
-    @Override
-    public boolean canBreedWith(AnimalEntity other) {
-        if (other == this) {
-            return false;
-        } else if (!this.isTamed()) {
-            return false;
-        } else if (!(other instanceof ChameleonEntity chameleonEntity)) {
-            return false;
-        } else {
-            if (!chameleonEntity.isTamed()) {
-                return false;
-            } else if (chameleonEntity.isInSittingPose()) {
-                return false;
-            } else {
-                return this.isInLove() && chameleonEntity.isInLove();
-            }
-        }
-    }
-
-    @Nullable
-    public ChameleonEntity createChild(ServerWorld serverWorld, PassiveEntity passiveEntity) {
-        ChameleonEntity chameleonEntity = ModEntityTypes.CHAMELEON.create(serverWorld);
-        if (chameleonEntity != null) {
-            UUID uUID = this.getOwnerUuid();
-            if (uUID != null) {
-                chameleonEntity.setOwnerUuid(uUID);
-                chameleonEntity.setTamed(true);
-            }
-        }
-
-        return chameleonEntity;
-    }
-
-    @Override
-    public double getMountedHeightOffset() {
-        return 0.15D;
     }
 
     @Override
@@ -271,15 +265,10 @@ public class ChameleonEntity extends ParentTameableEntity {
     }
 
     @Override
-    public void setTamed(boolean tamed) {
-        super.setTamed(tamed);
-        if (tamed) {
-            getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(18.0D);
-            getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE).setBaseValue(6.0f);
-        } else {
-            getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(6.0D);
-            getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE).setBaseValue(3.0f);
-        }
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(SITTING, false);
+        builder.add(ATTACKING, false);
     }
 
     @Override
@@ -287,7 +276,7 @@ public class ChameleonEntity extends ParentTameableEntity {
         this.goalSelector.add(1, new SwimGoal(this));
         this.goalSelector.add(2, new SitGoal(this));
         this.goalSelector.add(3, new TamedEscapeDangerGoal(this, 1.5));
-        this.goalSelector.add(4, new FollowOwnerGoal(this, 1.2, 10.0F, 2.0F, false));
+        this.goalSelector.add(4, new FollowOwnerGoal(this, 1.2, 10.0F, 2.0F));
         this.goalSelector.add(5, new AnimalMateGoal(this, 1));
         this.goalSelector.add(6, new TemptGoal(this, 1.2, BREEDING_INGREDIENT, false));
         this.goalSelector.add(7, new FollowParentGoal(this, 1.2));
@@ -309,11 +298,9 @@ public class ChameleonEntity extends ParentTameableEntity {
     }
 
     @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(SITTING, false);
-        this.dataTracker.startTracking(ATTACKING, false);
-
+    protected void updateAttributesForTamed() {
+        getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(18.0D);
+        getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE).setBaseValue(6.0f);
     }
 
     private void updateColorTransition(boolean shouldChangeColor) {

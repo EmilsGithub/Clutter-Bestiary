@@ -1,21 +1,23 @@
 package net.emilsg.clutterbestiary.item.custom;
 
-import net.emilsg.clutterbestiary.entity.ModEntityTypes;
+import com.mojang.serialization.MapCodec;
 import net.emilsg.clutterbestiary.entity.custom.KoiEntity;
 import net.emilsg.clutterbestiary.entity.variants.koi.*;
 import net.emilsg.clutterbestiary.util.ModUtil;
-import net.minecraft.client.item.TooltipContext;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
+import net.minecraft.entity.Bucketable;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.EntityBucketItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
@@ -26,6 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class KoiBucketItem extends EntityBucketItem {
+    public static final MapCodec<KoiBaseColorVariant> BASE_COLOR_CODEC = KoiBaseColorVariant.CODEC.fieldOf("BaseColor");
+    public static final MapCodec<KoiPrimaryPatternTypeVariant> PRIMARY_TYPE_CODEC = KoiPrimaryPatternTypeVariant.CODEC.fieldOf("PrimaryPatternType");
+    public static final MapCodec<KoiPrimaryPatternColorVariant> PRIMARY_COLOR_CODEC = KoiPrimaryPatternColorVariant.CODEC.fieldOf("PrimaryPatternColor");
+    public static final MapCodec<KoiSecondaryPatternTypeVariant> SECONDARY_TYPE_CODEC = KoiSecondaryPatternTypeVariant.CODEC.fieldOf("SecondaryPatternType");
+    public static final MapCodec<KoiSecondaryPatternColorVariant> SECONDARY_COLOR_CODEC = KoiSecondaryPatternColorVariant.CODEC.fieldOf("SecondaryPatternColor");
     private final EntityType<KoiEntity> entityType;
 
     public KoiBucketItem(EntityType<KoiEntity> type, Fluid fluid, SoundEvent emptyingSound, Settings settings) {
@@ -40,57 +47,53 @@ public class KoiBucketItem extends EntityBucketItem {
         }
     }
 
-    private void spawnEntity(ServerWorld world, ItemStack stack, BlockPos pos) {
-        KoiEntity koi = ModEntityTypes.KOI.create(world);
-        if (koi == null) return;
-        koi.copyDataFromNbt(koi, stack.getOrCreateNbt());
-        koi.refreshPositionAndAngles(pos, 0, 0);
-        koi.setFromBucket(true);
-
-        if (stack.hasCustomName()) {
-            koi.setCustomName(stack.getName());
-        }
-
-        world.spawnEntity(koi);
-    }
-
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        super.appendTooltip(stack, world, tooltip, context);
+    public void appendTooltip(ItemStack stack, TooltipContext ctx, List<Text> tooltip, TooltipType type) {
+        super.appendTooltip(stack, ctx, tooltip, type);
 
-        NbtCompound nbt = stack.getNbt();
-        if (this.entityType != ModEntityTypes.KOI || nbt == null) return;
-        if (!nbt.contains("BaseColor", NbtElement.STRING_TYPE)) return;
-        if (!nbt.contains("PrimaryPatternType", NbtElement.STRING_TYPE)) return;
-        if (!nbt.contains("SecondaryPatternType", NbtElement.STRING_TYPE)) return;
+        var cmp = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
 
-        KoiBaseColorVariant base = KoiBaseColorVariant.fromId(nbt.getString("BaseColor"));
+        var baseOpt = cmp.get(BASE_COLOR_CODEC).result();
+        if (baseOpt.isEmpty()) return;
+        var base = baseOpt.get();
 
         tooltip.add(Text.translatable("tooltip.clutterbestiary.base_color.koi").formatted(Formatting.GRAY));
         if (base.hasSeparateTexture()) {
             int tick = (int)(System.currentTimeMillis() / 100) % base.getColorHex().length;
             tooltip.add(ModUtil.buildCyclicFormattedName("tooltip.clutterbestiary." + base.getName() + ".koi", base.getColorHex(), tick, true));
+            return;
         } else {
             tooltip.add(Text.translatable("tooltip.clutterbestiary." + base.getName() + ".koi").formatted(base.getFormatting()));
         }
 
-        if (!base.hasSeparateTexture()) {
-            KoiPrimaryPatternTypeVariant primaryPatternType = KoiPrimaryPatternTypeVariant.fromId(nbt.getString("PrimaryPatternType"));
-            KoiPrimaryPatternColorVariant primaryPatternColor = KoiPrimaryPatternColorVariant.fromId(nbt.getString("PrimaryPatternColor"));
+        var pType  = cmp.get(PRIMARY_TYPE_CODEC).result().orElse(null);
+        var pColor = cmp.get(PRIMARY_COLOR_CODEC).result().orElse(null);
+        var sType  = cmp.get(SECONDARY_TYPE_CODEC).result().orElse(null);
+        var sColor = cmp.get(SECONDARY_COLOR_CODEC).result().orElse(null);
+
+        if (pType != null && pColor != null) {
             tooltip.add(Text.translatable("tooltip.clutterbestiary.primary_pattern.koi").formatted(Formatting.GRAY));
-            MutableText primaryText = Text.translatable("tooltip.clutterbestiary." + primaryPatternType.getName() + ".koi").formatted(primaryPatternType.getFormatting()).formatted(primaryPatternColor.getFormatting());
-
-            tooltip.add(primaryText);
-
-            KoiSecondaryPatternTypeVariant secondaryPatternType = KoiSecondaryPatternTypeVariant.fromId(nbt.getString("SecondaryPatternType"));
-            KoiSecondaryPatternColorVariant secondaryPatternColor = KoiSecondaryPatternColorVariant.fromId(nbt.getString("SecondaryPatternColor"));
+            tooltip.add(Text.translatable("tooltip.clutterbestiary." + pType.getName() + ".koi")
+                    .formatted(pType.getFormatting())
+                    .formatted(pColor.getFormatting()));
+        }
+        if (sType != null && sColor != null) {
             tooltip.add(Text.translatable("tooltip.clutterbestiary.secondary_pattern.koi").formatted(Formatting.GRAY));
-            MutableText secondaryText = Text.translatable("tooltip.clutterbestiary." + secondaryPatternType.getName() + ".koi").formatted(secondaryPatternType.getFormatting()).formatted(secondaryPatternColor.getFormatting());
-
-            tooltip.add(secondaryText);
+            tooltip.add(Text.translatable("tooltip.clutterbestiary." + sType.getName() + ".koi")
+                    .formatted(sType.getFormatting())
+                    .formatted(sColor.getFormatting()));
         }
 
         tooltip.add(ScreenTexts.EMPTY);
+    }
+
+    private void spawnEntity(ServerWorld world, ItemStack stack, BlockPos pos) {
+        Entity entity = this.entityType.spawnFromItemStack(world, stack, null, pos, SpawnReason.BUCKET, true, false);
+        if (entity instanceof Bucketable bucketable) {
+            NbtComponent nbtComponent = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
+            bucketable.copyDataFromNbt(nbtComponent.copyNbt());
+            bucketable.setFromBucket(true);
+        }
 
     }
 }

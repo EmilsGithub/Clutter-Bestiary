@@ -2,6 +2,8 @@ package net.emilsg.clutterbestiary.entity.custom;
 
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.FoodComponent;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.ai.pathing.PathNodeType;
@@ -101,24 +103,26 @@ public class CapybaraEntity extends ParentTameableEntity {
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
         int sleeperType = random.nextBetween(0, 2);
         setSleeperType(sleeperType);
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack itemStack = player.getStackInHand(hand);
-        Item item = itemStack.getItem();
+        ItemStack stackInHand = player.getStackInHand(hand);
+        Item item = stackInHand.getItem();
 
         Item itemForTaming = Items.MELON_SLICE;
 
         if (item == itemForTaming && this.getHealth() < this.getMaxHealth()) {
             if (!player.getAbilities().creativeMode) {
-                itemStack.decrement(1);
+                stackInHand.decrement(1);
             }
 
-            this.heal((float) item.getFoodComponent().getHunger());
+            FoodComponent foodComponent = stackInHand.get(DataComponentTypes.FOOD);
+            float nutrition = foodComponent != null ? (float)foodComponent.nutrition() : 1.0F;
+            this.heal(2.0F * nutrition);
             return ActionResult.SUCCESS;
         }
 
@@ -128,7 +132,7 @@ public class CapybaraEntity extends ParentTameableEntity {
                 return ActionResult.CONSUME;
             } else {
                 if (!player.getAbilities().creativeMode) {
-                    itemStack.decrement(1);
+                    stackInHand.decrement(1);
                 }
 
                 if (this.random.nextInt(3) == 0 && !this.getWorld().isClient()) {
@@ -136,6 +140,7 @@ public class CapybaraEntity extends ParentTameableEntity {
                     this.navigation.recalculatePath();
                     this.setHealth(this.getMaxHealth());
                     this.setTarget(null);
+                    this.setTamed(true, true);
                     this.getWorld().sendEntityStatus(this, (byte) 7);
                     setIsForceSleeping(true);
                     setIsSleeping(true);
@@ -147,13 +152,13 @@ public class CapybaraEntity extends ParentTameableEntity {
             }
         }
 
-        if (isTamed() && !this.getWorld().isClient() && hand == Hand.MAIN_HAND && !(itemStack.isOf(Items.MELON_SLICE)) && !(itemStack.isOf(Items.MELON)) && isOwner(player)) {
+        if (isTamed() && !this.getWorld().isClient() && hand == Hand.MAIN_HAND && !(stackInHand.isOf(Items.MELON_SLICE)) && !(stackInHand.isOf(Items.MELON)) && isOwner(player)) {
             setIsForceSleeping(!isSleeping());
             setIsSleeping(!isSleeping());
             return ActionResult.SUCCESS;
         }
 
-        if (itemStack.getItem() == itemForTaming) {
+        if (stackInHand.getItem() == itemForTaming) {
             return ActionResult.PASS;
         }
 
@@ -226,11 +231,11 @@ public class CapybaraEntity extends ParentTameableEntity {
     }
 
     @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(IS_SLEEPING, false);
-        this.dataTracker.startTracking(FORCE_SLEEPING, false);
-        this.dataTracker.startTracking(SLEEPER, 0);
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(IS_SLEEPING, false);
+        builder.add(FORCE_SLEEPING, false);
+        builder.add(SLEEPER, 0);
     }
 
     @Override
@@ -239,7 +244,7 @@ public class CapybaraEntity extends ParentTameableEntity {
         this.goalSelector.add(2, new CapybaraSitGoal(this));
         this.goalSelector.add(3, new CapybaraEscapeDangerGoal(this, 1.25));
         this.goalSelector.add(4, new CapybaraMateGoal(this, 1));
-        this.goalSelector.add(5, new CapybaraFollowOwnerGoal(this, 1.2, 10.0F, 2.0F, false));
+        this.goalSelector.add(5, new CapybaraFollowOwnerGoal(this, 1.2, 10.0F, 2.0F));
         this.goalSelector.add(6, new CapybaraTemptGoal(this, 1.2, BREEDING_INGREDIENT, false));
         this.goalSelector.add(7, new FollowParentGoal(this, 1.2));
         this.goalSelector.add(8, new CapybaraWanderGoal(this, 1.0, 0.3f));
@@ -329,8 +334,8 @@ public class CapybaraEntity extends ParentTameableEntity {
 
     private class CapybaraFollowOwnerGoal extends FollowOwnerGoal {
 
-        public CapybaraFollowOwnerGoal(ParentTameableEntity tameable, double speed, float minDistance, float maxDistance, boolean leavesAllowed) {
-            super(tameable, speed, minDistance, maxDistance, leavesAllowed);
+        public CapybaraFollowOwnerGoal(ParentTameableEntity tameable, double speed, float minDistance, float maxDistance) {
+            super(tameable, speed, minDistance, maxDistance);
         }
 
         @Override

@@ -15,7 +15,7 @@ public class BoopletRenderer extends MobEntityRenderer<BoopletEntity, BoopletMod
 
     public BoopletRenderer(EntityRendererFactory.Context ctx) {
         super(ctx, new BoopletModel<>(ctx.getPart(ModModelLayers.BOOPLET)), 0.4f);
-        this.addFeature(new EmissiveRenderer<>(this, BoopletRenderer::getEmissiveTexture, 1f, false));
+        this.addFeature(new EmissiveRenderer<>(this, BoopletRenderer::getEmissiveTexture));
     }
 
     @Override

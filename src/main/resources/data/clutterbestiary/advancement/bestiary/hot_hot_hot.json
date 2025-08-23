@@ -1,0 +1,29 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "thats_hot": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.bestiary.hot_hot_hot.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "id": "clutterbestiary:ember_tortoise_spawn_egg"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.bestiary.hot_hot_hot.title"
+    }
+  },
+  "requirements": [
+    [
+      "thats_hot"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

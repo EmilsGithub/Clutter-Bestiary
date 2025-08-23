@@ -25,7 +25,8 @@ public class JellyfishRenderer extends MobEntityRenderer<JellyfishEntity, Jellyf
     }
 
     @Override
-    protected void setupTransforms(JellyfishEntity jellyfishEntity, MatrixStack matrices, float animationProgress, float bodyYaw, float tickDelta) {
+    protected void setupTransforms(JellyfishEntity jellyfishEntity, MatrixStack matrices, float animationProgress, float bodyYaw, float tickDelta, float scale) {
+        super.setupTransforms(jellyfishEntity, matrices, animationProgress, bodyYaw, tickDelta, scale);
         float i = MathHelper.lerp(tickDelta, jellyfishEntity.prevTiltAngle, jellyfishEntity.tiltAngle);
         float j = MathHelper.lerp(tickDelta, jellyfishEntity.prevRollAngle, jellyfishEntity.rollAngle);
         matrices.translate(0.0f, 0.25f, 0.0f);

@@ -10,6 +10,7 @@ import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
@@ -33,7 +34,7 @@ public class CrimsonNewtEntity extends AbstractNetherNewtEntity {
     }
 
     @Override
-    public StatusEffect getOnAttackEffect() {
+    public RegistryEntry<StatusEffect> getOnAttackEffect() {
         //TODO add status effect when vulnerability has released: Registries.STATUS_EFFECT.get(Identifier.of("EXTERNAL_MOD_ID", "vulnerability"))
         return null;
     }

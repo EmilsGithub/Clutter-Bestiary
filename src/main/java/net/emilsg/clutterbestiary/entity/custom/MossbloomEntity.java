@@ -40,7 +40,6 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.stat.Stats;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Util;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.*;
@@ -88,7 +87,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
                 .add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.5f)
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 6.0f)
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f)
-                .add(EntityAttributes.HORSE_JUMP_STRENGTH, 0.75f);
+                .add(EntityAttributes.GENERIC_JUMP_STRENGTH, 0.75f);
     }
 
     public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
@@ -139,11 +138,6 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
             }
 
         }
-    }
-
-    @Override
-    public boolean canBeLeashedBy(PlayerEntity player) {
-        return true;
     }
 
     protected void playStepSound(BlockPos pos, BlockState state) {
@@ -339,7 +333,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     public double getJumpStrength() {
-        return this.getAttributeValue(EntityAttributes.HORSE_JUMP_STRENGTH);
+        return this.getAttributeValue(EntityAttributes.GENERIC_JUMP_STRENGTH);
     }
 
     public boolean isInAir() {
@@ -401,10 +395,11 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
-        MossbloomVariant variant = Util.getRandom(MossbloomVariant.values(), this.random);
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+        MossbloomVariant variant = MossbloomVariant.getRandom();
         this.setVariant(variant);
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
     @Override
@@ -455,50 +450,52 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         this.jumping = false;
     }
 
-    private void tickFertilize(World world) {
-        BlockPos origin = this.getBlockPos();
-        int ox = origin.getX(), oy = origin.getY(), oz = origin.getZ();
-        BlockPos.Mutable pos = new BlockPos.Mutable();
-        Random rand = this.getRandom();
+    @Override
+    public ActionResult interactMob(PlayerEntity player, Hand hand) {
+        ItemStack itemStack = player.getStackInHand(hand);
+        Item item = itemStack.getItem();
 
-        int dyStart = rand.nextInt(3);
-        int dyStep  = rand.nextBoolean() ? 1 : 2;
-        int dxStart = rand.nextInt(11);
-        int dxStep  = rand.nextInt(10) + 1;
-        int dzStart = rand.nextInt(11);
-        int dzStep  = rand.nextInt(10) + 1;
-
-        int maxChecks = 32;
-
-        outer:
-        for (int yi = 0; yi < 3; yi++) {
-            int dy = ((dyStart + yi * dyStep) % 3) - 1;
-
-            for (int xi = 0; xi < 11; xi++) {
-                int dx = ((dxStart + xi * dxStep) % 11) - 5;
-
-                for (int zi = 0; zi < 11; zi++) {
-                    if (--maxChecks < 0) break outer;
-
-                    int dz = ((dzStart + zi * dzStep) % 11) - 5;
-                    pos.set(ox + dx, oy + dy, oz + dz);
-
-                    BlockState state = world.getBlockState(pos);
-                    if (state.isAir()) continue;
-
-                    Block block = state.getBlock();
-                    if (state.isIn(BlockTags.BEE_GROWABLES) && block instanceof Fertilizable fertilizable && fertilizable.isFertilizable(world, pos, state, false) && fertilizable.canGrow(world, rand, pos, state)) {
-
-                        if (world instanceof ServerWorld serverWorld) {
-                            fertilizable.grow(serverWorld, rand, pos, state);
-                        } else {
-                            BoneMealItem.createParticles(world, pos, 15);
-                        }
-                        break outer;
-                    }
+        if (this.isTamed() && hand == Hand.MAIN_HAND) {
+            if (!player.isSneaking()) {
+                if (!this.getIsSaddled() && itemStack.isOf(Items.SADDLE)) {
+                    if (!player.getAbilities().creativeMode) itemStack.decrement(1);
+                    this.setIsSaddled(true);
+                    this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_PIG_SADDLE, SoundCategory.NEUTRAL, 0.5f, 1.25f);
+                    return ActionResult.SUCCESS;
+                }
+                if (itemStack.isEmpty()) {
+                    this.setRiding(player);
+                    return ActionResult.SUCCESS;
                 }
             }
+
+            if (item instanceof ShearsItem) {
+                this.setIsSaddled(false);
+                itemStack.damage(1, player, LivingEntity.getSlotForHand(hand));
+                this.dropStack(new ItemStack(Items.SADDLE), 0.5F);
+                this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_MOOSHROOM_SHEAR, SoundCategory.NEUTRAL, 0.5f, 1.25f);
+                return ActionResult.SUCCESS;
+            }
         }
+
+        if (!this.isTamed() && item == tamingItem) {
+            if (this.getWorld().isClient()) return ActionResult.CONSUME;
+
+            if (!player.getAbilities().creativeMode) itemStack.decrement(1);
+            this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_HORSE_EAT, SoundCategory.NEUTRAL, 0.5f, 1.75f);
+
+            if (random.nextInt(8) == 0) {
+                super.setOwner(player);
+                this.navigation.recalculatePath();
+                this.setTarget(null);
+                this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
+            } else {
+                this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_NEGATIVE_PLAYER_REACTION_PARTICLES);
+            }
+            return ActionResult.SUCCESS;
+        }
+
+        return super.interactMob(player, hand);
     }
 
 
@@ -518,15 +515,16 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         nbt.putBoolean("IsSaddled", this.getIsSaddled());
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(VARIANT, MossbloomVariant.HORNED.getId());
-        this.dataTracker.startTracking(HAS_HORNS, true);
-        this.dataTracker.startTracking(HORN_DROP_TIMER, 0);
-        this.dataTracker.startTracking(IS_SHAKING, false);
-        this.dataTracker.startTracking(TIME_TILL_DROP, 0);
-        this.dataTracker.startTracking(IS_SPRINTING, false);
-        this.dataTracker.startTracking(IS_SADDLED, false);
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(VARIANT, MossbloomVariant.HORNED.getId());
+        builder.add(HAS_HORNS, true);
+        builder.add(HORN_DROP_TIMER, 0);
+        builder.add(IS_SHAKING, false);
+        builder.add(TIME_TILL_DROP, 0);
+        builder.add(IS_SPRINTING, false);
+        builder.add(IS_SADDLED, false);
     }
 
     @Override
@@ -594,52 +592,50 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         }
     }
 
-    @Override
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack itemStack = player.getStackInHand(hand);
-        Item item = itemStack.getItem();
+    private void tickFertilize(World world) {
+        BlockPos origin = this.getBlockPos();
+        int ox = origin.getX(), oy = origin.getY(), oz = origin.getZ();
+        BlockPos.Mutable pos = new BlockPos.Mutable();
+        Random rand = this.getRandom();
 
-        if (this.isTamed() && hand == Hand.MAIN_HAND) {
-            if (!player.isSneaking()) {
-                if (!this.getIsSaddled() && itemStack.isOf(Items.SADDLE)) {
-                    if (!player.getAbilities().creativeMode) itemStack.decrement(1);
-                    this.setIsSaddled(true);
-                    this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_PIG_SADDLE, SoundCategory.NEUTRAL, 0.5f, 1.25f);
-                    return ActionResult.SUCCESS;
-                }
-                if (itemStack.isEmpty()) {
-                    this.setRiding(player);
-                    return ActionResult.SUCCESS;
-                }
-            }
+        int dyStart = rand.nextInt(3);
+        int dyStep  = rand.nextBoolean() ? 1 : 2;
+        int dxStart = rand.nextInt(11);
+        int dxStep  = rand.nextInt(10) + 1;
+        int dzStart = rand.nextInt(11);
+        int dzStep  = rand.nextInt(10) + 1;
 
-            if (item instanceof ShearsItem) {
-                this.setIsSaddled(false);
-                itemStack.damage(1, player, (p) -> p.sendEquipmentBreakStatus(EquipmentSlot.MAINHAND));
-                this.dropStack(new ItemStack(Items.SADDLE), 0.5F);
-                this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_MOOSHROOM_SHEAR, SoundCategory.NEUTRAL, 0.5f, 1.25f);
-                return ActionResult.SUCCESS;
+        int maxChecks = 32;
+
+        outer:
+        for (int yi = 0; yi < 3; yi++) {
+            int dy = ((dyStart + yi * dyStep) % 3) - 1;
+
+            for (int xi = 0; xi < 11; xi++) {
+                int dx = ((dxStart + xi * dxStep) % 11) - 5;
+
+                for (int zi = 0; zi < 11; zi++) {
+                    if (--maxChecks < 0) break outer;
+
+                    int dz = ((dzStart + zi * dzStep) % 11) - 5;
+                    pos.set(ox + dx, oy + dy, oz + dz);
+
+                    BlockState state = world.getBlockState(pos);
+                    if (state.isAir()) continue;
+
+                    Block block = state.getBlock();
+                    if (state.isIn(BlockTags.BEE_GROWABLES) && block instanceof Fertilizable fertilizable && fertilizable.isFertilizable(world, pos, state) && fertilizable.canGrow(world, rand, pos, state)) {
+
+                        if (world instanceof ServerWorld serverWorld) {
+                            fertilizable.grow(serverWorld, rand, pos, state);
+                        } else {
+                            BoneMealItem.createParticles(world, pos, 15);
+                        }
+                        break outer;
+                    }
+                }
             }
         }
-
-        if (!this.isTamed() && item == tamingItem) {
-            if (this.getWorld().isClient()) return ActionResult.CONSUME;
-
-            if (!player.getAbilities().creativeMode) itemStack.decrement(1);
-            this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_HORSE_EAT, SoundCategory.NEUTRAL, 0.5f, 1.75f);
-
-            if (random.nextInt(8) == 0) {
-                super.setOwner(player);
-                this.navigation.recalculatePath();
-                this.setTarget(null);
-                this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
-            } else {
-                this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_NEGATIVE_PLAYER_REACTION_PARTICLES);
-            }
-            return ActionResult.SUCCESS;
-        }
-
-        return super.interactMob(player, hand);
     }
 
 

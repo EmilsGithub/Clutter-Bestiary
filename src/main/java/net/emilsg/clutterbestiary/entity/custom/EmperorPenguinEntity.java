@@ -44,7 +44,6 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
         this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
         this.setPathfindingPenalty(PathNodeType.DAMAGE_FIRE, -1.0F);
         this.setPathfindingPenalty(PathNodeType.COCOA, -1.0F);
-        this.setStepHeight(1.0f);
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
@@ -138,10 +137,11 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
         nbt.putInt("EggTimer", this.getEggTimer());
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(HAS_EGG, false);
-        this.dataTracker.startTracking(EGG_TIMER, 0);
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(HAS_EGG, false);
+        builder.add(EGG_TIMER, 0);
     }
 
     @Override

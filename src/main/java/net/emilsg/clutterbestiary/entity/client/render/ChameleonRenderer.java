@@ -14,7 +14,7 @@ public class ChameleonRenderer extends MobEntityRenderer<ChameleonEntity, Chamel
 
     public ChameleonRenderer(EntityRendererFactory.Context ctx) {
         super(ctx, new ChameleonModel<>(ctx.getPart(ModModelLayers.CHAMELEON)), 0.4f);
-        this.addFeature(new ChameleonColorFeatureRenderer(this));
+        this.addFeature(new ChameleonColorFeatureRenderer(this, ctx.getModelLoader()));
     }
 
     @Override

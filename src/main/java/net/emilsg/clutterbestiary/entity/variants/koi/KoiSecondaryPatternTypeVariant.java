@@ -1,5 +1,7 @@
 package net.emilsg.clutterbestiary.entity.variants.koi;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.entity.variants.BestiaryBasicVariant;
 import net.minecraft.util.Formatting;
@@ -7,12 +9,31 @@ import net.minecraft.util.Identifier;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public enum KoiSecondaryPatternTypeVariant implements BestiaryBasicVariant {
     NONE("none", Formatting.STRIKETHROUGH),
     SMALL_SPOTS("small_spots", Formatting.ITALIC),
     MEDIUM_SPOTS("medium_spots", Formatting.ITALIC);
+
+    private static final Map<Identifier, KoiSecondaryPatternTypeVariant> BY_ID =
+            java.util.Arrays.stream(values()).collect(Collectors.toMap(
+                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName()),
+                    v -> v
+            ));
+
+    public static final Codec<KoiSecondaryPatternTypeVariant> CODEC =
+            Identifier.CODEC.comapFlatMap(
+                    id -> {
+                        var v = BY_ID.get(id);
+                        return v != null
+                                ? DataResult.success(v)
+                                : DataResult.error(() -> "Unknown koi secondary pattern type variant: " + id);
+                    },
+                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName())
+            );
 
     private final String name;
     private final Formatting formatting;

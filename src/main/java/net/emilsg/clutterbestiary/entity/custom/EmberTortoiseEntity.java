@@ -26,7 +26,6 @@ import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -35,7 +34,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.RecipeType;
-import net.minecraft.recipe.SmeltingRecipe;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
@@ -51,7 +49,10 @@ import net.minecraft.world.WorldView;
 import net.minecraft.world.dimension.DimensionTypes;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 public class EmberTortoiseEntity extends ParentAnimalEntity {
     private static final TrackedData<Boolean> MOVING = DataTracker.registerData(EmberTortoiseEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
@@ -99,74 +100,21 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public void tick() {
-        super.tick();
-        World world = this.getWorld();
-
-        if (this.isAlive() && this.getHealth() <= (this.getMaxHealth() / 4) && this.canShield() && !world.isClient()) {
-            this.startShielding();
-        } else if (this.isAlive() && this.getShieldingDuration() <= 0 && !world.isClient()) {
-            this.setShielding(false);
-        }
-
-        if (this.isShielding() && world.isClient && !this.isDead()) {
-            Vec3d entityPos = this.getPos();
-            Random random = new Random();
-            int numberOfParticles = 10;
-
-            fireSoundTicker++;
-            fireChargeSoundTicker++;
-
-            if (fireSoundTicker >= 20) {
-                world.playSound(entityPos.getX() + 0.5F, entityPos.getY() + 0.5F, entityPos.getZ() + 0.5F, SoundEvents.BLOCK_FIRE_AMBIENT, SoundCategory.NEUTRAL, 0.5F + random.nextFloat(), 0.0125F, false);
-                fireSoundTicker = 0;
-            }
-
-            if (fireChargeSoundTicker >= 20) {
-                world.playSound(entityPos.getX() + 0.5F, entityPos.getY() + 0.5F, entityPos.getZ() + 0.5F, SoundEvents.ITEM_FIRECHARGE_USE, SoundCategory.NEUTRAL, 0.5F + random.nextFloat(), 0.25F, false);
-                fireChargeSoundTicker = 0;
-            }
-
-            for (int i = 0; i < numberOfParticles; i++) {
-                double velocityX = (random.nextDouble() - 0.5) * 0.4;
-                double velocityY = (random.nextDouble() - 0.5) * 0.4;
-                double velocityZ = (random.nextDouble() - 0.5) * 0.4;
-
-                world.addParticle(random.nextBoolean() ? ParticleTypes.FLAME : ParticleTypes.SMALL_FLAME,
-                        entityPos.x, entityPos.y + 1, entityPos.z,
-                        velocityX, velocityY, velocityZ);
+    public ActionResult interactMob(PlayerEntity player, Hand hand) {
+        ItemStack stackInHand = player.getStackInHand(hand);
+        if (stackInHand.isOf(this.getShieldingRechargeItem())) {
+            if (this.canShield()) {
+                this.startShielding();
+                player.playSound(SoundEvents.ITEM_FIRECHARGE_USE, 0.5F + random.nextFloat(), 0.75F);
+                player.swingHand(hand);
+                if (!player.getAbilities().creativeMode) stackInHand.decrement(1);
+            } else {
+                int cooldown = this.getShieldingCooldown();
+                this.setShieldingCooldown(cooldown - 100);
             }
         }
 
-        if (this.isShielding() && !world.isClient() && !this.isDead()) {
-            if (this.isTouchingWaterOrRain()) this.setShielding(false);
-
-            this.setShieldingDuration(this.getShieldingDuration() - 1);
-
-            Box area = new Box(this.getBlockPos()).expand(3, 1, 3);
-
-            List<LivingEntity> nearbyEntities = world.getEntitiesByClass(LivingEntity.class, area, e -> true);
-
-            if (nearbyEntities != null) {
-                for (LivingEntity entity : nearbyEntities) {
-                    entity.setOnFire(true);
-                    entity.setFireTicks(100);
-                    if (entity instanceof PlayerEntity player && world instanceof ServerWorld serverWorld) {
-                        ModUtil.grantImpossibleAdvancement("bestiary/hot_hot_hot", serverWorld, player);
-                    }
-                }
-            }
-
-            this.meltNearbyBlocks(world);
-        }
-
-        if (!world.isClient() && this.getHealth() < this.getMaxHealth() && random.nextInt(200) == 0 && this.getWorld().getDimensionKey() == DimensionTypes.THE_NETHER && this.isAlive()) {
-            this.setHealth((float) (int) (this.getHealth() + 1));
-        }
-
-        if (world.isClient) {
-            this.setupAnimationStates();
-        }
+        return super.interactMob(player, hand);
     }
 
     public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, net.minecraft.util.math.random.Random random) {
@@ -232,21 +180,74 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack stackInHand = player.getStackInHand(hand);
-        if (stackInHand.isOf(this.getShieldingRechargeItem())) {
-            if (this.canShield()) {
-                this.startShielding();
-                player.playSound(SoundEvents.ITEM_FIRECHARGE_USE, SoundCategory.NEUTRAL, 0.5F + random.nextFloat(), 0.75F);
-                player.swingHand(hand);
-                if (!player.getAbilities().creativeMode) stackInHand.decrement(1);
-            } else {
-                int cooldown = this.getShieldingCooldown();
-                this.setShieldingCooldown(cooldown - 100);
+    public void tick() {
+        super.tick();
+        World world = this.getWorld();
+
+        if (this.isAlive() && this.getHealth() <= (this.getMaxHealth() / 4) && this.canShield() && !world.isClient()) {
+            this.startShielding();
+        } else if (this.isAlive() && this.getShieldingDuration() <= 0 && !world.isClient()) {
+            this.setShielding(false);
+        }
+
+        if (this.isShielding() && world.isClient && !this.isDead()) {
+            Vec3d entityPos = this.getPos();
+            Random random = new Random();
+            int numberOfParticles = 10;
+
+            fireSoundTicker++;
+            fireChargeSoundTicker++;
+
+            if (fireSoundTicker >= 20) {
+                world.playSound(entityPos.getX() + 0.5F, entityPos.getY() + 0.5F, entityPos.getZ() + 0.5F, SoundEvents.BLOCK_FIRE_AMBIENT, SoundCategory.NEUTRAL, 0.5F + random.nextFloat(), 0.0125F, false);
+                fireSoundTicker = 0;
+            }
+
+            if (fireChargeSoundTicker >= 20) {
+                world.playSound(entityPos.getX() + 0.5F, entityPos.getY() + 0.5F, entityPos.getZ() + 0.5F, SoundEvents.ITEM_FIRECHARGE_USE, SoundCategory.NEUTRAL, 0.5F + random.nextFloat(), 0.25F, false);
+                fireChargeSoundTicker = 0;
+            }
+
+            for (int i = 0; i < numberOfParticles; i++) {
+                double velocityX = (random.nextDouble() - 0.5) * 0.4;
+                double velocityY = (random.nextDouble() - 0.5) * 0.4;
+                double velocityZ = (random.nextDouble() - 0.5) * 0.4;
+
+                world.addParticle(random.nextBoolean() ? ParticleTypes.FLAME : ParticleTypes.SMALL_FLAME,
+                        entityPos.x, entityPos.y + 1, entityPos.z,
+                        velocityX, velocityY, velocityZ);
             }
         }
 
-        return super.interactMob(player, hand);
+        if (this.isShielding() && !world.isClient() && !this.isDead()) {
+            if (this.isTouchingWaterOrRain()) this.setShielding(false);
+
+            this.setShieldingDuration(this.getShieldingDuration() - 1);
+
+            Box area = new Box(this.getBlockPos()).expand(3, 1, 3);
+
+            List<LivingEntity> nearbyEntities = world.getEntitiesByClass(LivingEntity.class, area, e -> true);
+
+            if (nearbyEntities != null) {
+                for (LivingEntity entity : nearbyEntities) {
+                    entity.setOnFire(true);
+                    entity.setFireTicks(100);
+                    if (entity instanceof PlayerEntity player && world instanceof ServerWorld serverWorld) {
+                        ModUtil.grantImpossibleAdvancement("bestiary/hot_hot_hot", serverWorld, player);
+                    }
+                }
+            }
+
+            this.meltNearbyBlocks(world);
+        }
+
+        if (!world.isClient() && this.getHealth() < this.getMaxHealth() && random.nextInt(200) == 0 && this.getWorld().getDimensionEntry().matchesKey(DimensionTypes.THE_NETHER) && this.isAlive()) {
+            this.setHealth((float) (int) (this.getHealth() + 1));
+        }
+
+        if (world.isClient) {
+            this.setupAnimationStates();
+        }
     }
 
     public boolean isAttacking() {
@@ -327,17 +328,14 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
         nbt.putInt("ShieldingCooldown", this.getShieldingCooldown());
     }
 
-    protected float getActiveEyeHeight(EntityPose pose, EntityDimensions dimensions) {
-        return dimensions.height * 0.4F;
-    }
-
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(MOVING, false);
-        this.dataTracker.startTracking(ATTACKING, false);
-        this.dataTracker.startTracking(SHIELDING, false);
-        this.dataTracker.startTracking(SHIELDING_COOLDOWN, 0);
-        this.dataTracker.startTracking(SHIELDING_DURATION, 400);
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(MOVING, false);
+        builder.add(ATTACKING, false);
+        builder.add(SHIELDING, false);
+        builder.add(SHIELDING_COOLDOWN, 0);
+        builder.add(SHIELDING_DURATION, 400);
     }
 
     @Override
@@ -378,12 +376,14 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
                     Block inputBlock = state.getBlock();
                     ItemStack inputStack = new ItemStack(inputBlock.asItem());
 
-                    Optional<SmeltingRecipe> recipeOpt = world.getRecipeManager().getFirstMatch(
-                            RecipeType.SMELTING, new SimpleInventory(inputStack), world
+                    var match = world.getRecipeManager().getFirstMatch(
+                            RecipeType.SMELTING,
+                            new net.minecraft.recipe.input.SingleStackRecipeInput(inputStack),
+                            world
                     );
 
-                    if (recipeOpt.isPresent()) {
-                        ItemStack result = recipeOpt.get().getOutput(world.getRegistryManager());
+                    if (match.isPresent()) {
+                        ItemStack result = match.get().value().getResult(world.getRegistryManager());
                         if (Block.getBlockFromItem(result.getItem()) != Blocks.AIR) {
                             Block resultBlock = Block.getBlockFromItem(result.getItem());
                             if (random.nextInt(750) == 0) world.setBlockState(pos, resultBlock.getDefaultState());

@@ -38,7 +38,9 @@ public class ClutterBestiaryClient implements ClientModInitializer {
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.POTION_SAC, PotionSacModel::getTexturedModelData);
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.DRAGONFLY, DragonflyModel::getTexturedModelData);
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.BOOPLET, BoopletModel::getTexturedModelData);
-        EntityModelLayerRegistry.registerModelLayer(ModModelLayers.KOI, KoiModel::getTexturedModelData);
+        EntityModelLayerRegistry.registerModelLayer(ModModelLayers.KOI_BASE, KoiModel::getTexturedModelData);
+        EntityModelLayerRegistry.registerModelLayer(ModModelLayers.KOI_PRIMARY_COLOR, KoiModel::getTexturedModelData);
+        EntityModelLayerRegistry.registerModelLayer(ModModelLayers.KOI_SECONDARY_COLOR, KoiModel::getTexturedModelData);
         EntityModelLayerRegistry.registerModelLayer(ModModelLayers.KOI_EGGS, KoiEggsModel::getTexturedModelData);
 
     }

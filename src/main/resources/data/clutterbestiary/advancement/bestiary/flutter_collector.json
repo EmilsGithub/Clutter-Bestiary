@@ -1,0 +1,38 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "flutter_collector": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "clutterbestiary:butterfly_in_a_bottle"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "advancements.bestiary.flutter_collector.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "id": "clutterbestiary:butterfly_in_a_bottle"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancements.bestiary.flutter_collector.title"
+    }
+  },
+  "requirements": [
+    [
+      "flutter_collector"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -17,6 +17,7 @@ import net.minecraft.entity.mob.WaterCreatureEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.tag.EntityTypeTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
@@ -41,7 +42,7 @@ public class JellyfishEntity extends WaterCreatureEntity {
         if (entity instanceof PlayerEntity && ((PlayerEntity) entity).isCreative()) {
             return false;
         }
-        return entity.getType() == EntityType.AXOLOTL || entity.getGroup() != EntityGroup.AQUATIC;
+        return !entity.getType().isIn(EntityTypeTags.AQUATIC);
     };
     private static final TargetPredicate TARGET_PREDICATE = TargetPredicate.createNonAttackable().ignoreDistanceScalingFactor().ignoreVisibility().setPredicate(TARGET_FILTER);
     public final AnimationState swimmingAnimationState = new AnimationState();
@@ -74,13 +75,8 @@ public class JellyfishEntity extends WaterCreatureEntity {
     }
 
     @Override
-    public boolean canBeLeashedBy(PlayerEntity player) {
-        return !this.isLeashed();
-    }
-
-    @Override
     public boolean damage(DamageSource source, float amount) {
-        if (source.getAttacker() instanceof LivingEntity attacker && attacker.getWorld() instanceof ServerWorld && attacker.getGroup() != EntityGroup.AQUATIC) {
+        if (source.getAttacker() instanceof LivingEntity attacker && attacker.getWorld() instanceof ServerWorld && !attacker.getType().isIn(EntityTypeTags.AQUATIC)) {
             if (random.nextInt(3) == 0) {
                 attacker.addStatusEffect(new StatusEffectInstance(StatusEffects.POISON, 100, 1), this);
             }
@@ -105,9 +101,9 @@ public class JellyfishEntity extends WaterCreatureEntity {
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
+    public @Nullable EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
         this.setVariant(JellyfishVariant.getRandom());
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
     @Override
@@ -154,9 +150,10 @@ public class JellyfishEntity extends WaterCreatureEntity {
         return 0.4f;
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(VARIANT, JellyfishVariant.GREEN.getId());
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(VARIANT, JellyfishVariant.GREEN.getId());
     }
 
     public float getSwimY() {

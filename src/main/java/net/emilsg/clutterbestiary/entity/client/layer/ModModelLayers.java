@@ -23,7 +23,12 @@ public class ModModelLayers {
     public static final EntityModelLayer POTION_SAC = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "potion_sac"), "main");
     public static final EntityModelLayer DRAGONFLY = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "dragonfly"), "main");
     public static final EntityModelLayer BOOPLET = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "booplet"), "main");
-    public static final EntityModelLayer KOI = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "koi"), "main");
     public static final EntityModelLayer KOI_EGGS = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "koi_eggs"), "main");
+
+
+    public static final EntityModelLayer KOI_BASE = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "koi"), "main");
+    public static final EntityModelLayer KOI_PRIMARY_COLOR = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "koi"), "primary");
+    public static final EntityModelLayer KOI_SECONDARY_COLOR = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "koi"), "secondary");
+
 
 }

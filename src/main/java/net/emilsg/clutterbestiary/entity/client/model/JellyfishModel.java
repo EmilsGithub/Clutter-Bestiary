@@ -62,8 +62,8 @@ public class JellyfishModel<T extends JellyfishEntity> extends SinglePartEntityM
     }
 
     @Override
-    public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
-        root.render(matrices, vertexConsumer, light, overlay, red, green, blue, alpha);
+    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
+        this.getPart().render(matrices, vertices, light, overlay, color);
     }
 
     @Override

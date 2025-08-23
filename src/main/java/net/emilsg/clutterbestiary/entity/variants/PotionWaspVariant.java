@@ -5,6 +5,7 @@ import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.Potions;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.Identifier;
 
 import java.util.Arrays;
@@ -20,9 +21,9 @@ public enum PotionWaspVariant {
 
 
     private final String name;
-    private final Potion effect;
+    private final RegistryEntry<Potion> effect;
 
-    PotionWaspVariant(String name, Potion effect) {
+    PotionWaspVariant(String name, RegistryEntry<Potion> effect) {
         this.name = name;
         this.effect = effect;
     }
@@ -36,13 +37,16 @@ public enum PotionWaspVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
-    public static List<StatusEffect> getAllStatusEffects() {
+    public static List<RegistryEntry<StatusEffect>> getAllStatusEffects() {
         return Arrays.stream(values())
-                .flatMap(variant -> variant.effect.getEffects().stream())
+                .map(PotionWaspVariant::getPotionEffect)
+                .map(RegistryEntry::value)
+                .flatMap(potion -> potion.getEffects().stream())
                 .map(StatusEffectInstance::getEffectType)
                 .distinct()
                 .toList();
     }
+
 
     public String getId() {
         return ClutterBestiary.MOD_ID + ":" + this.getName();
@@ -52,7 +56,7 @@ public enum PotionWaspVariant {
         return name;
     }
 
-    public Potion getPotionEffect() {
+    public RegistryEntry<Potion> getPotionEffect() {
         return effect;
     }
 

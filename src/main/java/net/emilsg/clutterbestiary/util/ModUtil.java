@@ -1,7 +1,7 @@
 package net.emilsg.clutterbestiary.util;
 
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.advancement.Advancement;
+import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.advancement.AdvancementProgress;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
@@ -43,7 +43,7 @@ public class ModUtil {
     public static void grantImpossibleAdvancement(String path, ServerWorld world, PlayerEntity player) {
         if (player instanceof ServerPlayerEntity serverPlayer) {
             MinecraftServer server = world.getServer();
-            Advancement advancement = server.getAdvancementLoader().get(new Identifier(ClutterBestiary.MOD_ID, path));
+            AdvancementEntry advancement = server.getAdvancementLoader().get(Identifier.of(ClutterBestiary.MOD_ID, path));
 
             if (serverPlayer.getAdvancementTracker().getProgress(advancement).isDone()) return;
 

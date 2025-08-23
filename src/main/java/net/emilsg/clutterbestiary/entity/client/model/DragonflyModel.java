@@ -49,13 +49,13 @@ public class DragonflyModel<T extends DragonflyEntity> extends BestiaryModel<T> 
     }
 
     @Override
-    public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
+    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
         float scale = child ? 0.5f : 1f;
 
         matrices.push();
         matrices.scale(scale, scale, scale);
         matrices.translate(0.0f, child ? 1.5f : 0.0f, 0.0f);
-        this.getPart().render(matrices, vertexConsumer, light, overlay, red, green, blue, alpha);
+        this.getPart().render(matrices, vertices, light, overlay, color);
         matrices.pop();
     }
 

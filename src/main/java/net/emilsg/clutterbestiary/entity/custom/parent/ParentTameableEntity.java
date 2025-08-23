@@ -6,13 +6,13 @@ import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.TameableEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.EntityView;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-public class ParentTameableEntity extends TameableEntity {
+public abstract class ParentTameableEntity extends TameableEntity {
     private static final TrackedData<Boolean> MOVING = DataTracker.registerData(ParentTameableEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> IS_FLEEING = DataTracker.registerData(ParentTameableEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
@@ -43,11 +43,6 @@ public class ParentTameableEntity extends TameableEntity {
     }
 
     @Override
-    public EntityView method_48926() {
-        return this.getWorld();
-    }
-
-    @Override
     public void tickMovement() {
         if (!this.getWorld().isClient) {
             Vec3d velocity = this.getVelocity();
@@ -58,10 +53,12 @@ public class ParentTameableEntity extends TameableEntity {
     }
 
     @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(MOVING, false);
-        this.dataTracker.startTracking(IS_FLEEING, false);
+    public abstract boolean isBreedingItem(ItemStack stack);
 
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(MOVING, false);
+        builder.add(IS_FLEEING, false);
     }
 }

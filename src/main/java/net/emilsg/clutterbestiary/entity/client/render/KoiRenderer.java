@@ -15,11 +15,11 @@ import net.minecraft.util.Identifier;
 public class KoiRenderer extends MobEntityRenderer<KoiEntity, KoiModel<KoiEntity>> {
 
     public KoiRenderer(EntityRendererFactory.Context ctx) {
-        super(ctx, new KoiModel<>(ctx.getPart(ModModelLayers.KOI)), 0.4f);
-        this.addFeature(new KoiBaseColorFeatureRenderer(this));
-        this.addFeature(new KoiPrimaryPatternColorFeatureRenderer(this));
-        this.addFeature(new KoiSecondaryPatternColorFeatureRenderer(this));
-        this.addFeature(new EmissiveRenderer<>(this, KoiBaseColorVariant::getEmissiveTextureFromEntity, 0.5f, false));
+        super(ctx, new KoiModel<>(ctx.getPart(ModModelLayers.KOI_BASE)), 0.4f);
+        this.addFeature(new KoiBaseColorFeatureRenderer(this, ctx.getModelLoader()));
+        this.addFeature(new KoiPrimaryPatternColorFeatureRenderer(this, ctx.getModelLoader()));
+        this.addFeature(new KoiSecondaryPatternColorFeatureRenderer(this, ctx.getModelLoader()));
+        this.addFeature(new EmissiveRenderer<>(this, KoiBaseColorVariant::getEmissiveTextureFromEntity));
     }
 
     @Override

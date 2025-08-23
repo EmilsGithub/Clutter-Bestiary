@@ -2,8 +2,6 @@ package net.emilsg.clutterbestiary.entity;
 
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.entity.custom.*;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
-import net.minecraft.entity.EntityDimensions;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.registry.Registries;
@@ -13,64 +11,64 @@ import net.minecraft.util.Identifier;
 public class ModEntityTypes {
 
     public static final EntityType<ButterflyEntity> BUTTERFLY = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "butterfly"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, ButterflyEntity::new).dimensions(EntityDimensions.changing(0.5f, 0.5f)).build());
+            EntityType.Builder.create(ButterflyEntity::new, SpawnGroup.CREATURE).dimensions(0.5f, 0.5f).build());
 
     public static final EntityType<ChameleonEntity> CHAMELEON = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "chameleon"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, ChameleonEntity::new).dimensions(EntityDimensions.changing(0.75f, 0.5f)).build());
+            EntityType.Builder.create(ChameleonEntity::new, SpawnGroup.CREATURE).dimensions(0.75f, 0.5f).build());
 
     public static final EntityType<EchofinEntity> ECHOFIN = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "echofin"),
-            FabricEntityTypeBuilder.create(SpawnGroup.AMBIENT, EchofinEntity::new).dimensions(EntityDimensions.changing(0.5f, 0.5f)).build());
+            EntityType.Builder.create(EchofinEntity::new, SpawnGroup.AMBIENT).dimensions(0.5f, 0.5f).build());
 
     public static final EntityType<MossbloomEntity> MOSSBLOOM = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "mossbloom"),
-            FabricEntityTypeBuilder.create(SpawnGroup.AMBIENT, MossbloomEntity::new).dimensions(EntityDimensions.changing(0.9f, 1.15f)).build());
+            EntityType.Builder.create(MossbloomEntity::new, SpawnGroup.AMBIENT).dimensions(0.9f, 1.15f).build());
 
     public static final EntityType<KiwiBirdEntity> KIWI_BIRD = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "kiwi_bird"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, KiwiBirdEntity::new).dimensions(EntityDimensions.changing(0.5f, 0.5f)).build());
+            EntityType.Builder.create(KiwiBirdEntity::new, SpawnGroup.CREATURE).dimensions(0.5f, 0.5f).build());
 
     public static final EntityType<EmperorPenguinEntity> EMPEROR_PENGUIN = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "emperor_penguin"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, EmperorPenguinEntity::new).dimensions(EntityDimensions.changing(0.75f, 1.35f)).build());
+            EntityType.Builder.create(EmperorPenguinEntity::new, SpawnGroup.CREATURE).dimensions(0.75f, 1.35f).build());
 
     public static final EntityType<BeaverEntity> BEAVER = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "beaver"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, BeaverEntity::new).dimensions(EntityDimensions.changing(0.9f, 0.65f)).build());
+            EntityType.Builder.create(BeaverEntity::new, SpawnGroup.CREATURE).dimensions(0.9f, 0.65f).build());
 
     public static final EntityType<CapybaraEntity> CAPYBARA = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "capybara"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, CapybaraEntity::new).dimensions(EntityDimensions.changing(0.7f, 0.8f)).build());
+            EntityType.Builder.create(CapybaraEntity::new, SpawnGroup.CREATURE).dimensions(0.7f, 0.8f).build());
 
     public static final EntityType<CrimsonNewtEntity> CRIMSON_NEWT = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "crimson_newt"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, CrimsonNewtEntity::new).dimensions(EntityDimensions.changing(0.75f, 0.75f)).fireImmune().build());
+            EntityType.Builder.create(CrimsonNewtEntity::new, SpawnGroup.CREATURE).dimensions(0.75f, 0.75f).makeFireImmune().build());
 
     public static final EntityType<WarpedNewtEntity> WARPED_NEWT = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "warped_newt"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, WarpedNewtEntity::new).dimensions(EntityDimensions.changing(0.75f, 0.75f)).fireImmune().build());
+            EntityType.Builder.create(WarpedNewtEntity::new, SpawnGroup.CREATURE).dimensions(0.75f, 0.75f).makeFireImmune().build());
 
     public static final EntityType<EmberTortoiseEntity> EMBER_TORTOISE = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "ember_tortoise"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, EmberTortoiseEntity::new).dimensions(EntityDimensions.changing(1.5f, 1.45f)).fireImmune().build());
+            EntityType.Builder.create(EmberTortoiseEntity::new, SpawnGroup.CREATURE).dimensions(1.5f, 1.45f).makeFireImmune().build());
 
     public static final EntityType<JellyfishEntity> JELLYFISH = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "jellyfish"),
-            FabricEntityTypeBuilder.create(SpawnGroup.WATER_AMBIENT, JellyfishEntity::new).dimensions(EntityDimensions.changing(0.5f, 0.5f)).build());
+            EntityType.Builder.create(JellyfishEntity::new, SpawnGroup.WATER_AMBIENT).dimensions(0.5f, 0.5f).build());
 
     public static final EntityType<MantaRayEntity> MANTA_RAY = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "manta_ray"),
-            FabricEntityTypeBuilder.create(SpawnGroup.WATER_CREATURE, MantaRayEntity::new).dimensions(EntityDimensions.changing(1f, 0.5f)).build());
+            EntityType.Builder.create(MantaRayEntity::new, SpawnGroup.WATER_CREATURE).dimensions(1f, 0.5f).build());
 
     public static final EntityType<SeahorseEntity> SEAHORSE = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "seahorse"),
-            FabricEntityTypeBuilder.create(SpawnGroup.WATER_AMBIENT, SeahorseEntity::new).dimensions(EntityDimensions.changing(0.4f, 0.5f)).build());
+            EntityType.Builder.create(SeahorseEntity::new, SpawnGroup.WATER_AMBIENT).dimensions(0.4f, 0.5f).build());
 
     public static final EntityType<PotionWaspEntity> POTION_WASP = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "potion_wasp"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, PotionWaspEntity::new).dimensions(EntityDimensions.changing(0.75f, 0.75f)).build());
+            EntityType.Builder.create(PotionWaspEntity::new, SpawnGroup.CREATURE).dimensions(0.75f, 0.75f).build());
 
     public static final EntityType<PotionSacEntity> POTION_SAC = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "potion_sac"),
-            FabricEntityTypeBuilder.create(SpawnGroup.MISC, PotionSacEntity::new).dimensions(EntityDimensions.changing(0.75f, 0.75f)).build());
+            EntityType.Builder.create(PotionSacEntity::new, SpawnGroup.MISC).dimensions(0.75f, 0.75f).build());
 
     public static final EntityType<DragonflyEntity> DRAGONFLY = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "dragonfly"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, DragonflyEntity::new).dimensions(EntityDimensions.changing(0.65f, 0.4f)).build());
+            EntityType.Builder.create(DragonflyEntity::new, SpawnGroup.CREATURE).dimensions(0.65f, 0.4f).build());
 
     public static final EntityType<BoopletEntity> BOOPLET = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "booplet"),
-            FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, BoopletEntity::new).dimensions(EntityDimensions.changing(0.6f, 0.6f)).build());
+            EntityType.Builder.create(BoopletEntity::new, SpawnGroup.CREATURE).dimensions(0.6f, 0.6f).build());
 
     public static final EntityType<KoiEntity> KOI = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "koi"),
-            FabricEntityTypeBuilder.create(SpawnGroup.WATER_AMBIENT, KoiEntity::new).dimensions(EntityDimensions.changing(0.7f, 0.5f)).build());
+            EntityType.Builder.create(KoiEntity::new, SpawnGroup.WATER_AMBIENT).dimensions(0.7f, 0.5f).build());
 
     public static final EntityType<KoiEggsEntity> KOI_EGGS = Registry.register(Registries.ENTITY_TYPE, Identifier.of(ClutterBestiary.MOD_ID, "koi_eggs"),
-            FabricEntityTypeBuilder.create(SpawnGroup.MISC, KoiEggsEntity::new).dimensions(EntityDimensions.changing(0.45f, 0.45f)).build());
+            EntityType.Builder.create(KoiEggsEntity::new, SpawnGroup.MISC).dimensions(0.45f, 0.45f).build());
 
     public static void register() {
     }

@@ -6,6 +6,8 @@ import net.emilsg.clutterbestiary.entity.custom.parent.ParentFishEntity;
 import net.emilsg.clutterbestiary.entity.variants.koi.*;
 import net.emilsg.clutterbestiary.item.ModItems;
 import net.minecraft.advancement.criterion.Criteria;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.goal.TemptGoal;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
@@ -68,14 +70,28 @@ public class KoiEntity extends ParentFishEntity {
     }
 
     @Override
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(BASE_COLOR, KoiBaseColorVariant.ORANGE.getID());
-        this.dataTracker.startTracking(PRIMARY_PATTERN_COLOR, KoiPrimaryPatternColorVariant.WHITE.getID());
-        this.dataTracker.startTracking(PRIMARY_PATTERN_TYPE, KoiPrimaryPatternTypeVariant.SPOTTED.getID());
-        this.dataTracker.startTracking(SECONDARY_PATTERN_COLOR, KoiSecondaryPatternColorVariant.BLACK.getID());
-        this.dataTracker.startTracking(SECONDARY_PATTERN_TYPE, KoiSecondaryPatternTypeVariant.SMALL_SPOTS.getID());
-        this.dataTracker.startTracking(CHILD, false);
+    public void copyDataFromNbt(NbtCompound nbt) {
+        super.copyDataFromNbt(nbt);
+
+        if (nbt.contains("BaseColor", NbtElement.STRING_TYPE)) {
+            this.setBaseColorVariant(KoiBaseColorVariant.fromId(nbt.getString("BaseColor")));
+        }
+
+        if (nbt.contains("PrimaryPatternColor", NbtElement.STRING_TYPE)) {
+            this.setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant.fromId(nbt.getString("PrimaryPatternColor")));
+        }
+
+        if (nbt.contains("PrimaryPatternType", NbtElement.STRING_TYPE)) {
+            this.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.fromId(nbt.getString("PrimaryPatternType")));
+        }
+
+        if (nbt.contains("SecondaryPatternColor", NbtElement.STRING_TYPE)) {
+            this.setSecondaryPatternColorVariant(KoiSecondaryPatternColorVariant.fromId(nbt.getString("SecondaryPatternColor")));
+        }
+
+        if (nbt.contains("SecondaryPatternType", NbtElement.STRING_TYPE)) {
+            this.setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant.fromId(nbt.getString("SecondaryPatternType")));
+        }
     }
 
     protected void initGoals() {
@@ -132,48 +148,16 @@ public class KoiEntity extends ParentFishEntity {
         this.forcedAge = nbt.getInt("ForcedAge");
     }
 
-    @Nullable
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
-        if (entityData == null) {
-            entityData = new PassiveEntity.PassiveData(true);
-        }
-
-        PassiveEntity.PassiveData passiveData = (PassiveEntity.PassiveData) entityData;
-        if (passiveData.canSpawnBaby() && passiveData.getSpawnedCount() > 0 && world.getRandom().nextFloat() <= passiveData.getBabyChance()) {
-            this.setBreedingAge(-24000);
-        }
-
-        passiveData.countSpawned();
-
-        KoiBaseColorVariant base;
-        KoiPrimaryPatternColorVariant primaryColor;
-        KoiPrimaryPatternTypeVariant primaryType;
-        KoiSecondaryPatternColorVariant secondaryColor;
-        KoiSecondaryPatternTypeVariant secondaryType;
-
-        do {
-            base = KoiBaseColorVariant.getRandom();
-            primaryColor = KoiPrimaryPatternColorVariant.getRandom();
-            primaryType = KoiPrimaryPatternTypeVariant.getRandom();
-            secondaryColor = KoiSecondaryPatternColorVariant.getRandom();
-            secondaryType = KoiSecondaryPatternTypeVariant.getRandom();
-        }
-        while (!KoiVariantCompatibility.isValid(base, primaryColor, primaryType, secondaryColor, secondaryType));
-
-        this.setBaseColorVariant(base);
-
-        this.setPrimaryPatternColorVariant(primaryColor);
-        this.setPrimaryPatternTypeVariant(primaryType);
-        this.setSecondaryPatternColorVariant(secondaryColor);
-        this.setSecondaryPatternTypeVariant(secondaryType);
-
-        if (base.hasSeparateTexture()) {
-            this.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.NONE);
-            this.setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant.NONE);
-        }
-
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
+    public void copyDataToStack(ItemStack stack) {
+        super.copyDataToStack(stack);
+        NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, nbt -> {
+            nbt.putString("BaseColor", this.getBaseColorVariant().getID());
+            nbt.putString("PrimaryPatternType", this.getPrimaryPatternTypeVariant().getID());
+            nbt.putString("PrimaryPatternColor", this.getPrimaryPatternColorVariant().getID());
+            nbt.putString("SecondaryPatternType", this.getSecondaryPatternTypeVariant().getID());
+            nbt.putString("SecondaryPatternColor", this.getSecondaryPatternColorVariant().getID());
+        });
     }
 
     public KoiBaseColorVariant getBaseColorVariant() {
@@ -241,90 +225,58 @@ public class KoiEntity extends ParentFishEntity {
         return SoundEvents.ENTITY_TROPICAL_FISH_FLOP;
     }
 
-    public void copyDataToStack(ItemStack stack) {
-        NbtCompound nbtCompound = stack.getOrCreateNbt();
-
-        if (this.hasCustomName()) {
-            stack.setCustomName(this.getCustomName());
+    @Override
+    public @Nullable EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+        if (entityData == null) {
+            entityData = new PassiveEntity.PassiveData(true);
         }
 
-        if (this.isAiDisabled()) {
-            nbtCompound.putBoolean("NoAI", this.isAiDisabled());
+        PassiveEntity.PassiveData passiveData = (PassiveEntity.PassiveData) entityData;
+        if (passiveData.canSpawnBaby() && passiveData.getSpawnedCount() > 0 && world.getRandom().nextFloat() <= passiveData.getBabyChance()) {
+            this.setBreedingAge(-24000);
         }
 
-        if (this.isSilent()) {
-            nbtCompound.putBoolean("Silent", this.isSilent());
+        passiveData.countSpawned();
+
+        KoiBaseColorVariant base;
+        KoiPrimaryPatternColorVariant primaryColor;
+        KoiPrimaryPatternTypeVariant primaryType;
+        KoiSecondaryPatternColorVariant secondaryColor;
+        KoiSecondaryPatternTypeVariant secondaryType;
+
+        do {
+            base = KoiBaseColorVariant.getRandom();
+            primaryColor = KoiPrimaryPatternColorVariant.getRandom();
+            primaryType = KoiPrimaryPatternTypeVariant.getRandom();
+            secondaryColor = KoiSecondaryPatternColorVariant.getRandom();
+            secondaryType = KoiSecondaryPatternTypeVariant.getRandom();
+        }
+        while (!KoiVariantCompatibility.isValid(base, primaryColor, primaryType, secondaryColor, secondaryType));
+
+        this.setBaseColorVariant(base);
+
+        this.setPrimaryPatternColorVariant(primaryColor);
+        this.setPrimaryPatternTypeVariant(primaryType);
+        this.setSecondaryPatternColorVariant(secondaryColor);
+        this.setSecondaryPatternTypeVariant(secondaryType);
+
+        if (base.hasSeparateTexture()) {
+            this.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.NONE);
+            this.setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant.NONE);
         }
 
-        if (this.hasNoGravity()) {
-            nbtCompound.putBoolean("NoGravity", this.hasNoGravity());
-        }
-
-        if (this.isGlowingLocal()) {
-            nbtCompound.putBoolean("Glowing", this.isGlowingLocal());
-        }
-
-        if (this.isInvulnerable()) {
-            nbtCompound.putBoolean("Invulnerable", this.isInvulnerable());
-        }
-
-        nbtCompound.putFloat("Health", this.getHealth());
-
-        nbtCompound.putString("BaseColor", this.getBaseColorVariant().getID());
-        nbtCompound.putString("PrimaryPatternColor", this.getPrimaryPatternColorVariant().getID());
-        nbtCompound.putString("PrimaryPatternType", this.getPrimaryPatternTypeVariant().getID());
-        nbtCompound.putString("SecondaryPatternColor", this.getSecondaryPatternColorVariant().getID());
-        nbtCompound.putString("SecondaryPatternType", this.getSecondaryPatternTypeVariant().getID());
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
-    public void copyDataFromNbt(KoiEntity entity, NbtCompound nbt) {
-        if (nbt.contains("NoAI")) {
-            entity.setAiDisabled(nbt.getBoolean("NoAI"));
-        }
-
-        if (nbt.contains("Silent")) {
-            entity.setSilent(nbt.getBoolean("Silent"));
-        }
-
-        if (nbt.contains("NoGravity")) {
-            entity.setNoGravity(nbt.getBoolean("NoGravity"));
-        }
-
-        if (nbt.contains("Glowing")) {
-            entity.setGlowing(nbt.getBoolean("Glowing"));
-        }
-
-        if (nbt.contains("Invulnerable")) {
-            entity.setInvulnerable(nbt.getBoolean("Invulnerable"));
-        }
-
-        if (nbt.contains("Health", NbtElement.NUMBER_TYPE)) {
-            entity.setHealth(nbt.getFloat("Health"));
-        }
-
-        if (nbt.contains("Health", NbtElement.NUMBER_TYPE)) {
-            entity.setHealth(nbt.getFloat("Health"));
-        }
-
-        if (nbt.contains("BaseColor", NbtElement.STRING_TYPE)) {
-            entity.setBaseColorVariant(KoiBaseColorVariant.fromId(nbt.getString("BaseColor")));
-        }
-
-        if (nbt.contains("PrimaryPatternColor", NbtElement.STRING_TYPE)) {
-            entity.setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant.fromId(nbt.getString("PrimaryPatternColor")));
-        }
-
-        if (nbt.contains("PrimaryPatternType", NbtElement.STRING_TYPE)) {
-            entity.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.fromId(nbt.getString("PrimaryPatternType")));
-        }
-
-        if (nbt.contains("SecondaryPatternColor", NbtElement.STRING_TYPE)) {
-            entity.setSecondaryPatternColorVariant(KoiSecondaryPatternColorVariant.fromId(nbt.getString("SecondaryPatternColor")));
-        }
-
-        if (nbt.contains("SecondaryPatternType", NbtElement.STRING_TYPE)) {
-            entity.setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant.fromId(nbt.getString("SecondaryPatternType")));
-        }
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(BASE_COLOR, KoiBaseColorVariant.ORANGE.getID());
+        builder.add(PRIMARY_PATTERN_COLOR, KoiPrimaryPatternColorVariant.WHITE.getID());
+        builder.add(PRIMARY_PATTERN_TYPE, KoiPrimaryPatternTypeVariant.SPOTTED.getID());
+        builder.add(SECONDARY_PATTERN_COLOR, KoiSecondaryPatternColorVariant.BLACK.getID());
+        builder.add(SECONDARY_PATTERN_TYPE, KoiSecondaryPatternTypeVariant.SMALL_SPOTS.getID());
+        builder.add(CHILD, false);
     }
 
     private ActionResult tryBucket(PlayerEntity player, Hand hand, KoiEntity koiEntity) {

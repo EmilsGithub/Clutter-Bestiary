@@ -113,22 +113,21 @@ public class NetherNewtModel<T extends AbstractNetherNewtEntity> extends ParentT
     }
 
     @Override
-    public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
+    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
         if (this.child) {
             float babyScale = 0.5f;
             this.head.scale(createVec3f(babyScale));
             matrices.push();
             matrices.scale(babyScale, babyScale, babyScale);
             matrices.translate(0.0D, 1.5f, 0D);
-            this.getPart().render(matrices, vertexConsumer, light, overlay, red, green, blue, alpha);
+            this.getPart().render(matrices, vertices, light, overlay, color);
             matrices.pop();
             this.head.scale(createVec3f(0.9f));
         } else {
             matrices.push();
-            this.getPart().render(matrices, vertexConsumer, light, overlay, red, green, blue, alpha);
+            this.getPart().render(matrices, vertices, light, overlay, color);
             matrices.pop();
-        }
-    }
+        }    }
 
     @Override
     public void setAngles(AbstractNetherNewtEntity newt, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {

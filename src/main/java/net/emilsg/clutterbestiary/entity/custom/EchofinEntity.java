@@ -7,7 +7,10 @@ import net.emilsg.clutterbestiary.entity.variants.EchofinVariant;
 import net.emilsg.clutterbestiary.item.ModItems;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.*;
+import net.minecraft.entity.AnimationState;
+import net.minecraft.entity.EntityData;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.control.FlightMoveControl;
 import net.minecraft.entity.ai.control.LookControl;
 import net.minecraft.entity.ai.goal.EscapeDangerGoal;
@@ -31,7 +34,6 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
@@ -83,20 +85,10 @@ public class EchofinEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public void applyDamageEffects(LivingEntity attacker, Entity target) {
-        super.applyDamageEffects(attacker, target);
-        World world = target.getWorld();
-
-        if (world.isClient || !(target instanceof PlayerEntity player)) return;
-
-        if (shouldTeleportPlayers()) teleportPlayer(player, world);
-        else if (shouldLevitatePlayers()) levitatePlayer(player);
-
-    }
-
-    @Override
-    public boolean canBeLeashedBy(PlayerEntity player) {
-        return false;
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+        setVariant(EchofinVariant.getRandom());
+        this.setHomePos(this.getBlockPos());
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
     @Override
@@ -147,13 +139,6 @@ public class EchofinEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData, @Nullable NbtCompound entityNbt) {
-        setVariant(EchofinVariant.getRandom());
-        this.setHomePos(this.getBlockPos());
-        return super.initialize(world, difficulty, spawnReason, entityData, entityNbt);
-    }
-
-    @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
         ItemStack heldItem = player.getStackInHand(hand);
 
@@ -175,11 +160,16 @@ public class EchofinEntity extends ParentAnimalEntity {
                     this.dropItem(returnItem);
                 }
             }
-            player.playSound(SoundEvents.ITEM_BUCKET_FILL_FISH, SoundCategory.PLAYERS, 1.0f, 1.5f);
+            player.playSound(SoundEvents.ITEM_BUCKET_FILL_FISH, 1.0f, 1.5f);
             this.remove(RemovalReason.DISCARDED);
             return ActionResult.SUCCESS;
         }
         return super.interactMob(player, hand);
+    }
+
+    @Override
+    public boolean isBreedingItem(ItemStack stack) {
+        return false;
     }
 
     @Override
@@ -284,11 +274,24 @@ public class EchofinEntity extends ParentAnimalEntity {
         return SoundEvents.ENTITY_SALMON_HURT;
     }
 
-    protected void initDataTracker() {
-        super.initDataTracker();
-        this.dataTracker.startTracking(HOME_POS, BlockPos.ORIGIN);
-        this.dataTracker.startTracking(VARIANT, EchofinVariant.CHORUS.getId());
-        this.dataTracker.startTracking(ABILITY_TIMER, 0);
+    @Override
+    public void onPlayerCollision(PlayerEntity player) {
+        super.onPlayerCollision(player);
+
+        World world = player.getWorld();
+
+        if (world.isClient) return;
+
+        if (shouldTeleportPlayers()) teleportPlayer(player, world);
+        else if (shouldLevitatePlayers()) levitatePlayer(player);
+    }
+
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(HOME_POS, BlockPos.ORIGIN);
+        builder.add(VARIANT, EchofinVariant.CHORUS.getId());
+        builder.add(ABILITY_TIMER, 0);
     }
 
     @Override
