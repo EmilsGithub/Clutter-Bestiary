@@ -14,6 +14,7 @@ public class ClutterBestiaryClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         RendererRegistration.register();
+        ModModelPredicateProvider.register();
         registerEntityModelLayers();
         registerEntityRenderers();
     }
