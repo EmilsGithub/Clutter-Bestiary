@@ -25,7 +25,7 @@ public class ClutterBestiary implements ModInitializer {
     @Override
     public void onInitialize() {
         ModConfigManager.loadConfig();
-
+ 
         ModItems.register();
         ModBlocks.register();
 
