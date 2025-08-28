@@ -87,7 +87,8 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
                 .add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.5f)
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 6.0f)
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f)
-                .add(EntityAttributes.GENERIC_JUMP_STRENGTH, 0.75f);
+                .add(EntityAttributes.GENERIC_JUMP_STRENGTH, 0.75f)
+                .add(EntityAttributes.GENERIC_STEP_HEIGHT, 1.0f);
     }
 
     public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
