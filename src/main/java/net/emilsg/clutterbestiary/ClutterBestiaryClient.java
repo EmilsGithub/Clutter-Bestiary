@@ -5,6 +5,7 @@ import net.emilsg.clutterbestiary.entity.client.layer.ModModelLayers;
 import net.emilsg.clutterbestiary.entity.client.model.*;
 import net.emilsg.clutterbestiary.entity.client.player.RendererRegistration;
 import net.emilsg.clutterbestiary.entity.client.render.*;
+import net.emilsg.clutterbestiary.util.ModModelPredicateProvider;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
