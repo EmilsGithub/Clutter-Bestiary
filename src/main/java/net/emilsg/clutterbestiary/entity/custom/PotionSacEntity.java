@@ -31,8 +31,7 @@ public class PotionSacEntity extends MobEntity {
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
-        return MobEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 1D);
+        return MobEntity.createMobAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 1D);
     }
 
     @Override
@@ -42,7 +41,6 @@ public class PotionSacEntity extends MobEntity {
 
     @Override
     public void equipStack(EquipmentSlot slot, ItemStack stack) {
-
     }
 
     @Override
