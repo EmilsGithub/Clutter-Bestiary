@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_butterflies",
+  "spawners" : {
+    "type": "clutterbestiary:butterfly",
+    "weight": 20,
+    "minCount": 3,
+    "maxCount": 6
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "clutterbestiary:item/cooked_chorus_echofin"
+  }
+}

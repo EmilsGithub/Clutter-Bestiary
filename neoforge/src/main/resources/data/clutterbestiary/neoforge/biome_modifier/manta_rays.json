@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_manta_rays",
+  "spawners" : {
+    "type": "clutterbestiary:manta_ray",
+    "weight": 20,
+    "minCount": 1,
+    "maxCount": 3
+  }
+}

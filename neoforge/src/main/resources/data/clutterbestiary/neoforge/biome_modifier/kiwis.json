@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_kiwis",
+  "spawners" : {
+    "type": "clutterbestiary:kiwi_bird",
+    "weight": 30,
+    "minCount": 2,
+    "maxCount": 3
+  }
+}

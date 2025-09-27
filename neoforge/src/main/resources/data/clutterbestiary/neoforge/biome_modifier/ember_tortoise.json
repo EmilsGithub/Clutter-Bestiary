@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_ember_tortoises",
+  "spawners" : {
+    "type": "clutterbestiary:ember_tortoise",
+    "weight": 60,
+    "minCount": 1,
+    "maxCount": 2
+  }
+}

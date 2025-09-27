@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_echofins",
+  "spawners" : {
+    "type": "clutterbestiary:echofin",
+    "weight": 30,
+    "minCount": 1,
+    "maxCount": 3
+  }
+}

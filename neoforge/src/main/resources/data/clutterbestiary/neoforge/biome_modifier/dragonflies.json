@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_dragonflies",
+  "spawners" : {
+    "type": "clutterbestiary:dragonfly",
+    "weight": 20,
+    "minCount": 2,
+    "maxCount": 4
+  }
+}

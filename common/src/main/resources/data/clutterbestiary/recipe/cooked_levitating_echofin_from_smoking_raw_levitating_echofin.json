@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:smoking",
+  "category": "food",
+  "cookingtime": 100,
+  "experience": 0.4,
+  "group": "levitating_echofin",
+  "ingredient": {
+    "item": "clutterbestiary:raw_levitating_echofin"
+  },
+  "result": {
+    "id": "clutterbestiary:cooked_levitating_echofin"
+  }
+}

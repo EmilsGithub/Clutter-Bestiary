@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_capybaras",
+  "spawners" : {
+    "type": "clutterbestiary:capybara",
+    "weight": 5,
+    "minCount": 3,
+    "maxCount": 5
+  }
+}

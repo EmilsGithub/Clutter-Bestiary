@@ -1,0 +1,41 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+issueTrackerURL = "https://github.com/EmilsGithub/Clutter-Bestiary/issues"
+license = "MIT"
+
+[[mods]]
+modId = "clutterbestiary"
+version = "${version}-NeoForge-1.21.1"
+displayName = "Clutter: Bestiary"
+authors = "EmilSG"
+description = '''
+The entities from Clutter, plus more, updated, improved and split into a separate mod.
+'''
+logoFile = "icon.png"
+
+[[dependencies.clutterbestiary]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.clutterbestiary]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.clutterbestiary]]
+modId = "architectury"
+type = "required"
+versionRange = "[13.0.8,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[mixins]]
+config = "clutterbestiary.mixins.json"
+
+[[mixins]]
+config = "clutterbestiaryneoforge.mixins.json"

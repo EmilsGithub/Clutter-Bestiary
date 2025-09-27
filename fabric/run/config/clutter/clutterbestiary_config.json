@@ -1,0 +1,78 @@
+{
+  "spawn_warped_newts": {
+    "comment": "Spawn Warped Newts.",
+    "value": true
+  },
+  "spawn_manta_rays": {
+    "comment": "Spawn Manta Rays.",
+    "value": true
+  },
+  "spawn_crimson_newts": {
+    "comment": "Spawn Crimson Newts.",
+    "value": true
+  },
+  "spawn_dragonflies": {
+    "comment": "Spawn Dragonflies.",
+    "value": true
+  },
+  "spawn_mossblooms": {
+    "comment": "Spawn Mossblooms.",
+    "value": true
+  },
+  "spawn_butterflies": {
+    "comment": "Spawn Butterflies.",
+    "value": true
+  },
+  "spawn_koi": {
+    "comment": "Spawn Koi.",
+    "value": true
+  },
+  "spawn_kiwis": {
+    "comment": "Spawn Kiwis.",
+    "value": true
+  },
+  "spawn_beavers": {
+    "comment": "Spawn Beavers.",
+    "value": true
+  },
+  "do_trinkets_elytra_flight": {
+    "comment": "Will the Elytra and it´s variants work while worn in the cape slot provided by Trinkets?",
+    "value": true
+  },
+  "spawn_emperor_penguins": {
+    "comment": "Spawn Emperor Penguins.",
+    "value": true
+  },
+  "spawn_ember_tortoises": {
+    "comment": "Spawn Ember Tortoises.",
+    "value": true
+  },
+  "spawn_potion_wasps": {
+    "comment": "Spawn Potion Wasps.",
+    "value": true
+  },
+  "spawn_capybaras": {
+    "comment": "Spawn Capybaras.",
+    "value": true
+  },
+  "spawn_seahorses": {
+    "comment": "Spawn Seahorses.",
+    "value": true
+  },
+  "spawn_chameleons": {
+    "comment": "Spawn Chameleons.",
+    "value": true
+  },
+  "spawn_echofins": {
+    "comment": "Spawn Echofins.",
+    "value": true
+  },
+  "spawn_jellyfishes": {
+    "comment": "Spawn Jellyfishes.",
+    "value": true
+  },
+  "spawn_booplets": {
+    "comment": "Spawn Booplets.",
+    "value": true
+  }
+}

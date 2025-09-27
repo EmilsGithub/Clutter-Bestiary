@@ -1,0 +1,17 @@
+{
+  "values": [
+    "minecraft:basalt_deltas",
+    {
+      "id": "biomesoplenty:volcano",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:erupting_inferno",
+      "required": false
+    },
+    {
+      "id": "regions_unexplored:infernal_holt",
+      "required": false
+    }
+  ]
+}

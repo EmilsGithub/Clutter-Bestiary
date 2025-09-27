@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_crimson_newts",
+  "spawners" : {
+    "type": "clutterbestiary:crimson_newt",
+    "weight": 60,
+    "minCount": 2,
+    "maxCount": 3
+  }
+}

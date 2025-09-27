@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_jellyfishes",
+  "spawners" : {
+    "type": "clutterbestiary:jellyfish",
+    "weight": 6,
+    "minCount": 5,
+    "maxCount": 9
+  }
+}

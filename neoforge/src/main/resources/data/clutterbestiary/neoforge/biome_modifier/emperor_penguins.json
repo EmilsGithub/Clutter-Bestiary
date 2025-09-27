@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_emperor_penguins",
+  "spawners" : {
+    "type": "clutterbestiary:emperor_penguin",
+    "weight": 5,
+    "minCount": 2,
+    "maxCount": 4
+  }
+}

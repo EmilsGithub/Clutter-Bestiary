@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_booplets",
+  "spawners" : {
+    "type": "clutterbestiary:booplet",
+    "weight": 20,
+    "minCount": 4,
+    "maxCount": 7
+  }
+}

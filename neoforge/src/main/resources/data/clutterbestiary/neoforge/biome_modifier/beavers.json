@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_beavers",
+  "spawners" : {
+    "type": "clutterbestiary:beaver",
+    "weight": 5,
+    "minCount": 2,
+    "maxCount": 3
+  }
+}

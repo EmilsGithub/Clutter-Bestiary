@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_warped_newts",
+  "spawners" : {
+    "type": "clutterbestiary:warped_newt",
+    "weight": 60,
+    "minCount": 2,
+    "maxCount": 3
+  }
+}

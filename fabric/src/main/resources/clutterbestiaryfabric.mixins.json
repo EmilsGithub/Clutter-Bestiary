@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "net.emilsg.clutterbestiary.fabric.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
+  "client": [
+    "ElytraFeatureRendererMixin"
+  ],
+  "mixins": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

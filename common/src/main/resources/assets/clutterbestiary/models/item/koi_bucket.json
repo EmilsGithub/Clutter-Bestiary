@@ -1,0 +1,38 @@
+{
+  "parent": "minecraft:item/generated",
+  "overrides": [
+    {
+      "model": "clutterbestiary:item/white_koi_bucket",
+      "predicate": {
+        "type": 0.0
+      }
+    },
+    {
+      "model": "clutterbestiary:item/orange_koi_bucket",
+      "predicate": {
+        "type": 0.1
+      }
+    },
+    {
+      "model": "clutterbestiary:item/yellow_koi_bucket",
+      "predicate": {
+        "type": 0.2
+      }
+    },
+    {
+      "model": "clutterbestiary:item/black_koi_bucket",
+      "predicate": {
+        "type": 0.3
+      }
+    },
+    {
+      "model": "clutterbestiary:item/pearl_koi_bucket",
+      "predicate": {
+        "type": 0.4
+      }
+    }
+  ],
+  "textures": {
+    "layer0": "clutterbestiary:item/white_koi_bucket"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_seahorses",
+  "spawners" : {
+    "type": "clutterbestiary:seahorse",
+    "weight": 20,
+    "minCount": 4,
+    "maxCount": 7
+  }
+}

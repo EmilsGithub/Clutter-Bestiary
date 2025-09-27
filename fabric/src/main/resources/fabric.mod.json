@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "clutterbestiary",
+  "version": "${version}-Fabric-1.21.1",
+  "name": "Clutter: Bestiary",
+  "description": "The entities from Clutter, plus more, updated, improved and split into a separate mod.",
+  "authors": [
+    "EmilSG"
+  ],
+  "contact": {
+    "homepage": "https://modrinth.com/mod/clutterbestiary",
+    "sources": "https://github.com/EmilsGithub/Clutter-Bestiary",
+    "issues": "https://github.com/EmilsGithub/Clutter-Bestiary/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/clutterbestiary/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.emilsg.clutterbestiary.fabric.ClutterBestiaryFabric"
+    ],
+    "client": [
+      "net.emilsg.clutterbestiary.fabric.ClutterBestiaryClientFabric"
+    ]
+  },
+  "mixins": [
+    "clutterbestiary.mixins.json",
+    "clutterbestiaryfabric.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.17.2",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "architectury": ">=13.0.8",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
