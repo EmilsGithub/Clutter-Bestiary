@@ -2,7 +2,7 @@
 name: Suggestion
 about: Suggest an idea for this project
 title: "[Suggestion]"
-labels: ''
+labels: Suggestion
 assignees: EmilsGithub
 
 ---
