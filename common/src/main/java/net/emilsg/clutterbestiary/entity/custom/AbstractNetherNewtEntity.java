@@ -16,6 +16,7 @@ import net.minecraft.entity.attribute.AttributeContainer;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.damage.DamageTypes;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
@@ -92,36 +93,17 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
 
         float scaledSize;
         switch (random.nextInt(3) + 1) {
-            case 2 -> scaledSize = 1.25f;
-            case 3 -> scaledSize = 1.5f;
-            default -> scaledSize = 1;
+            case 2 -> scaledSize = 1f;
+            case 3 -> scaledSize = 1.25f;
+            default -> scaledSize = 0.85f;
         }
 
         netherNewtEntity.setBaby(true);
-        netherNewtEntity.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
         netherNewtEntity.setNewtSize(scaledSize);
+        netherNewtEntity.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
         netherNewtEntity.setFungiCount(random.nextInt(5) + 1);
         this.breed(world, other, netherNewtEntity);
         world.spawnEntityAndPassengers(netherNewtEntity);
-    }
-
-    @Override
-    public Vec3d getVehicleAttachmentPos(Entity vehicle) {
-        return super.getVehicleAttachmentPos(vehicle).add(0, -1.5f / 16f, 0);
-    }
-
-    @Override
-    public boolean isInsideWall() {
-        if (isInCreateSeat()) return false;
-        return super.isInsideWall();
-    }
-
-    private boolean isInCreateSeat() {
-        if (!ClutterBestiary.IS_CREATE_LOADED) return false;
-        var tag = TagKey.of(RegistryKeys.BLOCK, Identifier.of("create", "seats"));
-        var w   = getWorld();
-        var p   = getBlockPos();
-        return w.getBlockState(p).isIn(tag) || w.getBlockState(p.down()).isIn(tag);
     }
 
     @Override
@@ -170,11 +152,6 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
         this.setAngerTime(ANGER_TIME_RANGE.get(this.random));
     }
 
-    @Override
-    public double getEyeY() {
-        return super.getEyeY() * 0.4f;
-    }
-
     public boolean isSitting() {
         return this.dataTracker.get(SITTING);
     }
@@ -193,14 +170,11 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
         this.navigation.stop();
     }
 
-    @Override
-    public boolean damage(DamageSource source, float amount) {
-        if (source.getAttacker() instanceof LivingEntity attacker && attacker.getWorld() instanceof ServerWorld && !this.isBaby() && this.getFungiCount() >= 1 && getOnAttackEffect() != null) {
-            if (random.nextInt(8) == 0) {
-                attacker.addStatusEffect(new StatusEffectInstance(getOnAttackEffect(), getOnAttackEffect() == StatusEffects.POISON ? 100 : 200, 1), this);
-            }
-        }
-        return super.damage(source, amount);
+    public void setNewtSize(float size) {
+        this.dataTracker.set(SIZE, size);
+        Objects.requireNonNull(getAttributeInstance(EntityAttributes.GENERIC_SCALE)).setBaseValue(size);
+        this.refreshPosition();
+        this.calculateDimensions();
     }
 
     @Override
@@ -239,17 +213,6 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
         return this.dataTracker.get(SIZE);
     }
 
-    public void setNewtSize(float size) {
-        this.dataTracker.set(SIZE, MathHelper.clamp(size, 0f, 1.5f));
-        this.calculateDimensions();
-    }
-
-    @Override
-    public float getScale() {
-        AttributeContainer attributeContainer = this.getAttributes();
-        return attributeContainer == null ? 0.65f * this.getNewtSize() : this.clampScale((float)attributeContainer.getValue(EntityAttributes.GENERIC_SCALE) * (0.65f * this.getNewtSize()));
-    }
-
     public void writeCustomDataToNbt(NbtCompound nbt) {
         super.writeCustomDataToNbt(nbt);
         this.writeAngerToNbt(nbt);
@@ -262,11 +225,13 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
     public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
         float scaledSize;
         switch (random.nextInt(3) + 1) {
-            case 2 -> scaledSize = 1.25f;
-            case 3 -> scaledSize = 1.5f;
-            default -> scaledSize = 1;
+            case 2 -> scaledSize = 1f;
+            case 3 -> scaledSize = 1.25f;
+            default -> scaledSize = 0.85f;
         }
         this.setNewtSize(scaledSize);
+        this.refreshPosition();
+        this.calculateDimensions();
         this.setFungiCount(random.nextInt(5) + 1);
 
         return super.initialize(world, difficulty, spawnReason, entityData);
@@ -337,7 +302,6 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
 
     protected abstract Item getTamingItem();
 
-
     @Override
     public boolean isBreedingItem(ItemStack stack) {
         return stack.isOf(this.getBreedingItem());
@@ -355,19 +319,11 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
         return world.getGameRules().getBoolean(GameRules.UNIVERSAL_ANGER) && this.hasAngerTime() && this.getAngryAt() == null;
     }
 
-    public void onTrackedDataSet(TrackedData<?> data) {
-        if (SIZE.equals(data)) {
-            this.calculateDimensions();
-        }
-
-        super.onTrackedDataSet(data);
-    }
-
     @Override
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
         builder.add(ANGER_TIME, 0);
-        builder.add(SIZE, 0f);
+        builder.add(SIZE, 1f);
         builder.add(MOVING, false);
         builder.add(FUNGI, 1);
         builder.add(SITTING, false);

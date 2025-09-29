@@ -20,7 +20,7 @@ public class MantaRayRenderer extends MobEntityRenderer<MantaRayEntity, MantaRay
 
     @Override
     public Identifier getTexture(MantaRayEntity entity) {
-        return entity.getSize() >= 1.5f ? OLD_TEXTURE : TEXTURE;
+        return entity.getSize() >= 1.25f ? OLD_TEXTURE : TEXTURE;
     }
 
     @Override

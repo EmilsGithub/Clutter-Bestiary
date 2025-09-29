@@ -34,6 +34,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class MantaRayEntity extends ParentWaterEntity {
     private static final TrackedData<Float> SIZE = DataTracker.registerData(MantaRayEntity.class, TrackedDataHandlerRegistry.FLOAT);
 
@@ -71,46 +73,15 @@ public class MantaRayEntity extends ParentWaterEntity {
         return super.getVehicleAttachmentPos(vehicle).add(0, -2.5f / 16f, 0);
     }
 
-    @Override
-    public boolean isInsideWall() {
-        if (isInCreateSeat()) return false;
-        return super.isInsideWall();
-    }
-
-    private boolean isInCreateSeat() {
-        if (!ClutterBestiary.IS_CREATE_LOADED) return false;
-        var tag = TagKey.of(RegistryKeys.BLOCK, Identifier.of("create", "seats"));
-        var w   = getWorld();
-        var p   = getBlockPos();
-        return w.getBlockState(p).isIn(tag) || w.getBlockState(p.down()).isIn(tag);
-    }
-
-    @Override
-    public double getEyeY() {
-        return super.getEyeY() * 0.4F;
-    }
-
     public float getSize() {
         return this.dataTracker.get(SIZE);
     }
 
     public void setSize(float size) {
-        this.dataTracker.set(SIZE, MathHelper.clamp(size, 0f, 1.5f));
+        this.dataTracker.set(SIZE, size);
+        Objects.requireNonNull(getAttributeInstance(EntityAttributes.GENERIC_SCALE)).setBaseValue(size);
+        this.refreshPosition();
         this.calculateDimensions();
-    }
-
-    @Override
-    public float getScale() {
-        AttributeContainer attributeContainer = this.getAttributes();
-        return attributeContainer == null ? 0.65f * this.getSize() : this.clampScale((float)attributeContainer.getValue(EntityAttributes.GENERIC_SCALE) * (0.65f * this.getSize()));
-    }
-
-    public void onTrackedDataSet(TrackedData<?> data) {
-        if (SIZE.equals(data)) {
-            this.calculateDimensions();
-        }
-
-        super.onTrackedDataSet(data);
     }
 
     public void readCustomDataFromNbt(NbtCompound nbt) {
@@ -167,12 +138,15 @@ public class MantaRayEntity extends ParentWaterEntity {
         float scaledSize;
         float chance = random.nextFloat();
 
-        if (chance < 0.31) scaledSize = 0.8f;
-        else if (chance < 0.62) scaledSize = 1.0f;
-        else if (chance < 0.95) scaledSize = 1.2f;
-        else scaledSize = 1.5f;
+        if (chance < 0.31) scaledSize = 0.75f;
+        else if (chance < 0.62) scaledSize = 0.9f;
+        else if (chance < 0.95) scaledSize = 1f;
+        else scaledSize = 1.25f;
 
         this.setSize(scaledSize);
+        this.refreshPosition();
+        this.calculateDimensions();
+
         return super.initialize(world, difficulty, spawnReason, entityData);
     }
 

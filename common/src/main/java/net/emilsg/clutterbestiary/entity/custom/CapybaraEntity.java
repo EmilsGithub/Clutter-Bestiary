@@ -365,38 +365,24 @@ public class CapybaraEntity extends ParentTameableEntity {
         }
     }
 
-    private class CapybaraSitGoal extends Goal {
+    private class CapybaraSitGoal extends SitGoal {
         private final CapybaraEntity capybara;
 
         public CapybaraSitGoal(CapybaraEntity capybara) {
+            super(capybara);
             this.capybara = capybara;
             this.setControls(EnumSet.of(Control.JUMP, Control.MOVE));
         }
 
         @Override
         public boolean canStart() {
-            if (!this.capybara.isTamed()) {
-                return false;
-            }
-            if (this.capybara.isInsideWaterOrBubbleColumn()) {
-                return false;
-            }
-            if (!this.capybara.isOnGround()) {
-                return false;
-            }
-            LivingEntity owner = this.capybara.getOwner();
-            if (owner == null) {
-                return true;
-            }
-            if (this.capybara.squaredDistanceTo(owner) < 144.0 && owner.getAttacker() != null) {
-                return false;
-            }
+            super.canStart();
             return this.capybara.isForceSleeping();
         }
 
         @Override
         public boolean shouldContinue() {
-            return this.capybara.isForceSleeping();
+            return this.capybara.isForceSleeping() || this.capybara.isSitting();
         }
 
         @Override
@@ -408,6 +394,7 @@ public class CapybaraEntity extends ParentTameableEntity {
         @Override
         public void stop() {
             this.capybara.setIsForceSleeping(false);
+            this.capybara.setInSittingPose(false);
         }
     }
 
