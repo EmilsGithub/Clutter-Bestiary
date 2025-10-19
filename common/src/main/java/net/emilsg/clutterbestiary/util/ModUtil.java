@@ -1,14 +1,19 @@
 package net.emilsg.clutterbestiary.util;
 
+import dev.architectury.registry.level.biome.BiomeModifications;
 import dev.architectury.registry.level.entity.SpawnPlacementsRegistry;
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.*;
 import net.minecraft.advancement.AdvancementEntry;
 import net.minecraft.advancement.AdvancementProgress;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.SpawnLocationTypes;
 import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -16,6 +21,10 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.Heightmap;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.SpawnSettings;
+
+import java.util.List;
 
 public class ModUtil {
 
@@ -64,6 +73,12 @@ public class ModUtil {
         }
     }
 
+    //Only works on Fabric side, hopefully fixed in the future.
+    public static void registerSpawns() {
+        BiomeModifications.addProperties(ctx -> ctx.hasTag(ModBiomeTags.SPAWNS_CHAMELEONS), (ctx, props) ->
+                props.getSpawnProperties().addSpawn(SpawnGroup.CREATURE, new SpawnSettings.SpawnEntry(ModEntityTypes.CHAMELEON.get(), 100, 2, 4)));
+    }
+
     public static void registerSpawnRestrictions() {
         SpawnPlacementsRegistry.register(ModEntityTypes.DRAGONFLY, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, DragonflyEntity::isValidNaturalSpawn);
         SpawnPlacementsRegistry.register(ModEntityTypes.MOSSBLOOM, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, MossbloomEntity::isValidNaturalSpawn);
@@ -85,6 +100,7 @@ public class ModUtil {
         SpawnPlacementsRegistry.register(ModEntityTypes.WARPED_NEWT, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, WarpedNewtEntity::isValidNaturalSpawn);
         SpawnPlacementsRegistry.register(ModEntityTypes.EMBER_TORTOISE, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, EmberTortoiseEntity::isValidNaturalSpawn);
         SpawnPlacementsRegistry.register(ModEntityTypes.ECHOFIN, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, EchofinEntity::isValidNaturalSpawn);
+
     }
 
 

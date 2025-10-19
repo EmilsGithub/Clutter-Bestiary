@@ -30,6 +30,7 @@ public final class ClutterBestiary {
         ModSoundEvents.register();
 
         ModUtil.registerSpawnRestrictions();
+        //ModUtil.registerSpawns(); -For the future when fixed.
 
         CommonEntityAttributeRegistry.register();
     }

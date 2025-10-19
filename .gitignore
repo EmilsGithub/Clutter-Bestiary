@@ -12,3 +12,6 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+# fabric
+/fabric/run/
+/neoforge/run/

@@ -1,7 +1,0 @@
-/summon clutterbestiary:beaver
-/locate biome minecraft:snowy_taiga
-/tp @s 844 118 1905
-/time set night
-/locate biome minecraft:sparse_jungle
-/tp @s -453 79 207
-/time set day
