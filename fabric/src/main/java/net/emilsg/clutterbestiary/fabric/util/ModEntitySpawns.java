@@ -99,6 +99,16 @@ public class ModEntitySpawns {
             BiomeModifications.addSpawn(BiomeSelectors.tag(ModBiomeTags.SPAWNS_POTION_WASPS), SpawnGroup.CREATURE,
                     ModEntityTypes.POTION_WASP.get(), 20, 1, 2);
         }
+
+        if (ModConfigManager.get(Configs.spawnRiverTurtles, true)) {
+            BiomeModifications.addSpawn(BiomeSelectors.tag(ModBiomeTags.SPAWNS_RIVER_TURTLES), SpawnGroup.CREATURE,
+                    ModEntityTypes.RIVER_TURTLE.get(), 20, 2, 3);
+        }
+
+        if (ModConfigManager.get(Configs.spawnCoatis, true)) {
+            BiomeModifications.addSpawn(BiomeSelectors.tag(ModBiomeTags.SPAWNS_COATIS), SpawnGroup.CREATURE,
+                    ModEntityTypes.COATI.get(), 20, 2, 4);
+        }
     }
 
 }

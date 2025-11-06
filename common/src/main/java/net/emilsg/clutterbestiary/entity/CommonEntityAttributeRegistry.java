@@ -26,5 +26,8 @@ public class CommonEntityAttributeRegistry {
         EntityAttributeRegistry.register(ModEntityTypes.BOOPLET, BoopletEntity::setAttributes);
         EntityAttributeRegistry.register(ModEntityTypes.KOI, KoiEntity::setAttributes);
         EntityAttributeRegistry.register(ModEntityTypes.KOI_EGGS, KoiEntity::setAttributes);
+        EntityAttributeRegistry.register(ModEntityTypes.RIVER_TURTLE, RiverTurtleEntity::setAttributes);
+        EntityAttributeRegistry.register(ModEntityTypes.COATI, CoatiEntity::setAttributes);
+
     }
 }

@@ -63,19 +63,17 @@ public class ChameleonModel<T extends ChameleonEntity> extends ParentTameableMod
 
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
+        matrices.push();
+
         if (this.child) {
             float babyScale = 0.5f;
-            matrices.push();
             matrices.scale(babyScale, babyScale, babyScale);
             matrices.translate(0.0D, 1.5D, 0D);
-            this.getPart().render(matrices, vertices, light, overlay, color);
-            matrices.pop();
-            this.head.scale(createVec3f(0.9f));
-        } else {
-            matrices.push();
-            this.getPart().render(matrices, vertices, light, overlay, color);
-            matrices.pop();
+            this.head.scale(createVec3f(0.6f));
         }
+
+        this.getPart().render(matrices, vertices, light, overlay, color);
+        matrices.pop();
     }
 
     @Override

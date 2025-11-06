@@ -5,7 +5,9 @@ import net.emilsg.clutterbestiary.block.ModBlocks;
 import net.emilsg.clutterbestiary.config.ModConfigManager;
 import net.emilsg.clutterbestiary.entity.CommonEntityAttributeRegistry;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
+import net.emilsg.clutterbestiary.entity.ModTrackedDataHandler;
 import net.emilsg.clutterbestiary.item.ModItems;
+import net.emilsg.clutterbestiary.screen_handler.ModMenuTypes;
 import net.emilsg.clutterbestiary.sound.ModSoundEvents;
 import net.emilsg.clutterbestiary.util.ModItemGroups;
 import net.emilsg.clutterbestiary.util.ModUtil;
@@ -28,10 +30,12 @@ public final class ClutterBestiary {
         ModEntityTypes.register();
 
         ModSoundEvents.register();
+        ModTrackedDataHandler.registerAnimationStates();
 
         ModUtil.registerSpawnRestrictions();
-        //ModUtil.registerSpawns(); -For the future when fixed.
 
+        //ModUtil.registerSpawns(); -For the future when fixed.
+        ModMenuTypes.register();
         CommonEntityAttributeRegistry.register();
     }
 }

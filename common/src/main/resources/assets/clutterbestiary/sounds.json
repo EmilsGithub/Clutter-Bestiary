@@ -53,5 +53,13 @@
     "sounds": [
       "clutterbestiary:ember_tortoise_hurt"
     ]
+  },
+  "entity_coati_ambient": {
+    "subtitle": "sounds.clutterbestiary.entity_coati_ambient",
+    "sounds": [
+      "clutterbestiary:coati_ambient_one",
+      "clutterbestiary:coati_ambient_two"
+
+    ]
   }
 }

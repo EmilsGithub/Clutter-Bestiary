@@ -87,6 +87,8 @@ public class ModItems {
     public static final RegistrySupplier<Item> DRAGONFLY_SPAWN_EGG = registerItem("dragonfly_spawn_egg", () -> new ArchitecturySpawnEggItem(ModEntityTypes.DRAGONFLY, 2463756, 87652394, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
     public static final RegistrySupplier<Item> BOOPLET_SPAWN_EGG = registerItem("booplet_spawn_egg", () -> new ArchitecturySpawnEggItem(ModEntityTypes.BOOPLET, 5641645, 4241312, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
     public static final RegistrySupplier<Item> KOI_SPAWN_EGG = registerItem("koi_spawn_egg", () -> new ArchitecturySpawnEggItem(ModEntityTypes.KOI, 0x3E4549, 0xFF2632, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
+    public static final RegistrySupplier<Item> RIVER_TURTLE_SPAWN_EGG = registerItem("river_turtle_spawn_egg", () -> new ArchitecturySpawnEggItem(ModEntityTypes.RIVER_TURTLE, 0x4d2f2e, 0xcbb883, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
+    public static final RegistrySupplier<Item> COATI_SPAWN_EGG = registerItem("coati_spawn_egg", () -> new ArchitecturySpawnEggItem(ModEntityTypes.COATI, 0x4d2f2e, 0xcbb883, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
 
     public static RegistrySupplier<Item> registerItem(String name, Supplier<Item> item) {
         return ITEMS.register(Identifier.of(ClutterBestiary.MOD_ID, name), item);

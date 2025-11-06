@@ -2,16 +2,20 @@ package net.emilsg.clutterbestiary;
 
 import dev.architectury.registry.client.level.entity.EntityModelLayerRegistry;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
+import dev.architectury.registry.menu.MenuRegistry;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.client.layer.ModModelLayers;
 import net.emilsg.clutterbestiary.entity.client.model.*;
 import net.emilsg.clutterbestiary.entity.client.render.*;
+import net.emilsg.clutterbestiary.screen_handler.ModMenuTypes;
+import net.emilsg.clutterbestiary.screen_handler.screen.CoatiInventoryScreen;
 
 public final class ClutterBestiaryClient {
 
     public static void init() {
         registerEntityRenderers();
         registerEntityModelLayers();
+        MenuRegistry.registerScreenFactory(ModMenuTypes.COATI.get(), CoatiInventoryScreen::new);
     }
 
     private static void registerEntityRenderers() {
@@ -35,7 +39,8 @@ public final class ClutterBestiaryClient {
         EntityRendererRegistry.register(ModEntityTypes.BOOPLET, BoopletRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.KOI, KoiRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.KOI_EGGS, KoiEggsRenderer::new);
-
+        EntityRendererRegistry.register(ModEntityTypes.RIVER_TURTLE, RiverTurtleRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.COATI, CoatiRenderer::new);
     }
 
     private static void registerEntityModelLayers() {
@@ -61,5 +66,8 @@ public final class ClutterBestiaryClient {
         EntityModelLayerRegistry.register(ModModelLayers.KOI_PRIMARY_COLOR, KoiModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.KOI_SECONDARY_COLOR, KoiModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.KOI_EGGS, KoiEggsModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.RIVER_TURTLE, RiverTurtleModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.COATI, CoatiModel::getTexturedModelData);
+
     }
 }

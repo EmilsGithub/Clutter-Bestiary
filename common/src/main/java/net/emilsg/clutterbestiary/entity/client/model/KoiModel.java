@@ -66,16 +66,19 @@ public class KoiModel<T extends KoiEntity> extends ParentFishModel<T> {
 	}
 
 	@Override
-	public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, int color) {
-		float babyScale = 0.35f;
+	public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
 		matrices.push();
+
 		if (this.child) {
+			float babyScale = 0.35f;
 			matrices.scale(babyScale, babyScale, babyScale);
 			matrices.translate(0.0D, 2.65D, 0D);
-        }
-        this.getPart().render(matrices, vertexConsumer, light, overlay, color);
-        matrices.pop();
-    }
+			this.head.scale(createVec3f(0.6f));
+		}
+
+		this.getPart().render(matrices, vertices, light, overlay, color);
+		matrices.pop();
+	}
 
 	private void updatePatternVisibility(boolean patternVisibility) {
 		this.bodyPatternLayer.visible = patternVisibility;

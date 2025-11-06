@@ -46,6 +46,8 @@ public class Configs {
     public static final String spawnDragonflies = ModConfigManager.register("spawn_dragonflies", true, "Spawn Dragonflies.").getKey();
     public static final String spawnBooplets = ModConfigManager.register("spawn_booplets", true, "Spawn Booplets.").getKey();
     public static final String spawnPotionWasps = ModConfigManager.register("spawn_potion_wasps", true, "Spawn Potion Wasps.").getKey();
+    public static final String spawnRiverTurtles = ModConfigManager.register("spawn_river_turtles", true, "Spawn River Turtles.").getKey();
+    public static final String spawnCoatis = ModConfigManager.register("spawn_coatis", true, "Spawn Coatis.").getKey();
 
     public static final String doTrinketsElytraFlight = ModConfigManager.register("do_trinkets_elytra_flight", true, "Will the Elytra and it´s variants work while worn in the cape slot provided by Trinkets?").getKey();
 

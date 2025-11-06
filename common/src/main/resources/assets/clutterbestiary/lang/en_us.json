@@ -26,6 +26,8 @@
   "entity.clutterbestiary.dragonfly": "Dragonfly",
   "entity.clutterbestiary.booplet": "Booplet",
   "entity.clutterbestiary.koi": "Koi",
+  "entity.clutterbestiary.river_turtle": "River Turtle",
+  "entity.clutterbestiary.coati": "Coati",
 
   "clutterbestiary.yellow.butterfly": "Yellow Butterfly",
   "clutterbestiary.red.butterfly": "Red Butterfly",
@@ -114,6 +116,8 @@
   "item.clutterbestiary.dragonfly_spawn_egg": "Dragonfly Spawn Egg",
   "item.clutterbestiary.booplet_spawn_egg": "Booplet Spawn Egg",
   "item.clutterbestiary.koi_spawn_egg": "Koi Spawn Egg",
+  "item.clutterbestiary.river_turtle_spawn_egg": "River Turtle Spawn Egg",
+  "item.clutterbestiary.coati_spawn_egg": "Coati Spawn Egg",
 
   "tooltip.clutterbestiary.base_color.koi": "Base Color",
   "tooltip.clutterbestiary.primary_pattern.koi": "Primary Pattern",

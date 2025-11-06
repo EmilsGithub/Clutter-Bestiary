@@ -4,7 +4,7 @@ import net.emilsg.clutterbestiary.block.ModBlocks;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.goal.KiwiBirdLayEggGoal;
 import net.emilsg.clutterbestiary.entity.custom.goal.KiwiBirdMateGoal;
-import net.emilsg.clutterbestiary.entity.custom.goal.KiwiBirdWanderAroundFarGoal;
+import net.emilsg.clutterbestiary.entity.custom.goal.KiwiDanceGoal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.sound.ModSoundEvents;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
@@ -31,6 +31,7 @@ import net.minecraft.recipe.Ingredient;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
@@ -46,9 +47,6 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
     public final AnimationState dancingAnimationState = new AnimationState();
     public int idleAnimationTimeout = 0;
     public int dancingAnimationTimeout = 0;
-    private boolean songPlaying;
-    @Nullable
-    private BlockPos songSource;
 
     public KiwiBirdEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
         super(entityType, world);
@@ -68,7 +66,7 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
     }
 
     public boolean canEat() {
-        return super.canEat() && !this.hasEgg() && !this.isDancing();
+        return super.canEat() && !this.hasEgg();
     }
 
     public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
@@ -98,32 +96,14 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
         return stack.isIn(ModItemTags.C_SEEDS);
     }
 
-    public boolean isDancing() {
-        return this.dataTracker.get(IS_DANCING);
-    }
-
-    public void setDancing(boolean dancing) {
-        this.dataTracker.set(IS_DANCING, dancing);
-    }
-
-    public boolean isSongPlaying() {
-        return this.songPlaying;
-    }
-
     public void readCustomDataFromNbt(NbtCompound nbt) {
         super.readCustomDataFromNbt(nbt);
         this.setHasEgg(nbt.getBoolean("HasEgg"));
         this.setEggTimer(nbt.getInt("EggTimer"));
-        this.setDancing(nbt.getBoolean("IsDancing"));
     }
 
     public void setHasEgg(boolean hasEgg) {
         this.dataTracker.set(HAS_EGG, hasEgg);
-    }
-
-    public void setNearbySongPlaying(BlockPos songPosition, boolean playing) {
-        this.songSource = songPosition;
-        this.songPlaying = playing;
     }
 
     @Override
@@ -134,19 +114,9 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
         if (world.isClient) {
             this.setupAnimationStates();
         }
-
-        if (this.songSource == null || !this.songSource.isWithinDistance(this.getPos(), 3.46) || !this.getWorld().getBlockState(this.songSource).isOf(Blocks.JUKEBOX)) {
-            this.songPlaying = false;
-            this.songSource = null;
-        }
-
-        this.setDancing(this.isSongPlaying());
-
     }
 
     public void tickMovement() {
-
-
         if (this.hasEgg()) {
             this.setEggTimer(this.getEggTimer() + 1);
         }
@@ -158,7 +128,6 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
         super.writeCustomDataToNbt(nbt);
         nbt.putBoolean("HasEgg", this.hasEgg());
         nbt.putInt("EggTimer", this.getEggTimer());
-        nbt.putBoolean("IsDancing", this.isDancing());
     }
 
     @Nullable
@@ -191,13 +160,14 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
     protected void initGoals() {
         this.goalSelector.add(0, new SwimGoal(this));
         this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(2, new KiwiBirdMateGoal(this, 1));
-        this.goalSelector.add(3, new KiwiBirdLayEggGoal(this, 1, ModBlocks.KIWI_BIRD_EGG.get().getDefaultState()));
-        this.goalSelector.add(4, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(5, new FollowParentGoal(this, 1));
-        this.goalSelector.add(6, new KiwiBirdWanderAroundFarGoal(this, this, 1.0, 1));
-        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(8, new LookAroundGoal(this));
+        this.goalSelector.add(2, new KiwiDanceGoal(this));
+        this.goalSelector.add(3, new KiwiBirdMateGoal(this, 1));
+        this.goalSelector.add(4, new KiwiBirdLayEggGoal(this, 1, ModBlocks.KIWI_BIRD_EGG.get().getDefaultState()));
+        this.goalSelector.add(5, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
+        this.goalSelector.add(6, new FollowParentGoal(this, 1));
+        this.goalSelector.add(7, new WanderAroundFarGoal(this, 1.0));
+        this.goalSelector.add(8, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(9, new LookAroundGoal(this));
     }
 
     @Override
@@ -206,18 +176,11 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
     }
 
     private void setupAnimationStates() {
-        if (this.idleAnimationTimeout <= 0 && !this.isMoving() && !this.isSongPlaying()) {
+        if (this.idleAnimationTimeout <= 0 && !this.isMoving()) {
             this.idleAnimationTimeout = 30;
             this.idleAnimationState.start(this.age);
         } else {
             --this.idleAnimationTimeout;
-        }
-
-        if (dancingAnimationTimeout <= 0 && this.isSongPlaying()) {
-            this.dancingAnimationTimeout = 20;
-            this.dancingAnimationState.start(this.age);
-        } else {
-            --this.dancingAnimationTimeout;
         }
     }
 

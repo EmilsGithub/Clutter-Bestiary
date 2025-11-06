@@ -1,54 +1,49 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
+import net.minecraft.entity.Tameable;
 import net.minecraft.entity.ai.FuzzyTargeting;
 import net.minecraft.entity.ai.NoPenaltyTargeting;
 import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.entity.ai.goal.WanderAroundGoal;
 import net.minecraft.entity.mob.PathAwareEntity;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
-public class WanderAroundFarOftenGoal extends Goal {
+public class WanderAroundFarOftenGoal extends WanderAroundGoal {
     private final PathAwareEntity pathAwareEntity;
-    private final float speed;
 
     public WanderAroundFarOftenGoal(PathAwareEntity pathAwareEntity, float speed) {
+        super(pathAwareEntity, speed);
         this.pathAwareEntity = pathAwareEntity;
-        this.speed = speed;
-        this.setControls(EnumSet.of(Control.MOVE));
     }
 
     @Override
     public boolean canStart() {
-        return this.pathAwareEntity.getNavigation().isIdle() && this.pathAwareEntity.getRandom().nextInt(4) == 0 && !this.pathAwareEntity.hasPassengers();
+        if (this.mob.hasControllingPassenger()) {
+            return false;
+        } else {
+            if (this.mob.getRandom().nextInt(4) == 0) {
+                return false;
+            }
+
+            Vec3d vec3d = this.getWanderTarget();
+            if (vec3d == null) {
+                return false;
+            } else {
+                this.targetX = vec3d.x;
+                this.targetY = vec3d.y;
+                this.targetZ = vec3d.z;
+                this.ignoringChance = false;
+                return true;
+            }
+        }
     }
 
     public boolean shouldContinue() {
         return !this.pathAwareEntity.getNavigation().isIdle() && !this.pathAwareEntity.hasPassengers() && this.pathAwareEntity.getNavigation().isFollowingPath();
     }
-
-    public void start() {
-        Vec3d wanderTarget = getWanderTarget();
-        if (wanderTarget == null) return;
-
-        this.pathAwareEntity.getNavigation().startMovingTo(wanderTarget.getX(), wanderTarget.getY(), wanderTarget.getZ(), this.speed);
-    }
-
-    public void stop() {
-        this.pathAwareEntity.getNavigation().stop();
-        super.stop();
-    }
-
-    @Nullable
-    protected Vec3d getWanderTarget() {
-        if (this.pathAwareEntity.isInsideWaterOrBubbleColumn()) {
-            Vec3d preferredPath = FuzzyTargeting.find(this.pathAwareEntity, 15, 6);
-            return preferredPath == null ? NoPenaltyTargeting.find(this.pathAwareEntity, 10, 6) : preferredPath;
-        } else {
-            return FuzzyTargeting.find(this.pathAwareEntity, 10, 6);
-        }
-    }
-
 
 }

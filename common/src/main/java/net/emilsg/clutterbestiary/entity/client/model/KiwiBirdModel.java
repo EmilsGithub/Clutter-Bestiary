@@ -14,28 +14,33 @@ public class KiwiBirdModel<T extends KiwiBirdEntity> extends BestiaryModel<T> {
 
     public KiwiBirdModel(ModelPart root) {
         this.root = root;
-        this.all = root.getChild("All");
-        this.head = all.getChild("Head");
+        this.all = root.getChild("all");
+        this.head = this.all.getChild("head");
     }
 
     public static TexturedModelData getTexturedModelData() {
         ModelData modelData = new ModelData();
         ModelPartData modelPartData = modelData.getRoot();
-        ModelPartData All = modelPartData.addChild("All", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 20.0F, 0.5F));
+        ModelPartData all = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 20.0F, 0.5F));
 
-        ModelPartData Torso = All.addChild("Torso", ModelPartBuilder.create().uv(7, 10).cuboid(-2.0F, -2.0F, -2.5F, 4.0F, 4.0F, 5.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+        ModelPartData torso = all.addChild("torso", ModelPartBuilder.create().uv(13, 8).cuboid(-2.0F, -2.0F, -2.5F, 4.0F, 4.0F, 5.0F, new Dilation(0.0F))
+                .uv(13, 21).cuboid(-2.0F, -2.0F, -2.5F, 4.0F, 5.0F, 5.0F, new Dilation(0.125F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
 
-        ModelPartData L_Leg = All.addChild("L_Leg", ModelPartBuilder.create().uv(12, 23).cuboid(-0.5F, 3.01F, -1.0F, 1.0F, 0.0F, 1.0F, new Dilation(0.0F))
-                .uv(18, 20).cuboid(-0.5F, 1.01F, 0.0F, 1.0F, 2.0F, 0.0F, new Dilation(0.0F))
-                .uv(23, 20).cuboid(-1.0F, -0.74F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(1.5F, 1.0F, 0.5F));
+        ModelPartData tail_r1 = torso.addChild("tail_r1", ModelPartBuilder.create().uv(1, 26).cuboid(-1.5F, 0.0F, 0.0F, 3.0F, 3.0F, 2.0F, new Dilation(0.0F)), ModelTransform.of(0.0F, -2.0F, 2.5F, -0.1309F, 0.0F, 0.0F));
 
-        ModelPartData R_Leg = All.addChild("R_Leg", ModelPartBuilder.create().uv(17, 23).cuboid(-0.5F, 3.01F, -1.0F, 1.0F, 0.0F, 1.0F, new Dilation(0.0F))
-                .uv(13, 20).cuboid(-0.5F, 1.01F, 0.0F, 1.0F, 2.0F, 0.0F, new Dilation(0.0F))
-                .uv(1, 20).cuboid(-1.0F, -0.74F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(-1.5F, 1.0F, 0.5F));
+        ModelPartData leftLeg = all.addChild("leftLeg", ModelPartBuilder.create().uv(13, 21).cuboid(-0.5F, 3.01F, -1.0F, 1.0F, 0.0F, 1.0F, new Dilation(0.0F))
+                .uv(11, 18).cuboid(-0.5F, 1.01F, 0.0F, 1.0F, 2.0F, 0.0F, new Dilation(0.0F))
+                .uv(1, 21).cuboid(-1.0F, -0.74F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(1.5F, 1.0F, 0.5F));
 
-        ModelPartData Head = All.addChild("Head", ModelPartBuilder.create().uv(1, 2).cuboid(-1.5F, -1.5F, -2.75F, 3.0F, 3.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -1.5F, -2.0F));
+        ModelPartData rightLeg = all.addChild("rightLeg", ModelPartBuilder.create().uv(10, 21).cuboid(-0.5F, 3.01F, -1.0F, 1.0F, 0.0F, 1.0F, new Dilation(0.0F))
+                .uv(14, 18).cuboid(-0.5F, 1.01F, 0.0F, 1.0F, 2.0F, 0.0F, new Dilation(0.0F))
+                .uv(1, 16).cuboid(-1.0F, -0.74F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(-1.5F, 1.0F, 0.5F));
 
-        ModelPartData beak_r1 = Head.addChild("beak_r1", ModelPartBuilder.create().uv(22, 4).cuboid(-0.5F, -0.75F, -3.25F, 1.0F, 1.0F, 3.0F, new Dilation(0.0F)), ModelTransform.of(0.0F, 0.5F, -2.25F, 0.0873F, 0.0F, 0.0F));
+        ModelPartData head = all.addChild("head", ModelPartBuilder.create().uv(1, 6).cuboid(-1.5F, -1.5F, -2.75F, 3.0F, 3.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -1.75F, -2.0F));
+
+        ModelPartData innerBeak_r1 = head.addChild("innerBeak_r1", ModelPartBuilder.create().uv(8, 1).cuboid(-0.5F, -0.75F, -1.25F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F))
+                .uv(8, 3).cuboid(-0.5F, 0.25F, -1.25F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F))
+                .uv(1, 1).cuboid(-0.5F, -0.75F, -3.25F, 1.0F, 1.0F, 2.0F, new Dilation(0.0F)), ModelTransform.of(0.0F, 0.5F, -2.25F, 0.0873F, 0.0F, 0.0F));
         return TexturedModelData.of(modelData, 32, 32);
     }
 
@@ -46,19 +51,17 @@ public class KiwiBirdModel<T extends KiwiBirdEntity> extends BestiaryModel<T> {
 
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
+        matrices.push();
+
         if (this.child) {
-            float babyScale = 0.75f;
-            matrices.push();
+            float babyScale = 0.5f;
             matrices.scale(babyScale, babyScale, babyScale);
-            matrices.translate(0.0D, 0.5D, 0D);
-            this.getPart().render(matrices, vertices, light, overlay, color);
-            matrices.pop();
-            this.getHeadPart().scale(createVec3f(1.0f));
-        } else {
-            matrices.push();
-            this.getPart().render(matrices, vertices, light, overlay, color);
-            matrices.pop();
+            matrices.translate(0.0D, 1.5D, 0D);
+            this.head.scale(createVec3f(0.6f));
         }
+
+        this.getPart().render(matrices, vertices, light, overlay, color);
+        matrices.pop();
     }
 
     @Override
@@ -67,10 +70,10 @@ public class KiwiBirdModel<T extends KiwiBirdEntity> extends BestiaryModel<T> {
         this.setHeadAngles(entity, netHeadYaw, headPitch, ageInTicks);
 
         if (!entity.isSongPlaying())
-            this.animateMovement(KiwiBirdEntityAnimations.KIWI_BIRD_WALK, limbSwing, limbSwingAmount, 3f, 2f);
+            this.animateMovement(KiwiBirdEntityAnimations.KIWI_WALK, limbSwing, limbSwingAmount, 3f, 2f);
         if (entity.isSongPlaying())
-            this.updateAnimation(entity.dancingAnimationState, KiwiBirdEntityAnimations.KIWI_BIRD_DANCE, ageInTicks, 1f);
-        this.updateAnimation(entity.idleAnimationState, KiwiBirdEntityAnimations.KIWI_BIRD_IDLE, ageInTicks, 1f);
+            this.updateAnimation(entity.dancingAnimationState, KiwiBirdEntityAnimations.KIWI_DANCE, ageInTicks, 1f);
+        this.updateAnimation(entity.idleAnimationState, KiwiBirdEntityAnimations.KIWI_IDLE, ageInTicks, 1f);
     }
 
     @Override

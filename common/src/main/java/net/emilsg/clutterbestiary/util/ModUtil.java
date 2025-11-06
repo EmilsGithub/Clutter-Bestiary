@@ -12,6 +12,8 @@ import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.SpawnLocationTypes;
 import net.minecraft.entity.SpawnRestriction;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.server.MinecraftServer;
@@ -19,6 +21,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.biome.Biome;
@@ -71,6 +74,10 @@ public class ModUtil {
                 }
             }
         }
+    }
+
+    public static boolean inEitherHand(PlayerEntity player, Item item) {
+        return player.getStackInHand(Hand.MAIN_HAND).isOf(item) || player.getStackInHand(Hand.OFF_HAND).isOf(item);
     }
 
     //Only works on Fabric side, hopefully fixed in the future.

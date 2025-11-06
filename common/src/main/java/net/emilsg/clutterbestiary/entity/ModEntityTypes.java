@@ -36,6 +36,8 @@ public class ModEntityTypes {
     public static final RegistrySupplier<EntityType<BoopletEntity>> BOOPLET = registerEntityType("booplet", () -> EntityType.Builder.create(BoopletEntity::new, SpawnGroup.CREATURE).dimensions(0.6f, 0.6f).build("booplet"));
     public static final RegistrySupplier<EntityType<KoiEntity>> KOI = registerEntityType("koi", () -> EntityType.Builder.create(KoiEntity::new, SpawnGroup.WATER_AMBIENT).dimensions(0.7f, 0.5f).build("koi"));
     public static final RegistrySupplier<EntityType<KoiEggsEntity>> KOI_EGGS = registerEntityType("koi_eggs", () -> EntityType.Builder.create(KoiEggsEntity::new, SpawnGroup.MISC).dimensions(0.45f, 0.45f).build("koi_eggs"));
+    public static final RegistrySupplier<EntityType<RiverTurtleEntity>> RIVER_TURTLE = registerEntityType("river_turtle", () -> EntityType.Builder.create(RiverTurtleEntity::new, SpawnGroup.CREATURE).dimensions(0.65f, 0.4f).build("river_turtle"));
+    public static final RegistrySupplier<EntityType<CoatiEntity>> COATI = registerEntityType("coati", () -> EntityType.Builder.create(CoatiEntity::new, SpawnGroup.CREATURE).dimensions(0.8f, 0.7f).build("coati"));
 
     private static <T extends Entity> RegistrySupplier<EntityType<T>> registerEntityType(String name, Supplier<EntityType<T>> entityType){
         return ENTITIES.register(Identifier.of(ClutterBestiary.MOD_ID, name), entityType);

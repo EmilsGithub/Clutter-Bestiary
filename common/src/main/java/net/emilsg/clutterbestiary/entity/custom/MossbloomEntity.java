@@ -388,8 +388,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
 
     @Override
     public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
-        MossbloomVariant variant = MossbloomVariant.getRandom();
-        this.setVariant(variant);
+        this.setVariant(MossbloomVariant.getRandom());
 
         return super.initialize(world, difficulty, spawnReason, entityData);
     }

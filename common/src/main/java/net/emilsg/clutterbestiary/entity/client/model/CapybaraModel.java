@@ -62,20 +62,17 @@ public class CapybaraModel<T extends CapybaraEntity> extends ParentTameableModel
 
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
+        matrices.push();
+
         if (this.child) {
             float babyScale = 0.5f;
-            this.head.scale(createVec3f(babyScale));
-            matrices.push();
             matrices.scale(babyScale, babyScale, babyScale);
             matrices.translate(0.0D, 1.5D, 0D);
-            this.getPart().render(matrices, vertices, light, overlay, color);
-            matrices.pop();
-            this.head.scale(createVec3f(0.9f));
-        } else {
-            matrices.push();
-            this.getPart().render(matrices, vertices, light, overlay, color);
-            matrices.pop();
+            this.head.scale(createVec3f(0.6f));
         }
+
+        this.getPart().render(matrices, vertices, light, overlay, color);
+        matrices.pop();
     }
 
     @Override
