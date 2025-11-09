@@ -5,9 +5,11 @@ import net.emilsg.clutterbestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutterbestiary.entity.custom.BeaverEntity;
 import net.minecraft.client.model.*;
 import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.entity.model.ModelWithArms;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.Arm;
 
-public class BeaverModel<T extends BeaverEntity> extends BestiaryModel<T> {
+public class BeaverModel<T extends BeaverEntity> extends BestiaryModel<T> implements ModelWithArms {
     private final ModelPart root;
     private final ModelPart all;
     private final ModelPart head;
@@ -81,10 +83,16 @@ public class BeaverModel<T extends BeaverEntity> extends BestiaryModel<T> {
             this.updateAnimation(beaverEntity.waterAnimationState, BeaverEntityAnimations.BEAVER_SWIM, ageInTicks, animationSpeed);
         }
 
+        this.updateAnimation(beaverEntity.strippingItemsAnimationState, BeaverEntityAnimations.BEAVER_STRIP_ITEMS, ageInTicks, 1.0f);
     }
 
     @Override
     protected ModelPart getHeadPart() {
         return head;
+    }
+
+    @Override
+    public void setArmAngle(Arm arm, MatrixStack matrices) {
+
     }
 }

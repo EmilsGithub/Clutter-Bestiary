@@ -79,17 +79,16 @@ public class CapybaraModel<T extends CapybaraEntity> extends ParentTameableModel
     public void setAngles(CapybaraEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
 
-        if (!entity.isSleeping() && !entity.isForceSleeping())
-            this.setHeadAngles(entity, netHeadYaw, headPitch, ageInTicks);
+        if (!entity.isSleeping() && !entity.isForceSleeping()) this.setHeadAngles(entity, netHeadYaw, headPitch, ageInTicks);
 
-        if (!entity.isMoving() && (entity.isForceSleeping()) || entity.isSleeping()) {
-            this.updateAnimation(entity.sleepingAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_ONE : entity.sleeperType() == 1 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_TWO : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_THREE, ageInTicks, 1f);
-        } else {
-            this.animateMovement(CapybaraEntityAnimations.CAPYBARA_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
-        }
+        this.animateMovement(CapybaraEntityAnimations.CAPYBARA_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
 
         this.updateAnimation(entity.earTwitchAnimationStateOne, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_ONE, ageInTicks, 1f);
         this.updateAnimation(entity.earTwitchAnimationStateTwo, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_TWO, ageInTicks, 1f);
+        this.updateAnimation(entity.layingDownAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY_START : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE_START, ageInTicks, 1f);
+        this.updateAnimation(entity.sleepingAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE, ageInTicks, 1f);
+        this.updateAnimation(entity.standingUpAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY_STOP : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE_STOP, ageInTicks, 1f);
+
     }
 
     @Override

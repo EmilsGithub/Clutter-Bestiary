@@ -4,13 +4,11 @@ import net.emilsg.clutterbestiary.block.ModBlocks;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.goal.KiwiBirdLayEggGoal;
 import net.emilsg.clutterbestiary.entity.custom.goal.KiwiBirdMateGoal;
-import net.emilsg.clutterbestiary.entity.custom.goal.KiwiDanceGoal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.sound.ModSoundEvents;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
 import net.emilsg.clutterbestiary.util.ModItemTags;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.AnimationState;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
@@ -31,7 +29,6 @@ import net.minecraft.recipe.Ingredient;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
@@ -42,11 +39,8 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
     private static final Ingredient BREEDING_INGREDIENT = Ingredient.fromTag(ModItemTags.C_SEEDS);
     private static final TrackedData<Boolean> HAS_EGG = DataTracker.registerData(KiwiBirdEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Integer> EGG_TIMER = DataTracker.registerData(KiwiBirdEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Boolean> IS_DANCING = DataTracker.registerData(KiwiBirdEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     public final AnimationState idleAnimationState = new AnimationState();
-    public final AnimationState dancingAnimationState = new AnimationState();
     public int idleAnimationTimeout = 0;
-    public int dancingAnimationTimeout = 0;
 
     public KiwiBirdEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
         super(entityType, world);
@@ -153,14 +147,12 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
         super.initDataTracker(builder);
         builder.add(HAS_EGG, false);
         builder.add(EGG_TIMER, 0);
-        builder.add(IS_DANCING, false);
     }
 
     @Override
     protected void initGoals() {
         this.goalSelector.add(0, new SwimGoal(this));
         this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(2, new KiwiDanceGoal(this));
         this.goalSelector.add(3, new KiwiBirdMateGoal(this, 1));
         this.goalSelector.add(4, new KiwiBirdLayEggGoal(this, 1, ModBlocks.KIWI_BIRD_EGG.get().getDefaultState()));
         this.goalSelector.add(5, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));

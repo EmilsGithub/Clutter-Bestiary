@@ -69,10 +69,9 @@ public class KiwiBirdModel<T extends KiwiBirdEntity> extends BestiaryModel<T> {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
         this.setHeadAngles(entity, netHeadYaw, headPitch, ageInTicks);
 
-        if (!entity.isSongPlaying())
-            this.animateMovement(KiwiBirdEntityAnimations.KIWI_WALK, limbSwing, limbSwingAmount, 3f, 2f);
-        if (entity.isSongPlaying())
-            this.updateAnimation(entity.dancingAnimationState, KiwiBirdEntityAnimations.KIWI_DANCE, ageInTicks, 1f);
+
+        this.animateMovement(KiwiBirdEntityAnimations.KIWI_WALK, limbSwing, limbSwingAmount, 3f, 2f);
+
         this.updateAnimation(entity.idleAnimationState, KiwiBirdEntityAnimations.KIWI_IDLE, ageInTicks, 1f);
     }
 

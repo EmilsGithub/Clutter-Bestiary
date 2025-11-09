@@ -1,6 +1,8 @@
 package net.emilsg.clutterbestiary.entity.custom;
 
+import io.netty.buffer.ByteBuf;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
+import net.emilsg.clutterbestiary.entity.ModTrackedDataHandler;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
 import net.minecraft.component.DataComponentTypes;
@@ -16,7 +18,6 @@ import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.entity.mob.WaterCreatureEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -25,11 +26,14 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.codec.PacketCodec;
+import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.function.ValueLists;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.random.Random;
@@ -41,17 +45,24 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.function.IntFunction;
 
 public class CapybaraEntity extends ParentTameableEntity {
     private static final TrackedData<Boolean> IS_SLEEPING = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> FORCE_SLEEPING = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Integer> SLEEPER = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<CapybaraEntity.CapybaraEntityAnimationState> ANIMATION_STATE = DataTracker.registerData(CapybaraEntity.class, ModTrackedDataHandler.CAPYBARA_ANIMATION_STATE);
+
     private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.MELON);
     public final AnimationState earTwitchAnimationStateOne = new AnimationState();
     public final AnimationState earTwitchAnimationStateTwo = new AnimationState();
+
+    public final AnimationState idlingAnimationState = new AnimationState();
+    public final AnimationState layingDownAnimationState = new AnimationState();
     public final AnimationState sleepingAnimationState = new AnimationState();
+    public final AnimationState standingUpAnimationState = new AnimationState();
+
     public int earTwitchAnimationTimeout = 0;
-    public int sleepingAnimationTimeout = 0;
 
     public CapybaraEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
         super(entityType, world);
@@ -109,8 +120,8 @@ public class CapybaraEntity extends ParentTameableEntity {
 
     @Override
     public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
-        int sleeperType = random.nextBetween(0, 2);
-        setSleeperType(sleeperType);
+        int sleeperType = random.nextBetween(0, 1);
+        this.setSleeperType(sleeperType);
         return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
@@ -241,6 +252,7 @@ public class CapybaraEntity extends ParentTameableEntity {
         builder.add(IS_SLEEPING, false);
         builder.add(FORCE_SLEEPING, false);
         builder.add(SLEEPER, 0);
+        builder.add(ANIMATION_STATE, CapybaraEntityAnimationState.IDLING);
     }
 
     @Override
@@ -257,17 +269,6 @@ public class CapybaraEntity extends ParentTameableEntity {
         this.goalSelector.add(10, new CapybaraLookAroundGoal(this));
     }
 
-    protected void updateLimbs(float v) {
-        float f;
-        if (this.getPose() == EntityPose.STANDING) {
-            f = Math.min(v * 6.0F, 1.0F);
-        } else {
-            f = 0.0F;
-        }
-
-        this.limbAnimator.updateLimbs(f * 2f, 0.3F);
-    }
-
     private void pickRandomIdleAnim(boolean bl) {
         if (bl) {
             this.earTwitchAnimationStateOne.start(this.age);
@@ -277,13 +278,6 @@ public class CapybaraEntity extends ParentTameableEntity {
     }
 
     private void setupAnimationStates() {
-        if (this.sleepingAnimationTimeout <= 0) {
-            this.sleepingAnimationTimeout = 80;
-            this.sleepingAnimationState.start(this.age);
-        } else {
-            --this.sleepingAnimationTimeout;
-        }
-
         if (this.earTwitchAnimationTimeout <= 0 && random.nextInt(100) == 0) {
             this.earTwitchAnimationTimeout = 3;
             this.pickRandomIdleAnim(random.nextBoolean());
@@ -365,19 +359,33 @@ public class CapybaraEntity extends ParentTameableEntity {
         }
     }
 
-    private class CapybaraSitGoal extends SitGoal {
+    private static class CapybaraSitGoal extends SitGoal {
         private final CapybaraEntity capybara;
+        private int sleepingTime;
 
         public CapybaraSitGoal(CapybaraEntity capybara) {
             super(capybara);
             this.capybara = capybara;
-            this.setControls(EnumSet.of(Control.JUMP, Control.MOVE));
+            this.setControls(EnumSet.of(Control.JUMP, Control.MOVE, Control.LOOK));
+        }
+
+        @Override
+        public void tick() {
+            sleepingTime++;
+
+            if (sleepingTime >= 10) {
+                this.capybara.startState(CapybaraEntityAnimationState.SLEEPING);
+            }
+
+            if (sleepingTime >= 30) sleepingTime = 21;
+
+            super.tick();
         }
 
         @Override
         public boolean canStart() {
             super.canStart();
-            return this.capybara.isForceSleeping();
+            return this.capybara.isForceSleeping() || this.capybara.isSitting();
         }
 
         @Override
@@ -389,12 +397,15 @@ public class CapybaraEntity extends ParentTameableEntity {
         public void start() {
             this.capybara.getNavigation().stop();
             this.capybara.setIsForceSleeping(true);
+            this.capybara.startState(CapybaraEntityAnimationState.LAYING_DOWN);
         }
 
         @Override
         public void stop() {
             this.capybara.setIsForceSleeping(false);
             this.capybara.setInSittingPose(false);
+            this.sleepingTime = 0;
+            this.capybara.startState(CapybaraEntityAnimationState.STANDING_UP);
         }
     }
 
@@ -420,5 +431,99 @@ public class CapybaraEntity extends ParentTameableEntity {
         public boolean canStart() {
             return super.canStart() && !isSleeping();
         }
+    }
+
+    //TODO Revamp Animations
+
+    public static enum CapybaraEntityAnimationState {
+        IDLING(0),
+        LAYING_DOWN(1),
+        SLEEPING(2),
+        STANDING_UP(3);
+
+        public static final IntFunction<CapybaraEntity.CapybaraEntityAnimationState> INDEX_TO_VALUE = ValueLists.createIdToValueFunction(CapybaraEntity.CapybaraEntityAnimationState::getIndex, values(), ValueLists.OutOfBoundsHandling.ZERO);
+        public static final PacketCodec<ByteBuf, CapybaraEntity.CapybaraEntityAnimationState> PACKET_CODEC = PacketCodecs.indexed(INDEX_TO_VALUE, CapybaraEntity.CapybaraEntityAnimationState::getIndex);
+        private final int index;
+
+        CapybaraEntityAnimationState(final int index) {
+            this.index = index;
+        }
+
+        public int getIndex() {
+            return this.index;
+        }
+    }
+
+    protected void updateLimbs(float v) {
+        float f;
+        if (this.getPose() == EntityPose.STANDING) {
+            f = Math.min(v * 6.0F, 1.0F);
+        } else {
+            f = 0.0F;
+        }
+
+        this.limbAnimator.updateLimbs(f * 2f, 0.3F);
+    }
+
+    private CapybaraEntity.CapybaraEntityAnimationState getState() {
+        return this.dataTracker.get(ANIMATION_STATE);
+    }
+
+    private void setState(CapybaraEntity.CapybaraEntityAnimationState state) {
+        this.dataTracker.set(ANIMATION_STATE, state);
+    }
+
+    public void onTrackedDataSet(TrackedData<?> data) {
+        if (ANIMATION_STATE.equals(data)) {
+            CapybaraEntity.CapybaraEntityAnimationState state = this.getState();
+            this.stopAnimations();
+            switch (state.ordinal()) {
+                case 1:
+                    this.layingDownAnimationState.startIfNotRunning(this.age);
+                    break;
+                case 2:
+                    this.sleepingAnimationState.startIfNotRunning(this.age);
+                    break;
+                case 3:
+                    this.standingUpAnimationState.startIfNotRunning(this.age);
+                    break;
+                default:
+                    this.idlingAnimationState.startIfNotRunning(this.age);
+                    break;
+            }
+
+            this.calculateDimensions();
+        }
+
+        super.onTrackedDataSet(data);
+    }
+
+    public void stopAnimations() {
+        this.idlingAnimationState.stop();
+        this.layingDownAnimationState.stop();
+        this.sleepingAnimationState.stop();
+        this.standingUpAnimationState.stop();
+    }
+
+    public void startState(CapybaraEntity.CapybaraEntityAnimationState state) {
+        switch (state.ordinal()) {
+            case 0:
+                this.setState(CapybaraEntity.CapybaraEntityAnimationState.IDLING);
+                break;
+            case 1:
+                this.setState(CapybaraEntityAnimationState.LAYING_DOWN);
+                break;
+            case 2:
+                this.setState(CapybaraEntityAnimationState.SLEEPING);
+                break;
+            case 3:
+                this.setState(CapybaraEntityAnimationState.STANDING_UP);
+                break;
+        }
+    }
+
+    public void onDeath(DamageSource damageSource) {
+        this.startState(CapybaraEntity.CapybaraEntityAnimationState.IDLING);
+        super.onDeath(damageSource);
     }
 }

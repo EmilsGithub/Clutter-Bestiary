@@ -18,7 +18,7 @@ public class KiwiBirdMateGoal extends AnimalMateGoal {
     }
 
     public boolean canStart() {
-        return super.canStart() && !this.kiwiBird.hasEgg() && !this.kiwiBird.isDancing();
+        return super.canStart() && !this.kiwiBird.hasEgg();
     }
 
     protected void breed() {
