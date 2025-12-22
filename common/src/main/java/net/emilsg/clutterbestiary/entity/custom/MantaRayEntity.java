@@ -1,6 +1,5 @@
 package net.emilsg.clutterbestiary.entity.custom;
 
-import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.entity.custom.goal.MantaRayJumpGoal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentWaterEntity;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
@@ -10,22 +9,16 @@ import net.minecraft.entity.ai.control.YawAdjustingLookControl;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.ai.pathing.EntityNavigation;
 import net.minecraft.entity.ai.pathing.SwimNavigation;
-import net.minecraft.entity.attribute.AttributeContainer;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.mob.WaterCreatureEntity;
-import net.minecraft.fluid.Fluids;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.LocalDifficulty;
@@ -48,12 +41,6 @@ public class MantaRayEntity extends ParentWaterEntity {
         this.lookControl = new YawAdjustingLookControl(this, 10);
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentWaterEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 16.0D)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2.0D);
-    }
-
     protected void initGoals() {
         this.goalSelector.add(0, new MoveIntoWaterGoal(this));
         this.goalSelector.add(1, new SwimAroundGoal(this, 1.0, 10));
@@ -64,13 +51,48 @@ public class MantaRayEntity extends ParentWaterEntity {
         this.targetSelector.add(2, new ActiveTargetGoal<>(this, JellyfishEntity.class, true));
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends WaterCreatureEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos).isIn(ModBlockTags.MANTA_RAYS_SPAWN_ON);
+    @Override
+    public @Nullable EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+        this.setPitch(0.0F);
+        float scaledSize;
+        float chance = random.nextFloat();
+
+        if (chance < 0.31) scaledSize = 0.75f;
+        else if (chance < 0.62) scaledSize = 0.9f;
+        else if (chance < 0.95) scaledSize = 1f;
+        else scaledSize = 1.25f;
+
+        this.setSize(scaledSize);
+        this.refreshPosition();
+        this.calculateDimensions();
+
+        return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
     @Override
-    public Vec3d getVehicleAttachmentPos(Entity vehicle) {
-        return super.getVehicleAttachmentPos(vehicle).add(0, -2.5f / 16f, 0);
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(SIZE, 0f);
+    }
+
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.setSize(nbt.getFloat("Size"));
+    }
+
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putFloat("Size", this.getSize());
+    }
+
+    public static DefaultAttributeContainer.Builder setAttributes() {
+        return ParentWaterEntity.createMobAttributes()
+                .add(EntityAttributes.GENERIC_MAX_HEALTH, 16.0D)
+                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2.0D);
+    }
+
+    public static boolean isValidNaturalSpawn(EntityType<? extends WaterCreatureEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
+        return world.getBlockState(pos).isIn(ModBlockTags.MANTA_RAYS_SPAWN_ON);
     }
 
     public float getSize() {
@@ -84,9 +106,9 @@ public class MantaRayEntity extends ParentWaterEntity {
         this.calculateDimensions();
     }
 
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.setSize(nbt.getFloat("Size"));
+    @Override
+    public Vec3d getVehicleAttachmentPos(Entity vehicle) {
+        return super.getVehicleAttachmentPos(vehicle).add(0, -2.5f / 16f, 0);
     }
 
     @Override
@@ -123,37 +145,8 @@ public class MantaRayEntity extends ParentWaterEntity {
 
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putFloat("Size", this.getSize());
-    }
-
     protected EntityNavigation createNavigation(World world) {
         return new SwimNavigation(this, world);
-    }
-
-    @Override
-    public @Nullable EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
-        this.setPitch(0.0F);
-        float scaledSize;
-        float chance = random.nextFloat();
-
-        if (chance < 0.31) scaledSize = 0.75f;
-        else if (chance < 0.62) scaledSize = 0.9f;
-        else if (chance < 0.95) scaledSize = 1f;
-        else scaledSize = 1.25f;
-
-        this.setSize(scaledSize);
-        this.refreshPosition();
-        this.calculateDimensions();
-
-        return super.initialize(world, difficulty, spawnReason, entityData);
-    }
-
-    @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(SIZE, 0f);
     }
 
     protected void updateLimbs(float v) {

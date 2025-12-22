@@ -82,16 +82,16 @@ public class BoopletModel<T extends BoopletEntity> extends BestiaryModel<T> {
     }
 
     @Override
-    public void setAngles(BoopletEntity boopletEntity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setAngles(BoopletEntity boopletEntity, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
 
         if (!boopletEntity.isTouchingWater()) {
             this.animateMovement(boopletEntity.isFleeing() ? BoopletEntityAnimations.BOOPLET_RUN : BoopletEntityAnimations.BOOPLET_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
         }
 
-        this.updateAnimation(boopletEntity.swimAnimationState, BoopletEntityAnimations.BOOPLET_SWIM, ageInTicks, 1f);
-        this.updateAnimation(boopletEntity.boopAnimationState, BoopletEntityAnimations.BOOPLET_BOOP, ageInTicks, 1f);
-        this.updateAnimation(boopletEntity.happyAnimationState, BoopletEntityAnimations.BOOPLET_HAPPY, ageInTicks, 1f);
+        this.updateAnimation(boopletEntity.swimAnimationState, BoopletEntityAnimations.BOOPLET_SWIM, animationProgress, 1f);
+        this.updateAnimation(boopletEntity.boopAnimationState, BoopletEntityAnimations.BOOPLET_BOOP, animationProgress, 1f);
+        this.updateAnimation(boopletEntity.happyAnimationState, BoopletEntityAnimations.BOOPLET_HAPPY, animationProgress, 1f);
 
         this.fluff.visible = boopletEntity.isFluffy();
     }

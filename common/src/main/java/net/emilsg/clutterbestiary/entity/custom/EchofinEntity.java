@@ -28,6 +28,7 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -70,6 +71,49 @@ public class EchofinEntity extends ParentAnimalEntity {
         this.setPathfindingPenalty(PathNodeType.FENCE, -1.0F);
     }
 
+    @Override
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+        setVariant(EchofinVariant.getRandom());
+        this.setHomePos(this.getBlockPos());
+        return super.initialize(world, difficulty, spawnReason, entityData);
+    }
+
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(HOME_POS, BlockPos.ORIGIN);
+        builder.add(VARIANT, EchofinVariant.CHORUS.getId());
+        builder.add(ABILITY_TIMER, 0);
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new EscapeDangerGoal(this, 1.25));
+        this.goalSelector.add(1, new MeleeAttackGoal(this, 3.0, true));
+        this.goalSelector.add(2, new EchofinWanderAroundGoal(this));
+        this.targetSelector.add(1, new EchofinConditionalActiveTargetGoal(this, PlayerEntity.class, false));
+    }
+
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        int i = nbt.getInt("HomePosX");
+        int j = nbt.getInt("HomePosY");
+        int k = nbt.getInt("HomePosZ");
+        this.setHomePos(new BlockPos(i, j, k));
+        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
+        this.setEntityAbilityTimer(nbt.getInt("AbilityTimer"));
+    }
+
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putInt("HomePosX", this.getHomePos().getX());
+        nbt.putInt("HomePosY", this.getHomePos().getY());
+        nbt.putInt("HomePosZ", this.getHomePos().getZ());
+        nbt.putString("Variant", this.getTypeVariant());
+        nbt.putInt("AbilityTimer", this.getAbilityTimerEntitiesTimer());
+    }
+
     public static DefaultAttributeContainer.Builder setAttributes() {
         return ParentAnimalEntity.createMobAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 10D)
@@ -84,15 +128,13 @@ public class EchofinEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
-        setVariant(EchofinVariant.getRandom());
-        this.setHomePos(this.getBlockPos());
-        return super.initialize(world, difficulty, spawnReason, entityData);
+    public boolean canImmediatelyDespawn(double distanceSquared) {
+        return true;
     }
 
     @Override
-    public boolean canImmediatelyDespawn(double distanceSquared) {
-        return true;
+    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return null;
     }
 
     public int getAbilityTimerEntitiesTimer() {
@@ -183,14 +225,15 @@ public class EchofinEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        int i = nbt.getInt("HomePosX");
-        int j = nbt.getInt("HomePosY");
-        int k = nbt.getInt("HomePosZ");
-        this.setHomePos(new BlockPos(i, j, k));
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
-        this.setEntityAbilityTimer(nbt.getInt("AbilityTimer"));
+    public void onPlayerCollision(PlayerEntity player) {
+        super.onPlayerCollision(player);
+
+        World world = player.getWorld();
+
+        if (world.isClient || player.isCreative()) return;
+
+        if (shouldTeleportPlayers()) teleportPlayer(player, world);
+        else if (shouldLevitatePlayers()) levitatePlayer(player);
     }
 
     @Override
@@ -237,15 +280,6 @@ public class EchofinEntity extends ParentAnimalEntity {
         }
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putInt("HomePosX", this.getHomePos().getX());
-        nbt.putInt("HomePosY", this.getHomePos().getY());
-        nbt.putInt("HomePosZ", this.getHomePos().getZ());
-        nbt.putString("Variant", this.getTypeVariant());
-        nbt.putInt("AbilityTimer", this.getAbilityTimerEntitiesTimer());
-    }
-
     protected EntityNavigation createNavigation(World world) {
         BirdNavigation birdNavigation = new BirdNavigation(this, world) {
             public boolean isValidPosition(BlockPos pos) {
@@ -271,34 +305,6 @@ public class EchofinEntity extends ParentAnimalEntity {
     @Override
     protected @Nullable SoundEvent getHurtSound(DamageSource source) {
         return SoundEvents.ENTITY_SALMON_HURT;
-    }
-
-    @Override
-    public void onPlayerCollision(PlayerEntity player) {
-        super.onPlayerCollision(player);
-
-        World world = player.getWorld();
-
-        if (world.isClient) return;
-
-        if (shouldTeleportPlayers()) teleportPlayer(player, world);
-        else if (shouldLevitatePlayers()) levitatePlayer(player);
-    }
-
-    @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(HOME_POS, BlockPos.ORIGIN);
-        builder.add(VARIANT, EchofinVariant.CHORUS.getId());
-        builder.add(ABILITY_TIMER, 0);
-    }
-
-    @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new EscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(1, new MeleeAttackGoal(this, 3.0, true));
-        this.goalSelector.add(2, new EchofinWanderAroundGoal(this));
-        this.targetSelector.add(1, new EchofinConditionalActiveTargetGoal(this, PlayerEntity.class, false));
     }
 
     @Override

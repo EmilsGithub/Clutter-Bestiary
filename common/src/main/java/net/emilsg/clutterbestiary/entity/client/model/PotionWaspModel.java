@@ -89,13 +89,13 @@ public class PotionWaspModel<T extends PotionWaspEntity> extends BestiaryModel<T
     }
 
     @Override
-    public void setAngles(PotionWaspEntity potionWasp, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setAngles(PotionWaspEntity potionWasp, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(potionWasp, netHeadYaw, headPitch, ageInTicks);
+        this.setHeadAngles(potionWasp, netHeadYaw, headPitch, animationProgress);
 
         this.getPotionSacPart().hidden = !potionWasp.hasPotionSac();
 
-        this.updateAnimation(potionWasp.flyingAnimState, potionWasp.hasPotionSac() ? PotionWaspEntityAnimations.POTIONWASP_FLY : PotionWaspEntityAnimations.POTIONWASP_FLY_NO_SAC, ageInTicks, 1f);
+        this.updateAnimation(potionWasp.flyingAnimState, potionWasp.hasPotionSac() ? PotionWaspEntityAnimations.POTIONWASP_FLY : PotionWaspEntityAnimations.POTIONWASP_FLY_NO_SAC, animationProgress, 1f);
     }
 
     @Override

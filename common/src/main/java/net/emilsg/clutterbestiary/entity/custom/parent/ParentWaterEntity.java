@@ -15,6 +15,12 @@ public class ParentWaterEntity extends WaterCreatureEntity {
         super(entityType, world);
     }
 
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(MOVING, false);
+    }
+
     public boolean isMoving() {
         return this.dataTracker.get(MOVING);
     }
@@ -31,11 +37,5 @@ public class ParentWaterEntity extends WaterCreatureEntity {
             this.setMoving(isMoving);
         }
         super.tickMovement();
-    }
-
-    @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(MOVING, false);
     }
 }

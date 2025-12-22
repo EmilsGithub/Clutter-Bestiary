@@ -109,6 +109,11 @@ public class ModEntitySpawns {
             BiomeModifications.addSpawn(BiomeSelectors.tag(ModBiomeTags.SPAWNS_COATIS), SpawnGroup.CREATURE,
                     ModEntityTypes.COATI.get(), 20, 2, 4);
         }
+
+        if (ModConfigManager.get(Configs.spawnRedPandas, true)) {
+            BiomeModifications.addSpawn(BiomeSelectors.tag(ModBiomeTags.SPAWNS_RED_PANDAS), SpawnGroup.CREATURE,
+                    ModEntityTypes.RED_PANDA.get(), 20, 2, 3);
+        }
     }
 
 }

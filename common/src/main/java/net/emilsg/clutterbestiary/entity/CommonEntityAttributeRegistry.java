@@ -28,6 +28,6 @@ public class CommonEntityAttributeRegistry {
         EntityAttributeRegistry.register(ModEntityTypes.KOI_EGGS, KoiEntity::setAttributes);
         EntityAttributeRegistry.register(ModEntityTypes.RIVER_TURTLE, RiverTurtleEntity::setAttributes);
         EntityAttributeRegistry.register(ModEntityTypes.COATI, CoatiEntity::setAttributes);
-
+        EntityAttributeRegistry.register(ModEntityTypes.RED_PANDA, RedPandaEntity::setAttributes);
     }
 }

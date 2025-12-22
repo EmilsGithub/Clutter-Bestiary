@@ -85,6 +85,19 @@ public enum KoiBaseColorVariant implements BestiaryBasicVariant {
         return ORANGE;
     }
 
+    @Nullable
+    public static Identifier getEmissiveTextureFromEntity(KoiEntity koiEntity) {
+        return koiEntity.getBaseColorVariant().hasSeparateTexture() ? Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/koi/koi_" + koiEntity.getBaseColorVariant().getName() + "_emissive.png") : null;
+    }
+
+    public int[] getColorHex() {
+        return colorHex;
+    }
+
+    public Formatting getFormatting() {
+        return this.formatting;
+    }
+
     public String getID() {
         return ClutterBestiary.MOD_ID + ":" + this.getName();
     }
@@ -93,28 +106,15 @@ public enum KoiBaseColorVariant implements BestiaryBasicVariant {
         return this.name;
     }
 
-    public Formatting getFormatting() {
-        return this.formatting;
-    }
-
-    public boolean hasSeparateTexture() {
-        return this.separateTexture;
-    }
-
-    public int[] getColorHex() {
-        return colorHex;
+    public Identifier getTextureLocation() {
+        return this.hasSeparateTexture() ? Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/koi/koi_" + this.getName() + ".png") : Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/koi/koi_base.png");
     }
 
     public int getWeight() {
         return this.weight;
     }
 
-    public Identifier getTextureLocation() {
-        return this.hasSeparateTexture() ? Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/koi/koi_" + this.getName() + ".png") : Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/koi/koi_base.png");
-    }
-
-    @Nullable
-    public static Identifier getEmissiveTextureFromEntity(KoiEntity koiEntity) {
-        return koiEntity.getBaseColorVariant().hasSeparateTexture() ? Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/koi/koi_" + koiEntity.getBaseColorVariant().getName() + "_emissive.png") : null;
+    public boolean hasSeparateTexture() {
+        return this.separateTexture;
     }
 }

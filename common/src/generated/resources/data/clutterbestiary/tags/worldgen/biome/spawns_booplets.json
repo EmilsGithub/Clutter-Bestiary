@@ -1,0 +1,14 @@
+{
+  "values": [
+    "minecraft:snowy_plains",
+    "minecraft:snowy_taiga",
+    {
+      "id": "terralith:muskeg",
+      "required": false
+    },
+    {
+      "id": "regions_unexplored:frozen_tundra",
+      "required": false
+    }
+  ]
+}

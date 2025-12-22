@@ -46,7 +46,7 @@ import net.minecraft.util.math.random.Random;
 import net.minecraft.world.*;
 import org.jetbrains.annotations.Nullable;
 
-public class MossbloomEntity extends ParentTameableEntity implements Mount, JumpingMount{
+public class MossbloomEntity extends ParentTameableEntity implements Mount, JumpingMount {
 
     private static final TrackedData<String> VARIANT = DataTracker.registerData(MossbloomEntity.class, TrackedDataHandlerRegistry.STRING);
     private static final TrackedData<Boolean> HAS_HORNS = DataTracker.registerData(MossbloomEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
@@ -63,21 +63,70 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     public final AnimationState earTwitchAnimationStateRE = new AnimationState();
     public final AnimationState earTwitchAnimationStateBE = new AnimationState();
     public final AnimationState wagTailAnimationStateBE = new AnimationState();
+    private final Item tamingItem = Items.SPORE_BLOSSOM;
     public int idleAnimationTimeout = 0;
     public int shakingAnimationTimeout = 0;
     public int earTwitchAnimationTimeout = 0;
-
     protected int soundTicks;
     protected boolean inAir;
     protected float jumpStrength;
-
-    private final Item tamingItem = Items.SPORE_BLOSSOM;
 
     public MossbloomEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
         super(entityType, world);
         this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
         this.setPathfindingPenalty(PathNodeType.WATER, -1.0F);
         this.setPathfindingPenalty(PathNodeType.WATER_BORDER, 16.0F);
+    }
+
+    @Override
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+        this.setVariant(MossbloomVariant.getRandom());
+
+        return super.initialize(world, difficulty, spawnReason, entityData);
+    }
+
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(VARIANT, MossbloomVariant.HORNED.getId());
+        builder.add(HAS_HORNS, true);
+        builder.add(HORN_DROP_TIMER, 0);
+        builder.add(IS_SHAKING, false);
+        builder.add(TIME_TILL_DROP, 0);
+        builder.add(IS_SPRINTING, false);
+        builder.add(IS_SADDLED, false);
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new MossbloomDropHornsGoal(this));
+        this.goalSelector.add(1, new SwimGoal(this));
+        this.goalSelector.add(2, new TrackedFleeGoal(this, 2.5f));
+        this.goalSelector.add(3, new AnimalMateGoal(this, 1));
+        this.goalSelector.add(4, new TemptGoal(this, 1.25, Ingredient.ofItems(Items.BIG_DRIPLEAF), false));
+        this.goalSelector.add(5, new FollowParentGoal(this, 1.0));
+        this.goalSelector.add(6, new WanderAroundFarOftenGoal(this, 1.0f));
+        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(8, new LookAroundGoal(this));
+    }
+
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
+        this.dataTracker.set(HAS_HORNS, nbt.getBoolean("HasHorns"));
+        this.dataTracker.set(HORN_DROP_TIMER, nbt.getInt("HornDropTimer"));
+        this.dataTracker.set(IS_SHAKING, nbt.getBoolean("IsShaking"));
+        this.dataTracker.set(IS_SADDLED, nbt.getBoolean("IsSaddled"));
+    }
+
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putString("Variant", this.getTypeVariant());
+        nbt.putBoolean("HasHorns", this.getHasHorns());
+        nbt.putInt("HornDropTimer", this.getHornDropTimer());
+        nbt.putBoolean("IsShaking", this.getIsShaking());
+        nbt.putBoolean("IsSaddled", this.getIsSaddled());
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
@@ -132,67 +181,6 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         }
     }
 
-    protected void playStepSound(BlockPos pos, BlockState state) {
-        if (!state.isLiquid()) {
-            BlockState blockState = this.getWorld().getBlockState(pos.up());
-            BlockSoundGroup blockSoundGroup = state.getSoundGroup();
-            if (blockState.isOf(Blocks.SNOW)) {
-                blockSoundGroup = blockState.getSoundGroup();
-            }
-
-            if (this.hasPassengers()) {
-                ++this.soundTicks;
-                if (this.soundTicks > 5 && this.soundTicks % 3 == 0) {
-                    this.playWalkSound(blockSoundGroup);
-                } else if (this.soundTicks <= 5) {
-                    this.playSound(SoundEvents.ENTITY_HORSE_STEP_WOOD, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
-                }
-            } else if (this.isWooden(blockSoundGroup)) {
-                this.playSound(SoundEvents.ENTITY_HORSE_STEP_WOOD, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
-            } else {
-                this.playSound(SoundEvents.ENTITY_HORSE_STEP, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
-            }
-
-        }
-    }
-
-    protected void playWalkSound(BlockSoundGroup group) {
-        this.playSound(SoundEvents.ENTITY_HORSE_GALLOP, group.getVolume() * 0.05F, group.getPitch() + 0.25f);
-        if (this.random.nextInt(10) == 0) {
-            this.playSound(SoundEvents.ENTITY_HORSE_BREATHE, group.getVolume() * 0.6F, group.getPitch() + 0.5f);
-        }
-    }
-
-    private boolean isWooden(BlockSoundGroup soundGroup) {
-        return soundGroup == BlockSoundGroup.WOOD || soundGroup == BlockSoundGroup.NETHER_WOOD || soundGroup == BlockSoundGroup.NETHER_STEM || soundGroup == BlockSoundGroup.CHERRY_WOOD || soundGroup == BlockSoundGroup.BAMBOO_WOOD;
-    }
-
-    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
-        if (fallDistance > 1.0F) {
-            this.playSound(SoundEvents.ENTITY_HORSE_LAND, 0.4F, 1.75F);
-        }
-
-        int i = this.computeFallDamage(fallDistance, damageMultiplier);
-        if (i <= 0) {
-            return false;
-        } else {
-            this.damage(damageSource, (float)i);
-            if (this.hasPassengers()) {
-
-                for (Entity entity : this.getPassengersDeep()) {
-                    entity.damage(damageSource, (float) i);
-                }
-            }
-
-            this.playBlockFallSound();
-            return true;
-        }
-    }
-
-    protected int computeFallDamage(float fallDistance, float damageMultiplier) {
-        return MathHelper.ceil((fallDistance * 0.5F - 3.0F) * damageMultiplier);
-    }
-
     @Override
     public boolean canBreedWith(AnimalEntity other) {
         if (other == this) {
@@ -204,6 +192,11 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         } else {
             return this.isInLove() && other.isInLove();
         }
+    }
+
+    @Override
+    public boolean canJump() {
+        return this.getIsSaddled();
     }
 
     public boolean canSpawn(WorldAccess world, SpawnReason spawnReason) {
@@ -218,6 +211,24 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         MossbloomEntity child = ModEntityTypes.MOSSBLOOM.get().create(world);
         if (child != null) child.setVariant(MossbloomVariant.getRandom());
         return child;
+    }
+
+    @Override
+    @Nullable
+    public LivingEntity getControllingPassenger() {
+        Entity firstPassenger = this.getFirstPassenger();
+        if (firstPassenger instanceof MobEntity mobEntity) {
+            return mobEntity;
+        } else {
+            if (this.getIsSaddled()) {
+                firstPassenger = this.getFirstPassenger();
+                if (firstPassenger instanceof PlayerEntity) {
+                    return (PlayerEntity) firstPassenger;
+                }
+            }
+
+            return null;
+        }
     }
 
     public boolean getHasHorns() {
@@ -236,6 +247,14 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         this.dataTracker.set(HORN_DROP_TIMER, hornDropTimer);
     }
 
+    public boolean getIsSaddled() {
+        return this.dataTracker.get(IS_SADDLED);
+    }
+
+    public void setIsSaddled(boolean saddled) {
+        this.dataTracker.set(IS_SADDLED, saddled);
+    }
+
     public boolean getIsShaking() {
         return this.dataTracker.get(IS_SHAKING);
     }
@@ -244,18 +263,8 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         this.dataTracker.set(IS_SHAKING, isShaking);
     }
 
-    @Override
-    protected @Nullable SoundEvent getHurtSound(DamageSource source) {
-        return ModSoundEvents.ENTITY_MOSSBLOOM_HURT.get();
-    }
-
-    @Override
-    public int getLimitPerChunk() {
-        return 2;
-    }
-
-    public int getTimeTillDrop() {
-        return this.dataTracker.get(TIME_TILL_DROP);
+    public double getJumpStrength() {
+        return this.getAttributeValue(EntityAttributes.GENERIC_JUMP_STRENGTH);
     }
 
     @Override
@@ -270,108 +279,27 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
             if (strength >= 90) {
                 this.jumpStrength = 1.0F;
             } else {
-                this.jumpStrength = 0.4F + 0.4F * (float)strength / 90.0F;
+                this.jumpStrength = 0.4F + 0.4F * (float) strength / 90.0F;
             }
 
         }
     }
 
-    protected void tickControlled(PlayerEntity controllingPlayer, Vec3d movementInput) {
-        super.tickControlled(controllingPlayer, movementInput);
-        Vec2f vec2f = this.getControlledRotation(controllingPlayer);
-        this.setRotation(vec2f.y, vec2f.x);
-        this.prevYaw = this.bodyYaw = this.headYaw = this.getYaw();
-        if (this.isLogicalSideForUpdatingMovement()) {
-
-            if (this.isOnGround()) {
-                this.setInAir(false);
-                if (this.jumpStrength > 0.0F && !this.isInAir()) {
-                    this.jump(this.jumpStrength, movementInput);
-                }
-
-                this.jumpStrength = 0.0F;
-            }
-        }
-
-    }
-
-    protected Vec3d getControlledMovementInput(PlayerEntity controllingPlayer, Vec3d movementInput) {
-        if (this.isOnGround() && this.jumpStrength == 0.0F && !this.jumping) {
-            return Vec3d.ZERO;
-        } else {
-            float f = controllingPlayer.sidewaysSpeed * 0.5F;
-            float g = controllingPlayer.forwardSpeed;
-            if (g <= 0.0F) {
-                g *= 0.25F;
-            }
-
-            return new Vec3d(f, 0.0, g);
-        }
-    }
-
-    protected void jump(float strength, Vec3d movementInput) {
-        double d = this.getJumpStrength() * (double)strength * (double)this.getJumpVelocityMultiplier();
-        double e = d + (double)this.getJumpBoostVelocityModifier();
-        Vec3d vec3d = this.getVelocity();
-        this.setVelocity(vec3d.x, e, vec3d.z);
-        this.setInAir(true);
-        this.velocityDirty = true;
-        if (movementInput.z > 0.0) {
-            float f = MathHelper.sin(this.getYaw() * 0.017453292F);
-            float g = MathHelper.cos(this.getYaw() * 0.017453292F);
-            this.setVelocity(this.getVelocity().add((-0.4F * f * strength), 0.0, (0.4F * g * strength)));
-        }
-
-    }
-
-    public double getJumpStrength() {
-        return this.getAttributeValue(EntityAttributes.GENERIC_JUMP_STRENGTH);
-    }
-
-    public boolean isInAir() {
-        return this.inAir;
-    }
-
-    public void setInAir(boolean inAir) {
-        this.inAir = inAir;
-    }
-
-    protected Vec2f getControlledRotation(LivingEntity controllingPassenger) {
-        return new Vec2f(controllingPassenger.getPitch() * 0.5F, controllingPassenger.getYaw());
-    }
-
     @Override
-    public boolean canJump() {
-        return this.getIsSaddled();
-    }
-
-    @Override
-    public void startJumping(int height) {
-        this.jumping = true;
-    }
-
-    @Override
-    public void stopJumping() {
-    }
-
-    public void setTimeTillDrop(int timeTillDrop) {
-        this.dataTracker.set(TIME_TILL_DROP, timeTillDrop);
+    public int getLimitPerChunk() {
+        return 2;
     }
 
     public boolean getSprinting() {
         return this.dataTracker.get(IS_SPRINTING);
     }
 
-    public void setIsSprinting(boolean sprinting) {
-        this.dataTracker.set(IS_SPRINTING, sprinting);
+    public int getTimeTillDrop() {
+        return this.dataTracker.get(TIME_TILL_DROP);
     }
 
-    public boolean getIsSaddled() {
-        return this.dataTracker.get(IS_SADDLED);
-    }
-
-    public void setIsSaddled(boolean saddled) {
-        this.dataTracker.set(IS_SADDLED, saddled);
+    public void setTimeTillDrop(int timeTillDrop) {
+        this.dataTracker.set(TIME_TILL_DROP, timeTillDrop);
     }
 
     public String getTypeVariant() {
@@ -386,59 +314,26 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         this.dataTracker.set(VARIANT, variant.getId());
     }
 
-    @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
-        this.setVariant(MossbloomVariant.getRandom());
-
-        return super.initialize(world, difficulty, spawnReason, entityData);
-    }
-
-    @Override
-    public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(Items.BIG_DRIPLEAF);
-    }
-
-    public boolean isVariantOf(MossbloomVariant variant) {
-        return this.getVariant() == variant;
-    }
-
-    @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
-        this.dataTracker.set(HAS_HORNS, nbt.getBoolean("HasHorns"));
-        this.dataTracker.set(HORN_DROP_TIMER, nbt.getInt("HornDropTimer"));
-        this.dataTracker.set(IS_SHAKING, nbt.getBoolean("IsShaking"));
-        this.dataTracker.set(IS_SADDLED, nbt.getBoolean("IsSaddled"));
-    }
-
-    public boolean isImmobile() {
-        return super.isImmobile() && this.hasPassengers() && this.getIsSaddled();
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        World world = this.getWorld();
-
-        if (this.getVariant() == MossbloomVariant.FLOWERING && this.getRandom().nextInt(4800) == 0) {
-            this.tickFertilize(world);
+    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+        if (fallDistance > 1.0F) {
+            this.playSound(SoundEvents.ENTITY_HORSE_LAND, 0.4F, 1.75F);
         }
 
-        if (world.isClient) {
-            this.setupAnimationStates();
-        }
+        int i = this.computeFallDamage(fallDistance, damageMultiplier);
+        if (i <= 0) {
+            return false;
+        } else {
+            this.damage(damageSource, (float) i);
+            if (this.hasPassengers()) {
 
-        if (this.getVariant() == MossbloomVariant.HORNED && !this.isBaby()) {
-            if (this.getHornDropTimer() >= (SHOULD_DROP_HORNS_VALUE / 3)) this.setHasHorns(true);
-            this.setHornDropTimer(this.getHornDropTimer() + random.nextInt(1) + 1);
-        }
+                for (Entity entity : this.getPassengersDeep()) {
+                    entity.damage(damageSource, (float) i);
+                }
+            }
 
-        if (this.getVariant() == MossbloomVariant.HORNED && this.isBaby()) {
-            this.setHasHorns(false);
+            this.playBlockFallSound();
+            return true;
         }
-
-        this.jumping = false;
     }
 
     @Override
@@ -489,169 +384,70 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         return super.interactMob(player, hand);
     }
 
+    @Override
+    public boolean isBreedingItem(ItemStack stack) {
+        return stack.isOf(Items.BIG_DRIPLEAF);
+    }
 
+    public boolean isImmobile() {
+        return super.isImmobile() && this.hasPassengers() && this.getIsSaddled();
+    }
+
+    public boolean isInAir() {
+        return this.inAir;
+    }
+
+    public void setInAir(boolean inAir) {
+        this.inAir = inAir;
+    }
+
+    public boolean isVariantOf(MossbloomVariant variant) {
+        return this.getVariant() == variant;
+    }
+
+    public void setIsSprinting(boolean sprinting) {
+        this.dataTracker.set(IS_SPRINTING, sprinting);
+    }
+
+    @Override
+    public void startJumping(int height) {
+        this.jumping = true;
+    }
+
+    @Override
+    public void stopJumping() {
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        World world = this.getWorld();
+
+        if (this.getVariant() == MossbloomVariant.FLOWERING && this.getRandom().nextInt(4800) == 0) {
+            this.tickFertilize(world);
+        }
+
+        if (world.isClient) {
+            this.setupAnimationStates();
+        }
+
+        if (this.getVariant() == MossbloomVariant.HORNED && !this.isBaby()) {
+            if (this.getHornDropTimer() >= (SHOULD_DROP_HORNS_VALUE / 3)) this.setHasHorns(true);
+            this.setHornDropTimer(this.getHornDropTimer() + random.nextInt(1) + 1);
+        }
+
+        if (this.getVariant() == MossbloomVariant.HORNED && this.isBaby()) {
+            this.setHasHorns(false);
+        }
+
+        this.jumping = false;
+    }
 
     @Override
     public void tickMovement() {
         super.tickMovement();
-        if (this.isSubmergedInWater() && this.getControllingPassenger() != null) this.getControllingPassenger().dismountVehicle();
-    }
-
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putString("Variant", this.getTypeVariant());
-        nbt.putBoolean("HasHorns", this.getHasHorns());
-        nbt.putInt("HornDropTimer", this.getHornDropTimer());
-        nbt.putBoolean("IsShaking", this.getIsShaking());
-        nbt.putBoolean("IsSaddled", this.getIsSaddled());
-    }
-
-    @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(VARIANT, MossbloomVariant.HORNED.getId());
-        builder.add(HAS_HORNS, true);
-        builder.add(HORN_DROP_TIMER, 0);
-        builder.add(IS_SHAKING, false);
-        builder.add(TIME_TILL_DROP, 0);
-        builder.add(IS_SPRINTING, false);
-        builder.add(IS_SADDLED, false);
-    }
-
-    @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new MossbloomDropHornsGoal(this));
-        this.goalSelector.add(1, new SwimGoal(this));
-        this.goalSelector.add(2, new TrackedFleeGoal(this, 2.5f));
-        this.goalSelector.add(3, new AnimalMateGoal(this, 1));
-        this.goalSelector.add(4, new TemptGoal(this, 1.25, Ingredient.ofItems(Items.BIG_DRIPLEAF), false));
-        this.goalSelector.add(5, new FollowParentGoal(this, 1.0));
-        this.goalSelector.add(6, new WanderAroundFarOftenGoal(this, 1.0f));
-        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(8, new LookAroundGoal(this));
-    }
-
-    @Override
-    protected void onGrowUp() {
-        super.onGrowUp();
-
-        if (!this.isBaby() && this.getVariant() == MossbloomVariant.HORNED) {
-            this.setHasHorns(true);
-        }
-    }
-
-    protected void updateLimbs(float v) {
-        float f;
-        if (this.getPose() == EntityPose.STANDING) {
-            f = Math.min(v * 6.0F, 1.0F);
-        } else {
-            f = 0.0F;
-        }
-
-        this.limbAnimator.updateLimbs(f * 1.5f, 0.5F);
-    }
-
-    private void pickRandomIdleAnim(int i) {
-        switch (i) {
-            case 1 -> this.earTwitchAnimationStateRE.startIfNotRunning(this.age);
-            case 2 -> this.earTwitchAnimationStateLE.startIfNotRunning(this.age);
-            case 3 -> this.wagTailAnimationStateBE.startIfNotRunning(this.age);
-            default -> this.earTwitchAnimationStateBE.startIfNotRunning(this.age);
-        }
-    }
-
-    private void setupAnimationStates() {
-        if (this.shakingAnimationTimeout <= 0 && this.getIsShaking()) {
-            this.shakingAnimationTimeout = 60;
-            this.shakingAnimationState.start(this.age);
-        } else {
-            --this.shakingAnimationTimeout;
-        }
-
-        if (this.idleAnimationTimeout <= 0 && !this.isMoving()) {
-            this.idleAnimationTimeout = 10;
-            this.idleAnimationState.startIfNotRunning(this.age);
-        } else {
-            --this.idleAnimationTimeout;
-        }
-
-        if (this.earTwitchAnimationTimeout <= 0 && random.nextInt(50) == 0) {
-            this.earTwitchAnimationTimeout = 5;
-            this.pickRandomIdleAnim(random.nextInt(4));
-        } else {
-            --this.earTwitchAnimationTimeout;
-        }
-    }
-
-    private void tickFertilize(World world) {
-        BlockPos origin = this.getBlockPos();
-        int ox = origin.getX(), oy = origin.getY(), oz = origin.getZ();
-        BlockPos.Mutable pos = new BlockPos.Mutable();
-        Random rand = this.getRandom();
-
-        int dyStart = rand.nextInt(3);
-        int dyStep  = rand.nextBoolean() ? 1 : 2;
-        int dxStart = rand.nextInt(11);
-        int dxStep  = rand.nextInt(10) + 1;
-        int dzStart = rand.nextInt(11);
-        int dzStep  = rand.nextInt(10) + 1;
-
-        int maxChecks = 32;
-
-        outer:
-        for (int yi = 0; yi < 3; yi++) {
-            int dy = ((dyStart + yi * dyStep) % 3) - 1;
-
-            for (int xi = 0; xi < 11; xi++) {
-                int dx = ((dxStart + xi * dxStep) % 11) - 5;
-
-                for (int zi = 0; zi < 11; zi++) {
-                    if (--maxChecks < 0) break outer;
-
-                    int dz = ((dzStart + zi * dzStep) % 11) - 5;
-                    pos.set(ox + dx, oy + dy, oz + dz);
-
-                    BlockState state = world.getBlockState(pos);
-                    if (state.isAir()) continue;
-
-                    Block block = state.getBlock();
-                    if (state.isIn(BlockTags.BEE_GROWABLES) && block instanceof Fertilizable fertilizable && fertilizable.isFertilizable(world, pos, state) && fertilizable.canGrow(world, rand, pos, state)) {
-
-                        if (world instanceof ServerWorld serverWorld) {
-                            fertilizable.grow(serverWorld, rand, pos, state);
-                        } else {
-                            BoneMealItem.createParticles(world, pos, 15);
-                        }
-                        break outer;
-                    }
-                }
-            }
-        }
-    }
-
-
-    @Override
-    @Nullable
-    public LivingEntity getControllingPassenger() {
-        Entity firstPassenger = this.getFirstPassenger();
-        if (firstPassenger instanceof MobEntity mobEntity) {
-            return mobEntity;
-        } else {
-            if (this.getIsSaddled()) {
-                firstPassenger = this.getFirstPassenger();
-                if (firstPassenger instanceof PlayerEntity) {
-                    return (PlayerEntity)firstPassenger;
-                }
-            }
-
-            return null;
-        }
-    }
-
-    private void setRiding(PlayerEntity pPlayer) {
-        pPlayer.setYaw(this.getYaw());
-        pPlayer.setPitch(this.getPitch());
-        pPlayer.startRiding(this);
+        if (this.isSubmergedInWater() && this.getControllingPassenger() != null)
+            this.getControllingPassenger().dismountVehicle();
     }
 
     @Override
@@ -671,7 +467,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
             }
 
             if (this.isLogicalSideForUpdatingMovement()) {
-                float newSpeed = (float)this.getAttributeValue(EntityAttributes.GENERIC_MOVEMENT_SPEED);
+                float newSpeed = (float) this.getAttributeValue(EntityAttributes.GENERIC_MOVEMENT_SPEED);
 
                 boolean sprinting = MinecraftClient.getInstance().options.sprintKey.isPressed();
 
@@ -708,5 +504,205 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
             }
         }
         return super.updatePassengerForDismount(passenger);
+    }
+
+    protected int computeFallDamage(float fallDistance, float damageMultiplier) {
+        return MathHelper.ceil((fallDistance * 0.5F - 3.0F) * damageMultiplier);
+    }
+
+    protected Vec3d getControlledMovementInput(PlayerEntity controllingPlayer, Vec3d movementInput) {
+        if (this.isOnGround() && this.jumpStrength == 0.0F && !this.jumping) {
+            return Vec3d.ZERO;
+        } else {
+            float f = controllingPlayer.sidewaysSpeed * 0.5F;
+            float g = controllingPlayer.forwardSpeed;
+            if (g <= 0.0F) {
+                g *= 0.25F;
+            }
+
+            return new Vec3d(f, 0.0, g);
+        }
+    }
+
+    protected Vec2f getControlledRotation(LivingEntity controllingPassenger) {
+        return new Vec2f(controllingPassenger.getPitch() * 0.5F, controllingPassenger.getYaw());
+    }
+
+    @Override
+    protected @Nullable SoundEvent getHurtSound(DamageSource source) {
+        return ModSoundEvents.ENTITY_MOSSBLOOM_HURT.get();
+    }
+
+    protected void jump(float strength, Vec3d movementInput) {
+        double d = this.getJumpStrength() * (double) strength * (double) this.getJumpVelocityMultiplier();
+        double e = d + (double) this.getJumpBoostVelocityModifier();
+        Vec3d vec3d = this.getVelocity();
+        this.setVelocity(vec3d.x, e, vec3d.z);
+        this.setInAir(true);
+        this.velocityDirty = true;
+        if (movementInput.z > 0.0) {
+            float f = MathHelper.sin(this.getYaw() * 0.017453292F);
+            float g = MathHelper.cos(this.getYaw() * 0.017453292F);
+            this.setVelocity(this.getVelocity().add((-0.4F * f * strength), 0.0, (0.4F * g * strength)));
+        }
+
+    }
+
+    @Override
+    protected void onGrowUp() {
+        super.onGrowUp();
+
+        if (!this.isBaby() && this.getVariant() == MossbloomVariant.HORNED) {
+            this.setHasHorns(true);
+        }
+    }
+
+    protected void playStepSound(BlockPos pos, BlockState state) {
+        if (!state.isLiquid()) {
+            BlockState blockState = this.getWorld().getBlockState(pos.up());
+            BlockSoundGroup blockSoundGroup = state.getSoundGroup();
+            if (blockState.isOf(Blocks.SNOW)) {
+                blockSoundGroup = blockState.getSoundGroup();
+            }
+
+            if (this.hasPassengers()) {
+                ++this.soundTicks;
+                if (this.soundTicks > 5 && this.soundTicks % 3 == 0) {
+                    this.playWalkSound(blockSoundGroup);
+                } else if (this.soundTicks <= 5) {
+                    this.playSound(SoundEvents.ENTITY_HORSE_STEP_WOOD, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
+                }
+            } else if (this.isWooden(blockSoundGroup)) {
+                this.playSound(SoundEvents.ENTITY_HORSE_STEP_WOOD, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
+            } else {
+                this.playSound(SoundEvents.ENTITY_HORSE_STEP, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
+            }
+
+        }
+    }
+
+    protected void playWalkSound(BlockSoundGroup group) {
+        this.playSound(SoundEvents.ENTITY_HORSE_GALLOP, group.getVolume() * 0.05F, group.getPitch() + 0.25f);
+        if (this.random.nextInt(10) == 0) {
+            this.playSound(SoundEvents.ENTITY_HORSE_BREATHE, group.getVolume() * 0.6F, group.getPitch() + 0.5f);
+        }
+    }
+
+    protected void tickControlled(PlayerEntity controllingPlayer, Vec3d movementInput) {
+        super.tickControlled(controllingPlayer, movementInput);
+        Vec2f vec2f = this.getControlledRotation(controllingPlayer);
+        this.setRotation(vec2f.y, vec2f.x);
+        this.prevYaw = this.bodyYaw = this.headYaw = this.getYaw();
+        if (this.isLogicalSideForUpdatingMovement()) {
+
+            if (this.isOnGround()) {
+                this.setInAir(false);
+                if (this.jumpStrength > 0.0F && !this.isInAir()) {
+                    this.jump(this.jumpStrength, movementInput);
+                }
+
+                this.jumpStrength = 0.0F;
+            }
+        }
+
+    }
+
+    protected void updateLimbs(float v) {
+        float f;
+        if (this.getPose() == EntityPose.STANDING) {
+            f = Math.min(v * 6.0F, 1.0F);
+        } else {
+            f = 0.0F;
+        }
+
+        this.limbAnimator.updateLimbs(f * 1.5f, 0.5F);
+    }
+
+    private boolean isWooden(BlockSoundGroup soundGroup) {
+        return soundGroup == BlockSoundGroup.WOOD || soundGroup == BlockSoundGroup.NETHER_WOOD || soundGroup == BlockSoundGroup.NETHER_STEM || soundGroup == BlockSoundGroup.CHERRY_WOOD || soundGroup == BlockSoundGroup.BAMBOO_WOOD;
+    }
+
+    private void pickRandomIdleAnim(int i) {
+        switch (i) {
+            case 1 -> this.earTwitchAnimationStateRE.startIfNotRunning(this.age);
+            case 2 -> this.earTwitchAnimationStateLE.startIfNotRunning(this.age);
+            case 3 -> this.wagTailAnimationStateBE.startIfNotRunning(this.age);
+            default -> this.earTwitchAnimationStateBE.startIfNotRunning(this.age);
+        }
+    }
+
+    private void setRiding(PlayerEntity pPlayer) {
+        pPlayer.setYaw(this.getYaw());
+        pPlayer.setPitch(this.getPitch());
+        pPlayer.startRiding(this);
+    }
+
+    private void setupAnimationStates() {
+        if (this.shakingAnimationTimeout <= 0 && this.getIsShaking()) {
+            this.shakingAnimationTimeout = 60;
+            this.shakingAnimationState.start(this.age);
+        } else {
+            --this.shakingAnimationTimeout;
+        }
+
+        if (this.idleAnimationTimeout <= 0 && !this.isMoving()) {
+            this.idleAnimationTimeout = 10;
+            this.idleAnimationState.startIfNotRunning(this.age);
+        } else {
+            --this.idleAnimationTimeout;
+        }
+
+        if (this.earTwitchAnimationTimeout <= 0 && random.nextInt(50) == 0) {
+            this.earTwitchAnimationTimeout = 5;
+            this.pickRandomIdleAnim(random.nextInt(4));
+        } else {
+            --this.earTwitchAnimationTimeout;
+        }
+    }
+
+    private void tickFertilize(World world) {
+        BlockPos origin = this.getBlockPos();
+        int ox = origin.getX(), oy = origin.getY(), oz = origin.getZ();
+        BlockPos.Mutable pos = new BlockPos.Mutable();
+        Random rand = this.getRandom();
+
+        int dyStart = rand.nextInt(3);
+        int dyStep = rand.nextBoolean() ? 1 : 2;
+        int dxStart = rand.nextInt(11);
+        int dxStep = rand.nextInt(10) + 1;
+        int dzStart = rand.nextInt(11);
+        int dzStep = rand.nextInt(10) + 1;
+
+        int maxChecks = 32;
+
+        outer:
+        for (int yi = 0; yi < 3; yi++) {
+            int dy = ((dyStart + yi * dyStep) % 3) - 1;
+
+            for (int xi = 0; xi < 11; xi++) {
+                int dx = ((dxStart + xi * dxStep) % 11) - 5;
+
+                for (int zi = 0; zi < 11; zi++) {
+                    if (--maxChecks < 0) break outer;
+
+                    int dz = ((dzStart + zi * dzStep) % 11) - 5;
+                    pos.set(ox + dx, oy + dy, oz + dz);
+
+                    BlockState state = world.getBlockState(pos);
+                    if (state.isAir()) continue;
+
+                    Block block = state.getBlock();
+                    if (state.isIn(BlockTags.BEE_GROWABLES) && block instanceof Fertilizable fertilizable && fertilizable.isFertilizable(world, pos, state) && fertilizable.canGrow(world, rand, pos, state)) {
+
+                        if (world instanceof ServerWorld serverWorld) {
+                            fertilizable.grow(serverWorld, rand, pos, state);
+                        } else {
+                            BoneMealItem.createParticles(world, pos, 15);
+                        }
+                        break outer;
+                    }
+                }
+            }
+        }
     }
 }

@@ -12,5 +12,12 @@ dependencies {
     modImplementation "dev.architectury:architectury:$rootProject.architectury_api_version"
 }
 
-sourceSets.main.resources.srcDir("src/main/generated/resources")
+sourceSets {
+    main {
+        resources { // include generated resources in resources
+            srcDir("src/generated/resources")
+            exclude(".cache/**")
+        }
+    }
+}
 

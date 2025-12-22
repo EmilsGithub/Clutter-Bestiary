@@ -34,23 +34,23 @@ public class CrimsonNewtEntity extends AbstractNetherNewtEntity {
     }
 
     @Override
+    public Item getBreedingItem() {
+        return Items.CRIMSON_ROOTS;
+    }
+
+    @Override
     public RegistryEntry<StatusEffect> getOnAttackEffect() {
         //TODO add status effect when vulnerability has released: Registries.STATUS_EFFECT.get(Identifier.of("EXTERNAL_MOD_ID", "vulnerability"))
         return null;
     }
 
     @Override
-    public Item getBreedingItem() {
-        return Items.CRIMSON_ROOTS;
+    protected Item getFungusItem() {
+        return Items.CRIMSON_FUNGUS;
     }
 
     @Override
     protected Item getTamingItem() {
         return Items.WEEPING_VINES;
-    }
-
-    @Override
-    protected Item getFungusItem() {
-        return Items.CRIMSON_FUNGUS;
     }
 }

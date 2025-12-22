@@ -21,6 +21,9 @@
     ],
     "client": [
       "net.emilsg.clutterbestiary.fabric.ClutterBestiaryClientFabric"
+    ],
+    "fabric-datagen": [
+      "net.emilsg.clutterbestiary.fabric.ClutterBestiaryDataGenFabric"
     ]
   },
   "mixins": [

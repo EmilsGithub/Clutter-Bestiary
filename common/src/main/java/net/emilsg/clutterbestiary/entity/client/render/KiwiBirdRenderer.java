@@ -22,7 +22,8 @@ public class KiwiBirdRenderer extends MobEntityRenderer<KiwiBirdEntity, KiwiBird
 
     @Override
     public Identifier getTexture(KiwiBirdEntity kiwiBirdEntity) {
-        if (kiwiBirdEntity.getDisplayName() != null && kiwiBirdEntity.getDisplayName().contains(Text.of("Talon"))) return EASTER_EGG_TEXTURE;
+        if (kiwiBirdEntity.getDisplayName() != null && kiwiBirdEntity.getDisplayName().contains(Text.of("Talon")))
+            return EASTER_EGG_TEXTURE;
         return TEXTURE;
     }
 

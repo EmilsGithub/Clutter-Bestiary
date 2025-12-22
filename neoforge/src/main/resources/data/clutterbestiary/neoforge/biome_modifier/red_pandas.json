@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#clutterbestiary:spawns_red_pandas",
+  "spawners" : {
+    "type": "clutterbestiary:red_panda",
+    "weight": 20,
+    "minCount": 2,
+    "maxCount": 3
+  }
+}

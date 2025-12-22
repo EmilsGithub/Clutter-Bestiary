@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "clutterbestiary:block/butterfly_in_a_bottle",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "clutterbestiary:block/butterfly_in_a_bottle"
+    },
+    "facing=south": {
+      "model": "clutterbestiary:block/butterfly_in_a_bottle",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "clutterbestiary:block/butterfly_in_a_bottle",
+      "y": 270
+    }
+  }
+}

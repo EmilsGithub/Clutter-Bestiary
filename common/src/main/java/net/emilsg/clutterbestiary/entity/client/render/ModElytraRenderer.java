@@ -24,8 +24,7 @@ public class ModElytraRenderer<E extends LivingEntity, M extends EntityModel<E>>
     @Override
     protected Identifier getTexture(E entity) {
         ItemStack itemStack = entity.getEquippedStack(EquipmentSlot.CHEST);
-        System.out.println(entity.getEquippedStack(EquipmentSlot.CHEST).getItem() instanceof ButterflyElytraItem);
-        if(!(itemStack.getItem() instanceof ButterflyElytraItem butterflyElytraItem)) return super.getTexture(entity);
+        if (!(itemStack.getItem() instanceof ButterflyElytraItem butterflyElytraItem)) return super.getTexture(entity);
         return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/elytra/" + butterflyElytraItem.getType() + ".png");
     }
 }

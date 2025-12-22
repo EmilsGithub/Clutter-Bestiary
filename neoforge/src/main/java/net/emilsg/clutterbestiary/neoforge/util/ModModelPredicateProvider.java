@@ -1,11 +1,9 @@
 package net.emilsg.clutterbestiary.neoforge.util;
 
 import net.emilsg.clutterbestiary.entity.variants.ButterflyVariant;
+import net.emilsg.clutterbestiary.entity.variants.RiverTurtleVariant;
 import net.emilsg.clutterbestiary.entity.variants.SeahorseVariant;
-import net.emilsg.clutterbestiary.item.custom.BestiaryElytraItem;
-import net.emilsg.clutterbestiary.item.custom.ButterflyBottleItem;
-import net.emilsg.clutterbestiary.item.custom.KoiBucketItem;
-import net.emilsg.clutterbestiary.item.custom.SeahorseBucketItem;
+import net.emilsg.clutterbestiary.item.custom.*;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
@@ -23,6 +21,7 @@ public class ModModelPredicateProvider {
             if (item instanceof ButterflyBottleItem) registerButterflyInABottle(item);
             if (item instanceof SeahorseBucketItem) registerSeahorseBucket(item);
             if (item instanceof KoiBucketItem) registerKoiBucket(item);
+            if (item instanceof RiverTurtleBucketItem) registerRiverTurtleBucket(item);
         }
     }
 
@@ -36,11 +35,11 @@ public class ModModelPredicateProvider {
 
     private static void registerButterflyInABottle(Item bottle) {
         ModelPredicateProviderRegistry.register(bottle, Identifier.of("type"), (stack, world, entity, seed) -> {
-            if (!(stack.getItem() instanceof ButterflyBottleItem)) return 0;
+            if (!(stack.getItem() instanceof ButterflyBottleItem)) return 0.19f;
             NbtComponent nbtComponent = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
             Optional<ButterflyVariant> optional = nbtComponent.get(ButterflyBottleItem.BUTTERFLY_VARIANT_MAP_CODEC).result();
 
-            if (optional.isEmpty()) return 0;
+            if (optional.isEmpty()) return 0.19f;
 
             int id = optional.get().getOrderedID();
 
@@ -80,16 +79,36 @@ public class ModModelPredicateProvider {
 
                     var cmp = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
                     var base = cmp.get(KoiBucketItem.BASE_COLOR_CODEC).result();
-                    if (base.isEmpty()) return 0f;
-
-                    return switch (base.get()) {
+                    return base.map(koiBaseColorVariant -> switch (koiBaseColorVariant) {
                         case ORANGE -> 0.1f;
                         case YELLOW -> 0.2f;
                         case BLACK -> 0.3f;
                         case PEARL -> 0.4f;
                         default -> 0.0f;
-                    };
+                    }).orElse(0f);
                 }
         );
+    }
+
+
+    private static void registerRiverTurtleBucket(Item bucket) {
+        ModelPredicateProviderRegistry.register(bucket, Identifier.of("type"), (stack, world, entity, seed) -> {
+            if (!(stack.getItem() instanceof RiverTurtleBucketItem)) return 0;
+            NbtComponent nbtComponent = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
+            Optional<RiverTurtleVariant> optional = nbtComponent.get(RiverTurtleBucketItem.RIVER_TURTLE_VARIANT_MAP_CODEC).result();
+
+            if (optional.isEmpty()) return 0;
+
+            float type;
+
+            RiverTurtleVariant riverTurtleVariant = optional.get();
+
+            type = switch (riverTurtleVariant) {
+                case COCONUT -> 0.1f;
+                default -> 0.0f;
+            };
+
+            return type;
+        });
     }
 }

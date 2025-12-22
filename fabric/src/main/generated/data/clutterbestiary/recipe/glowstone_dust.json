@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "clutterbestiary:mossbloom_antlers"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:glowstone_dust"
+  }
+}

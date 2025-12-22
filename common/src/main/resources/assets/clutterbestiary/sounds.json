@@ -61,5 +61,25 @@
       "clutterbestiary:coati_ambient_two"
 
     ]
+  },
+  "entity_beaver_chainsaw": {
+    "subtitle": "sounds.clutterbestiary.entity_beaver_chainsaw",
+    "sounds": [
+      "clutterbestiary:beaver_chainsaw"
+    ]
+  },
+  "entity_river_turtle_ambient": {
+    "subtitle": "sounds.clutterbestiary.entity_river_turtle_ambient",
+    "sounds": [
+      "clutterbestiary:river_turtle_ambient_one",
+      "clutterbestiary:river_turtle_ambient_two",
+      "clutterbestiary:river_turtle_ambient_three"
+    ]
+  },
+  "entity_river_turtle_hurt": {
+    "subtitle": "sounds.clutterbestiary.entity_river_turtle_hurt",
+    "sounds": [
+      "clutterbestiary:river_turtle_hurt"
+    ]
   }
 }

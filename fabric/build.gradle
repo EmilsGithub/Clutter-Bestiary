@@ -57,3 +57,14 @@ shadowJar {
 remapJar {
     inputFile.set shadowJar.archiveFile
 }
+
+def commonProject = project(":common")
+fabricApi {
+    configureDataGeneration() {
+        modId = "clutterbestiary"
+        outputDirectory = commonProject.file("src/generated/resources")
+        addToResources = false
+        client = true
+        createSourceSet = false
+    }
+}

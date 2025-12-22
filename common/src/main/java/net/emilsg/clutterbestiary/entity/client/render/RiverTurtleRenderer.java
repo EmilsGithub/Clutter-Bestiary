@@ -1,9 +1,7 @@
 package net.emilsg.clutterbestiary.entity.client.render;
 
 import net.emilsg.clutterbestiary.entity.client.layer.ModModelLayers;
-import net.emilsg.clutterbestiary.entity.client.model.DragonflyModel;
 import net.emilsg.clutterbestiary.entity.client.model.RiverTurtleModel;
-import net.emilsg.clutterbestiary.entity.custom.DragonflyEntity;
 import net.emilsg.clutterbestiary.entity.custom.RiverTurtleEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRendererFactory;

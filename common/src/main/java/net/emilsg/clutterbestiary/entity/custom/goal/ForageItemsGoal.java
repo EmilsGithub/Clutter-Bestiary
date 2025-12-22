@@ -1,11 +1,11 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
+import net.emilsg.clutterbestiary.animation_handling.animation_states.CoatiEntityAnimationState;
 import net.emilsg.clutterbestiary.entity.custom.CoatiEntity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 
 import java.util.Comparator;
@@ -65,13 +65,12 @@ public class ForageItemsGoal extends Goal {
             ItemStack stack = target.getStack();
             if (!stack.isEmpty()) {
                 ItemStack remainder = this.coati.insertInto(this.coati.getWildInventory(), stack.copy());
-                this.coati.startState(CoatiEntity.CoatiEntityAnimationState.IDLING);
-                this.coati.startState(CoatiEntity.CoatiEntityAnimationState.PICKING_UP_ITEM);
+                this.coati.startState(CoatiEntityAnimationState.IDLING);
+                this.coati.startState(CoatiEntityAnimationState.PICKING_UP_ITEM);
                 this.coati.playSound(SoundEvents.ENTITY_ITEM_PICKUP);
                 if (remainder.isEmpty()) {
                     target.discard();
                     target = null;
-                    return;
                 } else if (remainder.getCount() != stack.getCount()) {
                     target.setStack(remainder);
                 }

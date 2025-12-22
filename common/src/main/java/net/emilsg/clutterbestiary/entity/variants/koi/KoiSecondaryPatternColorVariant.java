@@ -14,8 +14,8 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 public enum KoiSecondaryPatternColorVariant implements BestiaryBasicVariant {
-    BLACK("black", Formatting.DARK_GRAY,0x1C2226),
-    WHITE("white", Formatting.WHITE,0xC3C3E5);
+    BLACK("black", Formatting.DARK_GRAY, 0x1C2226),
+    WHITE("white", Formatting.WHITE, 0xC3C3E5);
 
     private static final Map<Identifier, KoiSecondaryPatternColorVariant> BY_ID =
             Arrays.stream(values()).collect(Collectors.toMap(
@@ -53,20 +53,19 @@ public enum KoiSecondaryPatternColorVariant implements BestiaryBasicVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
-    public String getID() {
-        return ClutterBestiary.MOD_ID + ":" + this.getName();
-    }
-
-
-    public String getName() {
-        return this.name;
+    public int getColorHex() {
+        return colorHex;
     }
 
     public Formatting getFormatting() {
         return this.colorFormatting;
     }
 
-    public int getColorHex() {
-        return colorHex;
+    public String getID() {
+        return ClutterBestiary.MOD_ID + ":" + this.getName();
+    }
+
+    public String getName() {
+        return this.name;
     }
 }

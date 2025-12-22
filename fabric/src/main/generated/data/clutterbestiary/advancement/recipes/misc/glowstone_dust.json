@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "from_item": {
+      "conditions": {
+        "items": [
+          {
+            "items": "clutterbestiary:mossbloom_antlers"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "clutterbestiary:glowstone_dust"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "from_item"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "clutterbestiary:glowstone_dust"
+    ]
+  }
+}

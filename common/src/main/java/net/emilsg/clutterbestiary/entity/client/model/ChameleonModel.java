@@ -63,17 +63,7 @@ public class ChameleonModel<T extends ChameleonEntity> extends ParentTameableMod
 
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        matrices.push();
-
-        if (this.child) {
-            float babyScale = 0.5f;
-            matrices.scale(babyScale, babyScale, babyScale);
-            matrices.translate(0.0D, 1.5D, 0D);
-            this.head.scale(createVec3f(0.6f));
-        }
-
-        this.getPart().render(matrices, vertices, light, overlay, color);
-        matrices.pop();
+        this.setBabyHeadSizeAndRender(matrices, vertices, light, overlay, color);
     }
 
     @Override
@@ -88,6 +78,11 @@ public class ChameleonModel<T extends ChameleonEntity> extends ParentTameableMod
 
         this.updateAnimation(chameleon.toungeIdleAnimationState, ChameleonEntityAnimations.CHAMELEON_LICK_IDLE, animationProgress, 1f);
         this.updateAnimation(chameleon.tailIdleAnimationState, ChameleonEntityAnimations.CHAMELEON_TAIL_IDLE, animationProgress, 1f);
+    }
+
+    @Override
+    protected ModelPart getHeadPart() {
+        return head;
     }
 
     protected void setHeadAngles(ChameleonEntity entity, float headYaw, float headPitch, float animationProgress) {
@@ -106,10 +101,5 @@ public class ChameleonModel<T extends ChameleonEntity> extends ParentTameableMod
 
         getHeadPart().yaw = headYaw * 0.017453292F;
         getHeadPart().pitch = headPitch * 0.017453292F;
-    }
-
-    @Override
-    protected ModelPart getHeadPart() {
-        return head;
     }
 }

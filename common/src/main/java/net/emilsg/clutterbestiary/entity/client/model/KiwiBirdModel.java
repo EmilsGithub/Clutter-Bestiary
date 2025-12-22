@@ -65,14 +65,14 @@ public class KiwiBirdModel<T extends KiwiBirdEntity> extends BestiaryModel<T> {
     }
 
     @Override
-    public void setAngles(KiwiBirdEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setAngles(KiwiBirdEntity entity, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(entity, netHeadYaw, headPitch, ageInTicks);
+        this.setHeadAngles(entity, netHeadYaw, headPitch, animationProgress);
 
 
         this.animateMovement(KiwiBirdEntityAnimations.KIWI_WALK, limbSwing, limbSwingAmount, 3f, 2f);
 
-        this.updateAnimation(entity.idleAnimationState, KiwiBirdEntityAnimations.KIWI_IDLE, ageInTicks, 1f);
+        this.updateAnimation(entity.idleAnimationState, KiwiBirdEntityAnimations.KIWI_IDLE, animationProgress, 1f);
     }
 
     @Override

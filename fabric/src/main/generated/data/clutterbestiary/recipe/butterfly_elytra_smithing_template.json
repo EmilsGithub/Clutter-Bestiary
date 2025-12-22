@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "clutterbestiary:butterfly_elytra_smithing_template_shards"
+    },
+    {
+      "item": "clutterbestiary:butterfly_elytra_smithing_template_shards"
+    },
+    {
+      "item": "clutterbestiary:butterfly_elytra_smithing_template_shards"
+    },
+    {
+      "item": "clutterbestiary:butterfly_elytra_smithing_template_shards"
+    },
+    {
+      "item": "clutterbestiary:butterfly_elytra_smithing_template_shards"
+    },
+    {
+      "item": "clutterbestiary:butterfly_elytra_smithing_template_shards"
+    },
+    {
+      "item": "clutterbestiary:butterfly_elytra_smithing_template_shards"
+    },
+    {
+      "item": "clutterbestiary:butterfly_elytra_smithing_template_shards"
+    },
+    {
+      "item": "clutterbestiary:butterfly_elytra_smithing_template_shards"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "clutterbestiary:butterfly_elytra_smithing_template"
+  }
+}

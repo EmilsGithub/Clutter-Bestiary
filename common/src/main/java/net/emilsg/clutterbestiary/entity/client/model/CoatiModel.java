@@ -1,11 +1,8 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
 import net.emilsg.clutterbestiary.entity.client.animation.CoatiAnimations;
-import net.emilsg.clutterbestiary.entity.client.animation.RiverTurtleAnimations;
-import net.emilsg.clutterbestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutterbestiary.entity.client.model.parent.ParentTameableModel;
 import net.emilsg.clutterbestiary.entity.custom.CoatiEntity;
-import net.emilsg.clutterbestiary.entity.custom.RiverTurtleEntity;
 import net.minecraft.client.model.*;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -72,52 +69,45 @@ public class CoatiModel<T extends CoatiEntity> extends ParentTameableModel<T> {
     }
 
     @Override
-    public void setAngles(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(entity, headYaw, headPitch, animationProgress);
-        this.setChestVisibility(entity.hasChest());
-
-        if (entity.getDaysFedHoney() >= 3) {
-            this.animateMovement(CoatiAnimations.COATI_FIND_BURROW, limbAngle, limbDistance, 3f, 2f);
-        } else {
-            this.animateMovement(CoatiAnimations.COATI_WALK, limbAngle, limbDistance, 3f, 2f);
-        }
-
-        this.updateAnimation(entity.diggingAnimationState, CoatiAnimations.COATI_DIG, animationProgress, 1.0f);
-        this.updateAnimation(entity.sniffingAnimationState, CoatiAnimations.COATI_SNIFF, animationProgress, 1.0f);
-        this.updateAnimation(entity.sittingAnimationState, CoatiAnimations.COATI_SIT_START, animationProgress, 1.0f);
-        this.updateAnimation(entity.standingUpAnimationState, CoatiAnimations.COATI_SIT_STOP, animationProgress, 1.0f);
-        this.updateAnimation(entity.unBurrowingAnimationState, CoatiAnimations.COATI_UNBURROW, animationProgress, 1.0f);
-        this.updateAnimation(entity.pickUpItemAnimationState, CoatiAnimations.COATI_PICK_UP_ITEM, animationProgress, 1.0f);
-
-    }
-
-    @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        matrices.push();
-
-        if (this.child) {
-            float babyScale = 0.5f;
-            matrices.scale(babyScale, babyScale, babyScale);
-            matrices.translate(0.0D, 1.5D, 0D);
-            this.head.scale(createVec3f(0.6f));
-        }
-
-        this.getPart().render(matrices, vertices, light, overlay, color);
-        matrices.pop();
-    }
-
-    private void setChestVisibility(boolean chestVisibility) {
-        chest.visible = chestVisibility;
-    }
-
-    @Override
     public ModelPart getPart() {
         return root;
     }
 
     @Override
+    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
+        this.setBabyHeadSizeAndRender(matrices, vertices, light, overlay, color);
+    }
+
+    @Override
+    public void setAngles(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        this.setHeadAngles(entity, headYaw, headPitch, animationProgress);
+        this.setChestVisibility(entity.hasChest());
+
+        if (entity.getDaysFedHoney() >= entity.getDaysFedHoneyNeeded()) {
+            this.animateMovement(CoatiAnimations.COATI_FIND_BURROW, limbAngle, limbDistance, 3f, 2f);
+        } else {
+            this.animateMovement(CoatiAnimations.COATI_WALK, limbAngle, limbDistance, 3f, 2f);
+        }
+
+        this.updateAnimation(entity.diggingAnimationState, CoatiAnimations.COATI_DIG, animationProgress, 2.0f);
+        this.updateAnimation(entity.sniffingAnimationState, CoatiAnimations.COATI_SNIFF, animationProgress, 1.0f);
+        this.updateAnimation(entity.sittingAnimationState, CoatiAnimations.COATI_SIT_START, animationProgress, 1.0f);
+        this.updateAnimation(entity.standingUpAnimationState, CoatiAnimations.COATI_SIT_STOP, animationProgress, 1.0f);
+        this.updateAnimation(entity.unBurrowingAnimationState, CoatiAnimations.COATI_UNBURROW, animationProgress, 1.0f);
+        this.updateAnimation(entity.pickUpItemAnimationState, CoatiAnimations.COATI_PICK_UP_ITEM, animationProgress, 1.0f);
+        this.updateAnimation(entity.idlingAnimationState, CoatiAnimations.COATI_IDLE, animationProgress, 1.0f);
+        this.updateAnimation(entity.leftEarTwitchAnimationState, CoatiAnimations.COATI_LEFT_EAR_TWITCH, animationProgress, 1.0f);
+        this.updateAnimation(entity.rightEarTwitchAnimationState, CoatiAnimations.COATI_RIGHT_EAR_TWITCH, animationProgress, 1.0f);
+
+    }
+
+    @Override
     protected ModelPart getHeadPart() {
         return head;
+    }
+
+    private void setChestVisibility(boolean chestVisibility) {
+        chest.visible = chestVisibility;
     }
 }

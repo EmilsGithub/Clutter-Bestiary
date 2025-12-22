@@ -18,12 +18,12 @@ public class BoopletRenderer extends MobEntityRenderer<BoopletEntity, BoopletMod
         this.addFeature(new EmissiveRenderer<>(this, BoopletRenderer::getEmissiveTexture));
     }
 
+    public static Identifier getEmissiveTexture(BoopletEntity entity) {
+        return EMISSIVE_TEXTURE;
+    }
+
     @Override
     public Identifier getTexture(BoopletEntity entity) {
         return TEXTURE;
-    }
-
-    public static Identifier getEmissiveTexture(BoopletEntity entity) {
-        return EMISSIVE_TEXTURE;
     }
 }

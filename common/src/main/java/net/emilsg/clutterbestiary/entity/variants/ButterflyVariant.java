@@ -31,11 +31,8 @@ public enum ButterflyVariant {
     PINK("pink", Formatting.RED, 15),
     WARPED("warped", Formatting.DARK_AQUA, 16, true),
     CRIMSON("crimson", Formatting.DARK_RED, 17, true),
-    SOUL("soul", Formatting.GOLD, 18, true);
+    SOUL("soul", Formatting.WHITE, 18, true);
 
-    private final String name;
-    private final Formatting colorFormatting;
-    private final boolean isFireImmune;
     private static final Map<Identifier, ButterflyVariant> BY_ID =
             Arrays.stream(values()).collect(java.util.stream.Collectors.toMap(
                     v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName()),
@@ -51,6 +48,9 @@ public enum ButterflyVariant {
                     },
                     v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName())
             );
+    private final String name;
+    private final Formatting colorFormatting;
+    private final boolean isFireImmune;
     private final int ID;
 
     ButterflyVariant(String name, Formatting colorFormatting, int ID, boolean isFireImmune) {
@@ -88,15 +88,15 @@ public enum ButterflyVariant {
         return this.name;
     }
 
+    public int getOrderedID() {
+        return this.ID;
+    }
+
     public Identifier getTextureLocation() {
         return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/butterfly/" + getName() + "_butterfly.png");
     }
 
     public boolean isFireImmune() {
         return isFireImmune;
-    }
-
-    public int getOrderedID() {
-        return this.ID;
     }
 }

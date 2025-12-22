@@ -16,14 +16,11 @@ public enum SeahorseVariant {
     RED("red"),
     PURPLE("purple");
 
-    private final String name;
-
     private static final Map<Identifier, SeahorseVariant> BY_ID =
             Arrays.stream(values()).collect(java.util.stream.Collectors.toMap(
                     v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName()),
                     v -> v
             ));
-
     public static final Codec<SeahorseVariant> CODEC =
             Identifier.CODEC.comapFlatMap(
                     id -> {
@@ -34,6 +31,7 @@ public enum SeahorseVariant {
                     },
                     v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName())
             );
+    private final String name;
 
     SeahorseVariant(String name) {
         this.name = name;

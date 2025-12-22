@@ -21,6 +21,9 @@ public class ModSoundEvents {
     public static final Supplier<SoundEvent> ENTITY_EMPEROR_PENGUIN_AMBIENT = registerSoundEvent("entity_emperor_penguin_ambient");
     public static final Supplier<SoundEvent> ENTITY_EMBER_TORTOISE_HURT = registerSoundEvent("entity_ember_tortoise_hurt");
     public static final Supplier<SoundEvent> ENTITY_COATI_AMBIENT = registerSoundEvent("entity_coati_ambient");
+    public static final Supplier<SoundEvent> ENTITY_BEAVER_CHAINSAW = registerSoundEvent("entity_beaver_chainsaw");
+    public static final Supplier<SoundEvent> ENTITY_RIVER_TURTLE_AMBIENT = registerSoundEvent("entity_river_turtle_ambient");
+    public static final Supplier<SoundEvent> ENTITY_RIVER_TURTLE_HURT = registerSoundEvent("entity_river_turtle_hurt");
 
     public static RegistrySupplier<SoundEvent> registerSoundEvent(String name) {
         return SOUNDS.register(name, () -> SoundEvent.of(Identifier.of(ClutterBestiary.MOD_ID, name)));

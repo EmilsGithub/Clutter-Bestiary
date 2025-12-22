@@ -45,7 +45,7 @@ public class KoiBaseColorFeatureRenderer extends FeatureRenderer<KoiEntity, KoiM
     @Override
     public void render(MatrixStack matrices, VertexConsumerProvider providers, int light, KoiEntity entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
         int rgb = getColor(entity, tickDelta);
-        if(rgb == 0) return;
+        if (rgb == 0) return;
         int argb = 0xFF000000 | (rgb & 0x00FFFFFF);
         Identifier texture = getTexture(entity);
 

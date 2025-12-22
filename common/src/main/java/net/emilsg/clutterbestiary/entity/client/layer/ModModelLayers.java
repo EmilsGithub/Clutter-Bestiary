@@ -26,6 +26,7 @@ public class ModModelLayers {
     public static final EntityModelLayer KOI_EGGS = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "koi_eggs"), "main");
     public static final EntityModelLayer RIVER_TURTLE = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "river_turtle"), "main");
     public static final EntityModelLayer COATI = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "coati"), "main");
+    public static final EntityModelLayer RED_PANDA = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "red_panda"), "main");
 
     public static final EntityModelLayer KOI_BASE = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "koi"), "main");
     public static final EntityModelLayer KOI_PRIMARY_COLOR = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "koi"), "primary");

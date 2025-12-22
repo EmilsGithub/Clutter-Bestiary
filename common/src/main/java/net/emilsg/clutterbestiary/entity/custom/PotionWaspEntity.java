@@ -26,6 +26,7 @@ import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -54,12 +55,37 @@ public class PotionWaspEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public boolean canHaveStatusEffect(StatusEffectInstance effectInstance) {
-        List<RegistryEntry<StatusEffect>> potionEffects = PotionWaspVariant.getAllStatusEffects();
-        for (RegistryEntry<StatusEffect> effect : potionEffects) {
-            if (effectInstance.getEffectType() == effect) return false;
-        }
-        return true;
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+        PotionWaspVariant variant = PotionWaspVariant.getRandom();
+        this.setVariant(variant);
+        this.setHasPotionSac(true);
+
+        return super.initialize(world, difficulty, spawnReason, entityData);
+    }
+
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(VARIANT, PotionWaspVariant.REGENERATION.getId());
+        builder.add(HAS_POTION_SAC, true);
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(1, new PotionWaspWanderAroundGoal(this));
+    }
+
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
+        this.dataTracker.set(HAS_POTION_SAC, nbt.getBoolean("HasPotionSac"));
+    }
+
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putString("Variant", this.getTypeVariant());
+        nbt.putBoolean("HasPotionSac", this.hasPotionSac());
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
@@ -70,13 +96,22 @@ public class PotionWaspEntity extends ParentAnimalEntity {
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
     }
 
-    @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
-        PotionWaspVariant variant = PotionWaspVariant.getRandom();
-        this.setVariant(variant);
-        this.setHasPotionSac(true);
+    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
+        return world.getBlockState(pos.down()).isIn(ModBlockTags.POTION_WASPS_SPAWN_ON);
+    }
 
-        return super.initialize(world, difficulty, spawnReason, entityData);
+    @Override
+    public boolean canHaveStatusEffect(StatusEffectInstance effectInstance) {
+        List<RegistryEntry<StatusEffect>> potionEffects = PotionWaspVariant.getAllStatusEffects();
+        for (RegistryEntry<StatusEffect> effect : potionEffects) {
+            if (effectInstance.getEffectType() == effect) return false;
+        }
+        return true;
+    }
+
+    @Override
+    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return null;
     }
 
     @Override
@@ -128,13 +163,6 @@ public class PotionWaspEntity extends ParentAnimalEntity {
         return false;
     }
 
-    @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
-        this.dataTracker.set(HAS_POTION_SAC, nbt.getBoolean("HasPotionSac"));
-    }
-
     public void setHasPotionSac(boolean hasPotionSac) {
         this.dataTracker.set(HAS_POTION_SAC, hasPotionSac);
     }
@@ -152,16 +180,6 @@ public class PotionWaspEntity extends ParentAnimalEntity {
         if (world.isClient) {
             this.setupAnimationStates();
         }
-    }
-
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putString("Variant", this.getTypeVariant());
-        nbt.putBoolean("HasPotionSac", this.hasPotionSac());
-    }
-
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.POTION_WASPS_SPAWN_ON);
     }
 
     protected EntityNavigation createNavigation(World world) {
@@ -184,18 +202,6 @@ public class PotionWaspEntity extends ParentAnimalEntity {
     @Override
     protected @Nullable SoundEvent getAmbientSound() {
         return null;
-    }
-
-    @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(VARIANT, PotionWaspVariant.REGENERATION.getId());
-        builder.add(HAS_POTION_SAC, true);
-    }
-
-    @Override
-    protected void initGoals() {
-        this.goalSelector.add(1, new PotionWaspWanderAroundGoal(this));
     }
 
     private void setupAnimationStates() {

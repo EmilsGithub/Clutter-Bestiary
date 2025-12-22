@@ -1,12 +1,11 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
+import net.emilsg.clutterbestiary.animation_handling.animation_states.CoatiEntityAnimationState;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.CoatiEntity;
 import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.World;
 
 import java.util.EnumSet;
 
@@ -32,8 +31,8 @@ public class CoatiDigGoal extends Goal {
     @Override
     public void start() {
         this.coati.getNavigation().stop();
-        this.coati.startState(CoatiEntity.CoatiEntityAnimationState.DIGGING);
-        diggingTimer = 160;
+        this.coati.startState(CoatiEntityAnimationState.DIGGING);
+        diggingTimer = 80;
     }
 
     @Override
@@ -41,7 +40,7 @@ public class CoatiDigGoal extends Goal {
         if (--diggingTimer > 0) return;
 
         this.coati.setDigging(false);
-        this.coati.startState(CoatiEntity.CoatiEntityAnimationState.IDLING);
+        this.coati.startState(CoatiEntityAnimationState.IDLING);
 
         if (this.coati.getWorld() instanceof ServerWorld serverWorld) {
             CoatiEntity child = ModEntityTypes.COATI.get().create(serverWorld);
@@ -49,6 +48,7 @@ public class CoatiDigGoal extends Goal {
                 child.setPosition(this.coati.getPos());
                 child.setBaby(true);
                 child.setUnBurrowing(true);
+                child.startState(CoatiEntityAnimationState.UNBURROWING);
                 serverWorld.spawnEntity(child);
             }
             for (int i = 0; i < this.coati.getWildInventory().size(); i++) {

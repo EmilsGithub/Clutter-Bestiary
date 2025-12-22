@@ -28,7 +28,7 @@ public class KoiPrimaryPatternColorFeatureRenderer extends FeatureRenderer<KoiEn
         if (entity.getBaseColorVariant().hasSeparateTexture()) return;
         if (entity.getPrimaryPatternTypeVariant() == KoiPrimaryPatternTypeVariant.NONE) return;
         int rgb = entity.getPrimaryPatternColorVariant().getColorHex();
-        if(rgb == 0) return;
+        if (rgb == 0) return;
         int argb = 0xFF000000 | (rgb & 0x00FFFFFF);
         Identifier texture = entity.getPrimaryPatternTypeVariant().getTextureLocation();
 

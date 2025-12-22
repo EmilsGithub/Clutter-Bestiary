@@ -1,16 +1,8 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
-import net.minecraft.entity.Tameable;
-import net.minecraft.entity.ai.FuzzyTargeting;
-import net.minecraft.entity.ai.NoPenaltyTargeting;
-import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.goal.WanderAroundGoal;
 import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.util.math.Vec3d;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.EnumSet;
 
 public class WanderAroundFarOftenGoal extends WanderAroundGoal {
     private final PathAwareEntity pathAwareEntity;

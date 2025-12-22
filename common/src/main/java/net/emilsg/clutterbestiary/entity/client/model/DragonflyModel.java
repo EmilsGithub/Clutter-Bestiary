@@ -64,11 +64,11 @@ public class DragonflyModel<T extends DragonflyEntity> extends BestiaryModel<T> 
     }
 
     @Override
-    public void setAngles(DragonflyEntity dragonfly, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setAngles(DragonflyEntity dragonfly, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(dragonfly, netHeadYaw, headPitch, ageInTicks);
+        this.setHeadAngles(dragonfly, netHeadYaw, headPitch, animationProgress);
 
-        this.updateAnimation(dragonfly.flyingAnimState, DragonflyEntityAnimations.DRAGONFLY_FLY, ageInTicks, 2.5f);
+        this.updateAnimation(dragonfly.flyingAnimState, DragonflyEntityAnimations.DRAGONFLY_FLY, animationProgress, 2.5f);
     }
 
     @Override

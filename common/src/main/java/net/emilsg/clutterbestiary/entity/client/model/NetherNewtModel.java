@@ -114,30 +114,20 @@ public class NetherNewtModel<T extends AbstractNetherNewtEntity> extends ParentT
 
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        matrices.push();
-
-        if (this.child) {
-            float babyScale = 0.5f;
-            matrices.scale(babyScale, babyScale, babyScale);
-            matrices.translate(0.0D, 1.5D, 0D);
-            this.head.scale(createVec3f(0.6f));
-        }
-
-        this.getPart().render(matrices, vertices, light, overlay, color);
-        matrices.pop();
+        this.setBabyHeadSizeAndRender(matrices, vertices, light, overlay, color);
     }
 
     @Override
-    public void setAngles(AbstractNetherNewtEntity newt, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setAngles(AbstractNetherNewtEntity newt, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(newt, netHeadYaw, headPitch, ageInTicks);
+        this.setHeadAngles(newt, netHeadYaw, headPitch, animationProgress);
 
         if (!newt.isSitting()) {
             this.animateMovement(NetherNewtEntityAnimations.NETHER_NEWT_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
-            this.updateAnimation(newt.idleAnimationState, NetherNewtEntityAnimations.NETHER_NEWT_IDLE, ageInTicks, 1f);
+            this.updateAnimation(newt.idleAnimationState, NetherNewtEntityAnimations.NETHER_NEWT_IDLE, animationProgress, 1f);
 
         } else {
-            this.updateAnimation(newt.sittingAnimationState, NetherNewtEntityAnimations.NETHER_NEWT_SIT, ageInTicks, 1.0f);
+            this.updateAnimation(newt.sittingAnimationState, NetherNewtEntityAnimations.NETHER_NEWT_SIT, animationProgress, 1.0f);
         }
 
         this.updateVisibleParts(newt);

@@ -12,10 +12,6 @@ public class KoiVariantCompatibility {
             return false;
         }
 
-        if (base.equals(KoiBaseColorVariant.ORANGE) && (primaryColor.equals(KoiPrimaryPatternColorVariant.RED) || primaryColor.equals(KoiPrimaryPatternColorVariant.YELLOW))) {
-            return false;
-        }
-
-        return true;
+        return !base.equals(KoiBaseColorVariant.ORANGE) || (!primaryColor.equals(KoiPrimaryPatternColorVariant.RED) && !primaryColor.equals(KoiPrimaryPatternColorVariant.YELLOW));
     }
 }

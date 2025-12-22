@@ -52,16 +52,16 @@ public enum KoiSecondaryPatternTypeVariant implements BestiaryBasicVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
+    public Formatting getFormatting() {
+        return this.formatting;
+    }
+
     public String getID() {
         return ClutterBestiary.MOD_ID + ":" + this.getName();
     }
 
     public String getName() {
         return this.name;
-    }
-
-    public Formatting getFormatting() {
-        return this.formatting;
     }
 
     public Identifier getTextureLocation() {

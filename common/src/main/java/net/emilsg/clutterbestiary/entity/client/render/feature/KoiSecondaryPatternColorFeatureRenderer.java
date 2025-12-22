@@ -28,7 +28,7 @@ public class KoiSecondaryPatternColorFeatureRenderer extends FeatureRenderer<Koi
         if (entity.getBaseColorVariant().hasSeparateTexture()) return;
         if (entity.getSecondaryPatternTypeVariant() == KoiSecondaryPatternTypeVariant.NONE) return;
         int rgb = entity.getSecondaryPatternColorVariant().getColorHex();
-        if(rgb == 0) return;
+        if (rgb == 0) return;
         int argb = 0xFF000000 | (rgb & 0x00FFFFFF);
         Identifier texture = entity.getSecondaryPatternTypeVariant().getTextureLocation();
 

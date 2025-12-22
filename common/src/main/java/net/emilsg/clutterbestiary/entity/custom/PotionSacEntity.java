@@ -30,6 +30,24 @@ public class PotionSacEntity extends MobEntity {
         super(entityType, world);
     }
 
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(VARIANT, PotionWaspVariant.REGENERATION.getId());
+    }
+
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
+    }
+
+    @Override
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putString("Variant", this.getTypeVariant());
+    }
+
     public static DefaultAttributeContainer.Builder setAttributes() {
         return MobEntity.createMobAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 1D);
     }
@@ -76,12 +94,6 @@ public class PotionSacEntity extends MobEntity {
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
-    }
-
-    @Override
     public void tick() {
         super.tick();
 
@@ -100,19 +112,7 @@ public class PotionSacEntity extends MobEntity {
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putString("Variant", this.getTypeVariant());
-    }
-
-    @Override
     protected @Nullable SoundEvent getDeathSound() {
         return SoundEvents.ENTITY_SLIME_DEATH_SMALL;
-    }
-
-    @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(VARIANT, PotionWaspVariant.REGENERATION.getId());
     }
 }

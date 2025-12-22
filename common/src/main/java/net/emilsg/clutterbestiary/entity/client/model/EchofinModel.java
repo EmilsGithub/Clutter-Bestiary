@@ -60,9 +60,9 @@ public class EchofinModel<T extends EchofinEntity> extends BestiaryModel<T> {
     }
 
     @Override
-    public void setAngles(EchofinEntity echofin, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setAngles(EchofinEntity echofin, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.updateAnimation(echofin.movingAnimState, EchofinEntityAnimations.ECHOFIN_SWIMMING, ageInTicks, 1f);
+        this.updateAnimation(echofin.movingAnimState, EchofinEntityAnimations.ECHOFIN_SWIMMING, animationProgress, 1f);
     }
 
     @Override

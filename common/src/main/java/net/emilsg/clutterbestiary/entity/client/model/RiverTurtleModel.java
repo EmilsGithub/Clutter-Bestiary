@@ -33,19 +33,23 @@ public class RiverTurtleModel<T extends RiverTurtleEntity> extends BestiaryModel
 
         ModelPartData frontLegs = body.addChild("frontLegs", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 1.0F, -5.25F));
 
-        ModelPartData frontRightLeg = frontLegs.addChild("frontRightLeg", ModelPartBuilder.create().uv(0, 12).cuboid(-1.0F, 1.99F, -2.0F, 2.0F, 0.0F, 2.0F, new Dilation(0.001F))
-                .uv(0, 0).cuboid(-1.0F, 0.0F, -1.01F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(-3.0F, -1.0F, 0.0F));
+        ModelPartData frontRightLeg = frontLegs.addChild("frontRightLeg", ModelPartBuilder.create().uv(0, 0).cuboid(-1.0F, 0.0F, -1.01F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(-3.0F, -1.0F, 0.0F));
 
-        ModelPartData frontLeftLeg = frontLegs.addChild("frontLeftLeg", ModelPartBuilder.create().uv(-2, 34).cuboid(-1.0F, 1.99F, -2.0F, 2.0F, 0.0F, 2.0F, new Dilation(0.0F))
-                .uv(0, 4).cuboid(-1.0F, 0.0F, -1.01F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(3.0F, -1.0F, 0.0F));
+        ModelPartData frontRightLegToes = frontRightLeg.addChild("frontRightLegToes", ModelPartBuilder.create().uv(1, 13).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 1.0F, new Dilation(0.001F)), ModelTransform.pivot(0.0F, 1.99F, -1.0F));
+
+        ModelPartData frontLeftLeg = frontLegs.addChild("frontLeftLeg", ModelPartBuilder.create().uv(0, 4).cuboid(-1.0F, 0.0F, -1.01F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(3.0F, -1.0F, 0.0F));
+
+        ModelPartData frontLeftLegToes = frontLeftLeg.addChild("frontLeftLegToes", ModelPartBuilder.create().uv(-1, 35).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 1.99F, -1.0F));
 
         ModelPartData backLegs = body.addChild("backLegs", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 0.0F, 0.25F));
 
-        ModelPartData backRightLeg = backLegs.addChild("backRightLeg", ModelPartBuilder.create().uv(0, 14).cuboid(-1.0F, 1.99F, -2.0F, 2.0F, 0.0F, 2.0F, new Dilation(0.0F))
-                .uv(8, 21).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.001F)), ModelTransform.pivot(-3.0F, 0.0F, 0.0F));
+        ModelPartData backRightLeg = backLegs.addChild("backRightLeg", ModelPartBuilder.create().uv(8, 21).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.001F)), ModelTransform.pivot(-3.0F, 0.0F, 0.0F));
 
-        ModelPartData backLeftLeg = backLegs.addChild("backLeftLeg", ModelPartBuilder.create().uv(0, 16).cuboid(-1.0F, 1.99F, -2.0F, 2.0F, 0.0F, 2.0F, new Dilation(0.0F))
-                .uv(16, 21).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.001F)), ModelTransform.pivot(3.0F, 0.0F, 0.0F));
+        ModelPartData backRightLegToes = backRightLeg.addChild("backRightLegToes", ModelPartBuilder.create().uv(1, 15).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 1.99F, -1.0F));
+
+        ModelPartData backLeftLeg = backLegs.addChild("backLeftLeg", ModelPartBuilder.create().uv(16, 21).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.001F)), ModelTransform.pivot(3.0F, 0.0F, 0.0F));
+
+        ModelPartData backLeftLegToes = backLeftLeg.addChild("backLeftLegToes", ModelPartBuilder.create().uv(1, 17).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 1.99F, -1.0F));
 
         ModelPartData stomach = body.addChild("stomach", ModelPartBuilder.create().uv(0, 12).cuboid(-5.0F, -3.0F, -6.0F, 6.0F, 2.0F, 7.0F, new Dilation(0.0F)), ModelTransform.pivot(2.0F, 2.0F, 0.0F));
 
@@ -53,21 +57,15 @@ public class RiverTurtleModel<T extends RiverTurtleEntity> extends BestiaryModel
 
         ModelPartData neck = body.addChild("neck", ModelPartBuilder.create().uv(19, 12).cuboid(-1.0F, -1.0F, -4.0F, 2.0F, 2.0F, 4.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, -6.0F));
 
-        ModelPartData head = neck.addChild("head", ModelPartBuilder.create().uv(0, 21).cuboid(-1.0F, -2.0F, -3.0F, 2.0F, 2.0F, 4.0F, new Dilation(0.125F)), ModelTransform.pivot(0.0F, -1.0F, -3.0F));
+        ModelPartData head = neck.addChild("head", ModelPartBuilder.create().uv(0, 21).cuboid(-1.0F, -1.0F, -3.0F, 2.0F, 2.0F, 4.0F, new Dilation(0.125F)), ModelTransform.pivot(0.0F, -1.0F, -3.0F));
 
         ModelPartData tail = body.addChild("tail", ModelPartBuilder.create().uv(19, 27).cuboid(-1.0F, -0.5F, 0.0F, 2.0F, 1.0F, 5.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.5F, 1.0F));
         return TexturedModelData.of(modelData, 64, 64);
     }
 
     @Override
-    public void setAngles(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(entity, headYaw, headPitch, animationProgress);
-
-        if (!entity.isHiding()) this.animateMovement(RiverTurtleAnimations.WALK, limbAngle, limbDistance, 3f, 2f);
-
-        this.updateAnimation(entity.hidingAnimationState, RiverTurtleAnimations.HIDE, animationProgress, 1.0f);
-        this.updateAnimation(entity.unhidingAnimationState, RiverTurtleAnimations.UNHIDE, animationProgress, 1.0f);
+    public ModelPart getPart() {
+        return root;
     }
 
     @Override
@@ -86,8 +84,20 @@ public class RiverTurtleModel<T extends RiverTurtleEntity> extends BestiaryModel
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
+    public void setAngles(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        this.setHeadAngles(entity, headYaw, headPitch, animationProgress);
+
+        if (!entity.isHiding() && !entity.isTouchingWater()) {
+            this.animateMovement(RiverTurtleAnimations.RIVER_TURTLE_WALK, limbAngle, limbDistance, 3f, 2f);
+        } else if (entity.isTouchingWater()) {
+            this.animateMovement(RiverTurtleAnimations.RIVER_TURTLE_SWIM, limbAngle, limbDistance, 3f, 2f);
+        }
+
+        this.updateAnimation(entity.hidingAnimationState, RiverTurtleAnimations.RIVER_TURTLE_HIDE, animationProgress, 1.0f);
+        this.updateAnimation(entity.unhidingAnimationState, RiverTurtleAnimations.RIVER_TURTLE_UNHIDE, animationProgress, 1.0f);
+        this.updateAnimation(entity.sitStartAnimationState, RiverTurtleAnimations.RIVER_TURTLE_SIT_START, animationProgress, 1.0f);
+        this.updateAnimation(entity.sitEndAnimationState, RiverTurtleAnimations.RIVER_TURTLE_SIT_END, animationProgress, 1.0f);
     }
 
     @Override

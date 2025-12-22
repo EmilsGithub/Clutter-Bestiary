@@ -55,7 +55,7 @@ public class BeaverStripBottomLogGoal extends MoveToTargetPosGoal {
 
         boolean isStrippableBlock = !(String.valueOf(state.getBlock()).contains("stripped") || state.isIn(ModBlockTags.STRIPPED_LOGS) || state.isIn(ModBlockTags.STRIPPED_WOODS)) && (state.isIn(BlockTags.LOGS) || state.isIn(ModBlockTags.WOODS));
 
-        if(world.getBlockState(pos.down()).isIn(BlockTags.LOGS) || !isStrippableBlock) return false;
+        if (world.getBlockState(pos.down()).isIn(BlockTags.LOGS) || !isStrippableBlock) return false;
 
         Block block = state.getBlock();
         if (block == null) return false;
@@ -74,7 +74,7 @@ public class BeaverStripBottomLogGoal extends MoveToTargetPosGoal {
 
         String strippedPath = "stripped_" + path;
         Identifier strippedID = Identifier.of(namespace, strippedPath);
-        if(!Registries.BLOCK.containsId(strippedID)) return false;
+        if (!Registries.BLOCK.containsId(strippedID)) return false;
 
         targetBlock = state.getBlock();
         strippedTargetBlock = Registries.BLOCK.get(strippedID);

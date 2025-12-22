@@ -89,35 +89,25 @@ public class MossbloomModel<T extends MossbloomEntity> extends ParentTameableMod
 
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        matrices.push();
-
-        if (this.child) {
-            float babyScale = 0.5f;
-            matrices.scale(babyScale, babyScale, babyScale);
-            matrices.translate(0.0D, 1.5D, 0D);
-            this.head.scale(createVec3f(0.6f));
-        }
-
-        this.getPart().render(matrices, vertices, light, overlay, color);
-        matrices.pop();
+        this.setBabyHeadSizeAndRender(matrices, vertices, light, overlay, color);
     }
 
     @Override
-    public void setAngles(MossbloomEntity mossbloom, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setAngles(MossbloomEntity mossbloom, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(mossbloom, netHeadYaw, headPitch, ageInTicks);
+        this.setHeadAngles(mossbloom, netHeadYaw, headPitch, animationProgress);
         this.updateVisibleParts(mossbloom);
 
         this.animateMovement(mossbloom.isFleeing() || mossbloom.getSprinting() ? MossbloomEntityAnimations.MOSSBLOOM_RUN : MossbloomEntityAnimations.MOSSBLOOM_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
 
         if (mossbloom.isVariantOf(MossbloomVariant.HORNED))
-            this.updateAnimation(mossbloom.shakingAnimationState, MossbloomEntityAnimations.MOSSBLOOM_SHAKE_HEAD, ageInTicks, 1f);
-        this.updateAnimation(mossbloom.idleAnimationState, MossbloomEntityAnimations.MOSSBLOOM_IDLE, ageInTicks, 1f);
+            this.updateAnimation(mossbloom.shakingAnimationState, MossbloomEntityAnimations.MOSSBLOOM_SHAKE_HEAD, animationProgress, 1f);
+        this.updateAnimation(mossbloom.idleAnimationState, MossbloomEntityAnimations.MOSSBLOOM_IDLE, animationProgress, 1f);
 
-        this.updateAnimation(mossbloom.earTwitchAnimationStateLE, MossbloomEntityAnimations.MOSSBLOOM_LE_DROP, ageInTicks, 2f);
-        this.updateAnimation(mossbloom.earTwitchAnimationStateRE, MossbloomEntityAnimations.MOSSBLOOM_RE_DROP, ageInTicks, 2f);
-        this.updateAnimation(mossbloom.earTwitchAnimationStateBE, MossbloomEntityAnimations.MOSSBLOOM_EARS_DROP, ageInTicks, 2f);
-        this.updateAnimation(mossbloom.wagTailAnimationStateBE, MossbloomEntityAnimations.MOSSBLOOM_WAG_TAIL, ageInTicks, 2f);
+        this.updateAnimation(mossbloom.earTwitchAnimationStateLE, MossbloomEntityAnimations.MOSSBLOOM_LE_DROP, animationProgress, 2f);
+        this.updateAnimation(mossbloom.earTwitchAnimationStateRE, MossbloomEntityAnimations.MOSSBLOOM_RE_DROP, animationProgress, 2f);
+        this.updateAnimation(mossbloom.earTwitchAnimationStateBE, MossbloomEntityAnimations.MOSSBLOOM_EARS_DROP, animationProgress, 2f);
+        this.updateAnimation(mossbloom.wagTailAnimationStateBE, MossbloomEntityAnimations.MOSSBLOOM_WAG_TAIL, animationProgress, 2f);
     }
 
     @Override

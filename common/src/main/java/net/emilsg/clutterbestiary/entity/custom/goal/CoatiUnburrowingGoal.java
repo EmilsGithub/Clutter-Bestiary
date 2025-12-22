@@ -1,5 +1,6 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
+import net.emilsg.clutterbestiary.animation_handling.animation_states.CoatiEntityAnimationState;
 import net.emilsg.clutterbestiary.entity.custom.CoatiEntity;
 import net.minecraft.entity.ai.goal.Goal;
 
@@ -15,15 +16,15 @@ public class CoatiUnburrowingGoal extends Goal {
     }
 
     @Override
-    public void start() {
-        this.coatiEntity.getNavigation().stop();
-        this.unBurrowingTicker = 90;
-        this.coatiEntity.startState(CoatiEntity.CoatiEntityAnimationState.UNBURROWING);
+    public boolean canStart() {
+        return this.coatiEntity.isUnBurrowing();
     }
 
     @Override
-    public boolean canStart() {
-        return this.coatiEntity.isUnBurrowing();
+    public void start() {
+        this.coatiEntity.getNavigation().stop();
+        this.unBurrowingTicker = 90;
+        this.coatiEntity.startState(CoatiEntityAnimationState.UNBURROWING);
     }
 
     @Override
@@ -31,7 +32,7 @@ public class CoatiUnburrowingGoal extends Goal {
         this.unBurrowingTicker--;
         if (this.unBurrowingTicker <= 0) {
             this.coatiEntity.setUnBurrowing(false);
-            this.coatiEntity.startState(CoatiEntity.CoatiEntityAnimationState.IDLING);
+            this.coatiEntity.startState(CoatiEntityAnimationState.IDLING);
         }
     }
 }

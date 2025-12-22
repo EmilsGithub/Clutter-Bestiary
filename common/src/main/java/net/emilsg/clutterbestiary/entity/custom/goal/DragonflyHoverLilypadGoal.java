@@ -24,7 +24,10 @@ public class DragonflyHoverLilypadGoal extends Goal {
 
     @Override
     public boolean canStart() {
-        if (nextScan > 0) { nextScan--; return false; }
+        if (nextScan > 0) {
+            nextScan--;
+            return false;
+        }
         nextScan = scanEvery;
         if (dragonFly.getRandom().nextInt(6) != 0) return false;
 
@@ -75,7 +78,10 @@ public class DragonflyHoverLilypadGoal extends Goal {
     }
 
     @Override
-    public void stop() { pad = null; hoverTicks = 0; }
+    public void stop() {
+        pad = null;
+        hoverTicks = 0;
+    }
 
     @Override
     public void tick() {

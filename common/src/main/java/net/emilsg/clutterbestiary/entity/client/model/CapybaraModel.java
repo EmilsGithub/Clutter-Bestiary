@@ -62,32 +62,27 @@ public class CapybaraModel<T extends CapybaraEntity> extends ParentTameableModel
 
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        matrices.push();
-
-        if (this.child) {
-            float babyScale = 0.5f;
-            matrices.scale(babyScale, babyScale, babyScale);
-            matrices.translate(0.0D, 1.5D, 0D);
-            this.head.scale(createVec3f(0.6f));
-        }
-
-        this.getPart().render(matrices, vertices, light, overlay, color);
-        matrices.pop();
+        this.setBabyHeadSizeAndRender(matrices, vertices, light, overlay, color);
     }
 
     @Override
-    public void setAngles(CapybaraEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setAngles(CapybaraEntity entity, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
 
-        if (!entity.isSleeping() && !entity.isForceSleeping()) this.setHeadAngles(entity, netHeadYaw, headPitch, ageInTicks);
+        if (!entity.isSleeping() && !entity.isForceSleeping()) {
+            this.setHeadAngles(entity, netHeadYaw, headPitch, animationProgress);
+        }
 
-        this.animateMovement(CapybaraEntityAnimations.CAPYBARA_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
+        if (!entity.isTouchingWater()) {
+            this.animateMovement(CapybaraEntityAnimations.CAPYBARA_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
+        }
 
-        this.updateAnimation(entity.earTwitchAnimationStateOne, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_ONE, ageInTicks, 1f);
-        this.updateAnimation(entity.earTwitchAnimationStateTwo, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_TWO, ageInTicks, 1f);
-        this.updateAnimation(entity.layingDownAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY_START : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE_START, ageInTicks, 1f);
-        this.updateAnimation(entity.sleepingAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE, ageInTicks, 1f);
-        this.updateAnimation(entity.standingUpAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY_STOP : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE_STOP, ageInTicks, 1f);
+        this.updateAnimation(entity.earTwitchAnimationStateOne, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_ONE, animationProgress, 1f);
+        this.updateAnimation(entity.earTwitchAnimationStateTwo, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_TWO, animationProgress, 1f);
+        this.updateAnimation(entity.layingDownAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY_START : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE_START, animationProgress, 1f);
+        this.updateAnimation(entity.sleepingAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE, animationProgress, 1f);
+        this.updateAnimation(entity.standingUpAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY_STOP : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE_STOP, animationProgress, 1f);
+        this.updateAnimation(entity.swimAnimationState, CapybaraEntityAnimations.CAPYBARA_SWIM, animationProgress, 1f);
 
     }
 

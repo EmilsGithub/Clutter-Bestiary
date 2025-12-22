@@ -49,6 +49,38 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
         this.setPathfindingPenalty(PathNodeType.COCOA, -1.0F);
     }
 
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(HAS_EGG, false);
+        builder.add(EGG_TIMER, 0);
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new SwimGoal(this));
+        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
+        this.goalSelector.add(3, new KiwiBirdMateGoal(this, 1));
+        this.goalSelector.add(4, new KiwiBirdLayEggGoal(this, 1, ModBlocks.KIWI_BIRD_EGG.get().getDefaultState()));
+        this.goalSelector.add(5, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
+        this.goalSelector.add(6, new FollowParentGoal(this, 1));
+        this.goalSelector.add(7, new WanderAroundFarGoal(this, 1.0));
+        this.goalSelector.add(8, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(9, new LookAroundGoal(this));
+    }
+
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.setHasEgg(nbt.getBoolean("HasEgg"));
+        this.setEggTimer(nbt.getInt("EggTimer"));
+    }
+
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putBoolean("HasEgg", this.hasEgg());
+        nbt.putInt("EggTimer", this.getEggTimer());
+    }
+
     public static DefaultAttributeContainer.Builder setAttributes() {
         return ParentAnimalEntity.createMobAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 6.0D)
@@ -59,12 +91,12 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
     }
 
-    public boolean canEat() {
-        return super.canEat() && !this.hasEgg();
-    }
-
     public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
         return world.getBlockState(pos.down()).isIn(ModBlockTags.KIWIS_SPAWN_ON);
+    }
+
+    public boolean canEat() {
+        return super.canEat() && !this.hasEgg();
     }
 
     @Nullable
@@ -90,12 +122,6 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
         return stack.isIn(ModItemTags.C_SEEDS);
     }
 
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.setHasEgg(nbt.getBoolean("HasEgg"));
-        this.setEggTimer(nbt.getInt("EggTimer"));
-    }
-
     public void setHasEgg(boolean hasEgg) {
         this.dataTracker.set(HAS_EGG, hasEgg);
     }
@@ -118,12 +144,6 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
         super.tickMovement();
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putBoolean("HasEgg", this.hasEgg());
-        nbt.putInt("EggTimer", this.getEggTimer());
-    }
-
     @Nullable
     @Override
     protected SoundEvent getAmbientSound() {
@@ -140,26 +160,6 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
         return SoundEvents.ENTITY_PARROT_HURT;
-    }
-
-    @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(HAS_EGG, false);
-        builder.add(EGG_TIMER, 0);
-    }
-
-    @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(3, new KiwiBirdMateGoal(this, 1));
-        this.goalSelector.add(4, new KiwiBirdLayEggGoal(this, 1, ModBlocks.KIWI_BIRD_EGG.get().getDefaultState()));
-        this.goalSelector.add(5, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(6, new FollowParentGoal(this, 1));
-        this.goalSelector.add(7, new WanderAroundFarGoal(this, 1.0));
-        this.goalSelector.add(8, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(9, new LookAroundGoal(this));
     }
 
     @Override

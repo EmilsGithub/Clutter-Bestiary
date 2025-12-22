@@ -57,22 +57,6 @@ public class DragonflyEntity extends ParentAnimalEntity {
         this.setPathfindingPenalty(PathNodeType.FENCE, -1.0F);
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentAnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 8D)
-                .add(EntityAttributes.GENERIC_FLYING_SPEED, 3f)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.1f)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
-    }
-
-    public DragonflyVariant getVariant() {
-        return DragonflyVariant.fromId(this.getTypeVariant());
-    }
-
-    public void setVariant(DragonflyVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId());
-    }
-
     @Override
     public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
         DragonflyVariant variant = DragonflyVariant.getRandom();
@@ -80,8 +64,19 @@ public class DragonflyEntity extends ParentAnimalEntity {
         return super.initialize(world, difficulty, spawnReason, entityData);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.DRAGONFLIES_SPAWN_ON);
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(VARIANT, SeahorseVariant.YELLOW.getId());
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new EscapeWaterGoal(this));
+        this.goalSelector.add(1, new FleeEntityGoal<>(this, PlayerEntity.class, 8.0f, 1.0f, 1.2f));
+        this.goalSelector.add(2, new DragonflyHoverLilypadGoal(this));
+        this.goalSelector.add(3, new HoverGoal(this));
+        this.goalSelector.add(3, new DragonflyFastWanderGoal(this));
     }
 
     @Override
@@ -95,9 +90,16 @@ public class DragonflyEntity extends ParentAnimalEntity {
         nbt.putString("Variant", this.getTypeVariant());
     }
 
-    @Override
-    public boolean isBreedingItem(ItemStack stack) {
-        return false;
+    public static DefaultAttributeContainer.Builder setAttributes() {
+        return ParentAnimalEntity.createMobAttributes()
+                .add(EntityAttributes.GENERIC_MAX_HEALTH, 8D)
+                .add(EntityAttributes.GENERIC_FLYING_SPEED, 3f)
+                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.1f)
+                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    }
+
+    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
+        return world.getBlockState(pos.down()).isIn(ModBlockTags.DRAGONFLIES_SPAWN_ON);
     }
 
     @Override
@@ -105,14 +107,16 @@ public class DragonflyEntity extends ParentAnimalEntity {
         return ModEntityTypes.DRAGONFLY.get().create(world);
     }
 
-    @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(VARIANT, SeahorseVariant.YELLOW.getId());
-    }
-
     public float getPathfindingFavor(BlockPos pos, WorldView world) {
         return world.getBlockState(pos).isAir() ? 10.0F : 0.0F;
+    }
+
+    public DragonflyVariant getVariant() {
+        return DragonflyVariant.fromId(this.getTypeVariant());
+    }
+
+    public void setVariant(DragonflyVariant variant) {
+        this.dataTracker.set(VARIANT, variant.getId());
     }
 
     @Override
@@ -121,12 +125,8 @@ public class DragonflyEntity extends ParentAnimalEntity {
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new EscapeWaterGoal(this));
-        this.goalSelector.add(1, new FleeEntityGoal<>(this, PlayerEntity.class, 8.0f, 1.0f, 1.2f));
-        this.goalSelector.add(2, new DragonflyHoverLilypadGoal(this));
-        this.goalSelector.add(3, new HoverGoal(this));
-        this.goalSelector.add(3, new DragonflyFastWanderGoal(this));
+    public boolean isBreedingItem(ItemStack stack) {
+        return false;
     }
 
     @Override
@@ -161,12 +161,12 @@ public class DragonflyEntity extends ParentAnimalEntity {
     protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
     }
 
-    private String getTypeVariant() {
-        return this.dataTracker.get(VARIANT);
-    }
-
     @Override
     protected void playStepSound(BlockPos pos, BlockState state) {
+    }
+
+    private String getTypeVariant() {
+        return this.dataTracker.get(VARIANT);
     }
 
     private void setupAnimationStates() {
@@ -202,18 +202,20 @@ public class DragonflyEntity extends ParentAnimalEntity {
             this.mob = mob;
         }
 
-        @Override public void tick() {
+        @Override
+        public void tick() {
             if (state != State.MOVE_TO) return;
 
             Vec3d to = new Vec3d(targetX - mob.getX(), targetY - mob.getY(), targetZ - mob.getZ());
             if (to.lengthSquared() < 0.01) {
-                state = State.WAIT; return;
+                state = State.WAIT;
+                return;
             }
 
             Vec3d dir = to.normalize();
             double boost = this.speed * multiplier;
             mob.setVelocity(mob.getVelocity().multiply(0.6).add(dir.multiply(boost)));
-            mob.setYaw((float)(MathHelper.atan2(dir.z, dir.x) * (180f/Math.PI)) - 90f);
+            mob.setYaw((float) (MathHelper.atan2(dir.z, dir.x) * (180f / Math.PI)) - 90f);
             mob.bodyYaw = mob.getYaw();
         }
     }

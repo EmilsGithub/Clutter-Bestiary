@@ -27,6 +27,11 @@ public enum CoatiVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
+    public static CoatiVariant getRandomAlbinoExcluded() {
+        List<CoatiVariant> variants = Arrays.stream(values()).toList();
+        return variants.get(new Random().nextInt(variants.size() - 1));
+    }
+
     public String getId() {
         return ClutterBestiary.MOD_ID + ":" + this.getName();
     }

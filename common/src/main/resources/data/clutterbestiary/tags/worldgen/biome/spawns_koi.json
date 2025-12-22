@@ -1,9 +1,0 @@
-{
-  "values": [
-    "minecraft:mangrove_swamp",
-    {
-      "id": "biomesoplenty:hot_springs",
-      "required": false
-    }
-  ]
-}

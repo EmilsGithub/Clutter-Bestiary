@@ -65,8 +65,20 @@ public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEnti
 
 
     @Override
-    public void render(MatrixStack matrices, VertexConsumerProvider providers, int light, ChameleonEntity entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
-        int rgb = getColor(entity);
+    public void render(MatrixStack matrices, VertexConsumerProvider providers, int light, ChameleonEntity entity,
+                       float limbAngle, float limbDistance, float tickDelta,
+                       float animationProgress, float headYaw, float headPitch) {
+
+        // 1) Get the *environment* color (block under/around the chameleon)
+        int envColor = getColor(entity);
+
+        // 2) Push that into the entity as the new target color
+        if (envColor != entity.getTargetColor()) {
+            entity.setTargetColor(envColor);
+        }
+
+        // 3) Use the *smoothed* color from the entity
+        int rgb = entity.getCurrentColor();
         int argb = 0xFF000000 | (rgb & 0x00FFFFFF);
         Identifier texture = getTexture(entity);
 
@@ -83,8 +95,13 @@ public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEnti
             return;
         }
 
-        render(getContextModel(), layerModel, texture, matrices, providers, light, entity, limbAngle, limbDistance, animationProgress, headYaw, headPitch, tickDelta, argb);
+        // 4) Render with the interpolated color
+        render(getContextModel(), layerModel, texture,
+                matrices, providers, light, entity,
+                limbAngle, limbDistance, animationProgress, headYaw, headPitch,
+                tickDelta, argb);
     }
+
 
     //@Override
     //public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, ChameleonEntity chameleonEntity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {

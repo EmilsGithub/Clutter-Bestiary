@@ -41,13 +41,6 @@ public class KoiBucketItem extends EntityBucketItem {
         this.type = type;
     }
 
-    public void onEmptied(@Nullable PlayerEntity player, World world, ItemStack stack, BlockPos pos) {
-        if (world instanceof ServerWorld) {
-            this.spawnEntity((ServerWorld)world, stack, pos);
-            world.emitGameEvent(player, GameEvent.ENTITY_PLACE, pos);
-        }
-    }
-
     @Override
     public void appendTooltip(ItemStack stack, TooltipContext ctx, List<Text> tooltip, TooltipType type) {
         super.appendTooltip(stack, ctx, tooltip, type);
@@ -60,16 +53,16 @@ public class KoiBucketItem extends EntityBucketItem {
 
         tooltip.add(Text.translatable("tooltip.clutterbestiary.base_color.koi").formatted(Formatting.GRAY));
         if (base.hasSeparateTexture()) {
-            int tick = (int)(System.currentTimeMillis() / 100) % base.getColorHex().length;
+            int tick = (int) (System.currentTimeMillis() / 100) % base.getColorHex().length;
             tooltip.add(ModUtil.buildCyclicFormattedName("tooltip.clutterbestiary." + base.getName() + ".koi", base.getColorHex(), tick, true));
             return;
         } else {
             tooltip.add(Text.translatable("tooltip.clutterbestiary." + base.getName() + ".koi").formatted(base.getFormatting()));
         }
 
-        var pType  = cmp.get(PRIMARY_TYPE_CODEC).result().orElse(null);
+        var pType = cmp.get(PRIMARY_TYPE_CODEC).result().orElse(null);
         var pColor = cmp.get(PRIMARY_COLOR_CODEC).result().orElse(null);
-        var sType  = cmp.get(SECONDARY_TYPE_CODEC).result().orElse(null);
+        var sType = cmp.get(SECONDARY_TYPE_CODEC).result().orElse(null);
         var sColor = cmp.get(SECONDARY_COLOR_CODEC).result().orElse(null);
 
         if (pType != null && pColor != null) {
@@ -86,6 +79,13 @@ public class KoiBucketItem extends EntityBucketItem {
         }
 
         tooltip.add(ScreenTexts.EMPTY);
+    }
+
+    public void onEmptied(@Nullable PlayerEntity player, World world, ItemStack stack, BlockPos pos) {
+        if (world instanceof ServerWorld) {
+            this.spawnEntity((ServerWorld) world, stack, pos);
+            world.emitGameEvent(player, GameEvent.ENTITY_PLACE, pos);
+        }
     }
 
     private void spawnEntity(ServerWorld world, ItemStack stack, BlockPos pos) {

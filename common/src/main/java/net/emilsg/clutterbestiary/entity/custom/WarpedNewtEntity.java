@@ -35,11 +35,6 @@ public class WarpedNewtEntity extends AbstractNetherNewtEntity {
     }
 
     @Override
-    protected Item getTamingItem() {
-        return Items.TWISTING_VINES;
-    }
-
-    @Override
     public Item getBreedingItem() {
         return Items.WARPED_ROOTS;
     }
@@ -52,5 +47,10 @@ public class WarpedNewtEntity extends AbstractNetherNewtEntity {
     @Override
     protected Item getFungusItem() {
         return Items.WARPED_FUNGUS;
+    }
+
+    @Override
+    protected Item getTamingItem() {
+        return Items.TWISTING_VINES;
     }
 }

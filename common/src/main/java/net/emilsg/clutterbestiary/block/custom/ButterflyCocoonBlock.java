@@ -78,24 +78,6 @@ public class ButterflyCocoonBlock extends Block {
     }
 
     @Override
-    protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-        Hand hand = player.getActiveHand();
-        ItemStack heldItem = player.getStackInHand(hand);
-        if (world.isClient && heldItem.isOf(Items.SHEARS) && state.get(CAN_HATCH)) {
-            return ActionResult.SUCCESS;
-        }
-        if (!world.isClient && heldItem.isOf(Items.SHEARS) && state.get(CAN_HATCH)) {
-            player.playSound(SoundEvents.ENTITY_SHEEP_SHEAR, 1.0f, 1.0f);
-            if (!player.getAbilities().creativeMode) {
-                heldItem.damage(1, player, LivingEntity.getSlotForHand(hand));
-            }
-            world.setBlockState(pos, state.with(CAN_HATCH, false).with(HATCH, 0), Block.NOTIFY_ALL);
-            return ActionResult.SUCCESS;
-        }
-        return super.onUse(state, world, pos, player, hit);
-    }
-
-    @Override
     public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
         if (random.nextInt(200 + random.nextInt(200)) <= 0) {
             world.playSound((double) pos.getX() + 0.5, (double) pos.getY() + 0.5, (double) pos.getZ() + 0.5, SoundEvents.BLOCK_MOSS_FALL, SoundCategory.BLOCKS, 0.25f, 1.25f, false);
@@ -152,6 +134,24 @@ public class ButterflyCocoonBlock extends Block {
     protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
         builder.add(HATCH, CAN_HATCH);
         super.appendProperties(builder);
+    }
+
+    @Override
+    protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+        Hand hand = player.getActiveHand();
+        ItemStack heldItem = player.getStackInHand(hand);
+        if (world.isClient && heldItem.isOf(Items.SHEARS) && state.get(CAN_HATCH)) {
+            return ActionResult.SUCCESS;
+        }
+        if (!world.isClient && heldItem.isOf(Items.SHEARS) && state.get(CAN_HATCH)) {
+            player.playSound(SoundEvents.ENTITY_SHEEP_SHEAR, 1.0f, 1.0f);
+            if (!player.getAbilities().creativeMode) {
+                heldItem.damage(1, player, LivingEntity.getSlotForHand(hand));
+            }
+            world.setBlockState(pos, state.with(CAN_HATCH, false).with(HATCH, 0), Block.NOTIFY_ALL);
+            return ActionResult.SUCCESS;
+        }
+        return super.onUse(state, world, pos, player, hit);
     }
 
     private boolean shouldHatchProgress(World world, BlockState state) {

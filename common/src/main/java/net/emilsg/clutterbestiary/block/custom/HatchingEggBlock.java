@@ -65,7 +65,7 @@ public class HatchingEggBlock extends Block {
     }
 
     public boolean isAboveHatchBooster(BlockView world, BlockPos pos) {
-        if(hatchBoostTag == null) return false;
+        if (hatchBoostTag == null) return false;
         return world.getBlockState(pos.down()).isIn(hatchBoostTag);
     }
 

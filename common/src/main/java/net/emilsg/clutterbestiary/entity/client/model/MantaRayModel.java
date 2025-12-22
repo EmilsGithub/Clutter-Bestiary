@@ -3,6 +3,7 @@ package net.emilsg.clutterbestiary.entity.client.model;
 import net.emilsg.clutterbestiary.entity.client.animation.MantaRayEntityAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.BestiaryAquaticModel;
 import net.emilsg.clutterbestiary.entity.custom.MantaRayEntity;
+import net.emilsg.clutterbestiary.util.ModUtil;
 import net.minecraft.client.model.*;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -66,11 +67,11 @@ public class MantaRayModel<T extends MantaRayEntity> extends BestiaryAquaticMode
     }
 
     @Override
-    public void setAngles(MantaRayEntity ray, float limbAngle, float limbDistance, float ageInTicks, float headYaw, float headPitch) {
+    public void setAngles(MantaRayEntity ray, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
 
-        oldPitch = lerp(oldPitch, headPitch * 0.011453292F, 0.05f);
-        oldYaw = lerp(oldYaw, headYaw * 0.011453292F, 0.05f);
+        oldPitch = ModUtil.lerp(oldPitch, headPitch * 0.011453292F, 0.05f);
+        oldYaw = ModUtil.lerp(oldYaw, headYaw * 0.011453292F, 0.05f);
 
         this.getPart().pitch = oldPitch;
         this.getPart().yaw = oldYaw;
@@ -78,12 +79,7 @@ public class MantaRayModel<T extends MantaRayEntity> extends BestiaryAquaticMode
         if (ray.isTouchingWater() || ray.isSubmergedInWater()) {
             this.animateMovement(MantaRayEntityAnimations.MANTA_RAY_SWIM, limbAngle, limbDistance, 1.5f, 2f);
         } else {
-            this.updateAnimation(ray.flopAnimationState, MantaRayEntityAnimations.MANTA_RAY_FLOP, ageInTicks, 1.0f);
+            this.updateAnimation(ray.flopAnimationState, MantaRayEntityAnimations.MANTA_RAY_FLOP, animationProgress, 1.0f);
         }
     }
-
-    private float lerp(float a, float b, float alpha) {
-        return a + (b - a) * alpha;
-    }
-
 }

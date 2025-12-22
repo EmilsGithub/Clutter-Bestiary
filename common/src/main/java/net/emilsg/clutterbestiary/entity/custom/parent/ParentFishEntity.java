@@ -19,6 +19,12 @@ public abstract class ParentFishEntity extends FishEntity {
     }
 
     @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(MOVING, false);
+    }
+
+    @Override
     public abstract ItemStack getBucketItem();
 
     public boolean getHasSelfControl() {
@@ -60,11 +66,5 @@ public abstract class ParentFishEntity extends FishEntity {
 
     @Override
     protected abstract SoundEvent getFlopSound();
-
-    @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(MOVING, false);
-    }
 
 }

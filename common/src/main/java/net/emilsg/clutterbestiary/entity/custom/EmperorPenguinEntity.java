@@ -52,6 +52,38 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
         this.setPathfindingPenalty(PathNodeType.COCOA, -1.0F);
     }
 
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(HAS_EGG, false);
+        builder.add(EGG_TIMER, 0);
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new SwimGoal(this));
+        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
+        this.goalSelector.add(2, new EmperorPenguinMateGoal(this, 1));
+        this.goalSelector.add(3, new EmperorPenguinLayEggGoal(this, 1, ModBlocks.EMPEROR_PENGUIN_EGG.get().getDefaultState()));
+        this.goalSelector.add(4, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
+        this.goalSelector.add(5, new FollowParentGoal(this, 1));
+        this.goalSelector.add(6, new WanderAroundFarGoal(this, 1f));
+        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
+        this.goalSelector.add(8, new LookAroundGoal(this));
+    }
+
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.setHasEgg(nbt.getBoolean("HasEgg"));
+        this.setEggTimer(nbt.getInt("EggTimer"));
+    }
+
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putBoolean("HasEgg", this.hasEgg());
+        nbt.putInt("EggTimer", this.getEggTimer());
+    }
+
     public static DefaultAttributeContainer.Builder setAttributes() {
         return ParentAnimalEntity.createMobAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 16.0D)
@@ -60,6 +92,10 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
                 .add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.1f)
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 4.0f)
                 .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    }
+
+    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
+        return world.getBlockState(pos.down()).isIn(ModBlockTags.EMPEROR_PENGUINS_SPAWN_ON);
     }
 
     public boolean canEat() {
@@ -72,35 +108,17 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
         return ModEntityTypes.EMPEROR_PENGUIN.get().create(world);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.EMPEROR_PENGUINS_SPAWN_ON);
-    }
-
-    @Override
-    public int getMinAmbientSoundDelay() {
-        return 240;
-    }
-
-    @Override
-    public void playAmbientSound() {
-        SoundEvent soundEvent = this.getAmbientSound();
-        if (soundEvent != null) {
-            this.playSound(soundEvent, this.getSoundVolume(), this.getSoundPitch() + 0.3f);
-        }
-
-    }
-
-    @Override
-    protected @Nullable SoundEvent getAmbientSound() {
-        return ModSoundEvents.ENTITY_EMPEROR_PENGUIN_AMBIENT.get();
-    }
-
     public int getEggTimer() {
         return this.dataTracker.get(EGG_TIMER);
     }
 
     public void setEggTimer(int time) {
         this.dataTracker.set(EGG_TIMER, time);
+    }
+
+    @Override
+    public int getMinAmbientSoundDelay() {
+        return 240;
     }
 
     public boolean hasEgg() {
@@ -112,10 +130,13 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
         return stack.isIn(ItemTags.FISHES);
     }
 
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.setHasEgg(nbt.getBoolean("HasEgg"));
-        this.setEggTimer(nbt.getInt("EggTimer"));
+    @Override
+    public void playAmbientSound() {
+        SoundEvent soundEvent = this.getAmbientSound();
+        if (soundEvent != null) {
+            this.playSound(soundEvent, this.getSoundVolume(), this.getSoundPitch() + 0.3f);
+        }
+
     }
 
     public void setHasEgg(boolean hasEgg) {
@@ -141,30 +162,9 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
         }
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putBoolean("HasEgg", this.hasEgg());
-        nbt.putInt("EggTimer", this.getEggTimer());
-    }
-
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(HAS_EGG, false);
-        builder.add(EGG_TIMER, 0);
-    }
-
-    @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(2, new EmperorPenguinMateGoal(this, 1));
-        this.goalSelector.add(3, new EmperorPenguinLayEggGoal(this, 1, ModBlocks.EMPEROR_PENGUIN_EGG.get().getDefaultState()));
-        this.goalSelector.add(4, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(5, new FollowParentGoal(this, 1));
-        this.goalSelector.add(6, new WanderAroundFarGoal(this, 1f));
-        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(8, new LookAroundGoal(this));
+    protected @Nullable SoundEvent getAmbientSound() {
+        return ModSoundEvents.ENTITY_EMPEROR_PENGUIN_AMBIENT.get();
     }
 
     protected void updateLimbs(float v) {

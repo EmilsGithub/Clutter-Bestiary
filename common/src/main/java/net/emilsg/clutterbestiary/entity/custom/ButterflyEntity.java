@@ -28,6 +28,7 @@ import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsage;
@@ -72,6 +73,111 @@ public class ButterflyEntity extends ParentAnimalEntity {
         this.setPathfindingPenalty(PathNodeType.WATER_BORDER, 16.0F);
         this.setPathfindingPenalty(PathNodeType.COCOA, -1.0F);
         this.setPathfindingPenalty(PathNodeType.FENCE, -1.0F);
+    }
+
+    @Override
+    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+        RegistryEntry<Biome> registryEntry = world.getBiome(this.getBlockPos());
+        ButterflyVariant variant = ButterflyVariant.getRandom(false);
+
+        if (spawnReason.equals(SpawnReason.SPAWN_EGG)) {
+            variant = Util.getRandom(ButterflyVariant.values(), this.random);
+        }
+
+        if (registryEntry.isIn(BiomeTags.IS_OVERWORLD)) {
+            variant = ButterflyVariant.getRandom(true);
+        } else if (registryEntry.isIn(BiomeTags.IS_NETHER)) {
+            if (registryEntry.matchesKey(BiomeKeys.WARPED_FOREST)) {
+                variant = ButterflyVariant.WARPED;
+            } else if (registryEntry.matchesKey(BiomeKeys.CRIMSON_FOREST)) {
+                variant = ButterflyVariant.CRIMSON;
+            } else if (registryEntry.matchesKey(BiomeKeys.SOUL_SAND_VALLEY)) {
+                variant = ButterflyVariant.SOUL;
+            } else {
+                if (random.nextBoolean()) {
+                    variant = ButterflyVariant.CRIMSON;
+                } else if (random.nextBoolean()) {
+                    variant = ButterflyVariant.WARPED;
+                } else {
+                    variant = ButterflyVariant.SOUL;
+                }
+            }
+        }
+
+        this.setVariant(variant);
+        this.setFlyingVariant(random.nextInt(3));
+        return super.initialize(world, difficulty, spawnReason, entityData);
+    }
+
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(HAS_COCOON, false);
+        builder.add(DUPE_TIMER, 0);
+        builder.add(VARIANT, ButterflyVariant.WHITE.getId());
+        builder.add(FLYING_TYPE_VARIANT, 0);
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(0, new AnimalMateGoal(this, 1.0));
+        this.goalSelector.add(1, new ButterflyPlaceCocoonGoal(this, 1.0));
+        this.goalSelector.add(2, new TemptGoal(this, 1.25, Ingredient.ofItems(Items.SUGAR), false));
+        this.goalSelector.add(3, new ButterflyDupeSporeBlossomGoal(this, 1, 1200));
+        this.goalSelector.add(4, new ButterflyWanderNetherGoal(this));
+        this.goalSelector.add(4, new ButterflyWanderOverworldGoal(this));
+    }
+
+    public void copyDataFromNbt(ButterflyEntity entity, NbtCompound nbt) {
+        if (nbt.contains("NoAI")) {
+            entity.setAiDisabled(nbt.getBoolean("NoAI"));
+        }
+
+        if (nbt.contains("Silent")) {
+            entity.setSilent(nbt.getBoolean("Silent"));
+        }
+
+        if (nbt.contains("NoGravity")) {
+            entity.setNoGravity(nbt.getBoolean("NoGravity"));
+        }
+
+        if (nbt.contains("Glowing")) {
+            entity.setGlowing(nbt.getBoolean("Glowing"));
+        }
+
+        if (nbt.contains("Invulnerable")) {
+            entity.setInvulnerable(nbt.getBoolean("Invulnerable"));
+        }
+
+        if (nbt.contains("FlyingVariant")) {
+            entity.setFlyingVariant(nbt.getInt("FlyingVariant"));
+        }
+
+        if (nbt.contains("Variant")) {
+            entity.setVariant(ButterflyVariant.fromId(nbt.getString("Variant")));
+        }
+
+        if (nbt.contains("Health", 99)) {
+            entity.setHealth(nbt.getFloat("Health"));
+        }
+
+    }
+
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.setHasCocoon(nbt.getBoolean("HasCocoon"));
+        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
+        this.setDupeTimer(nbt.getInt("DupeTimer"));
+        this.dataTracker.set(FLYING_TYPE_VARIANT, nbt.getInt("FlyingVariant"));
+    }
+
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putBoolean("HasCocoon", this.hasCocoon());
+        nbt.putString("Variant", this.getTypeVariant());
+        nbt.putInt("DupeTimer", this.getDupeTimer());
+        nbt.putInt("FlyingVariant", this.getFlyingTypeVariant());
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
@@ -123,41 +229,6 @@ public class ButterflyEntity extends ParentAnimalEntity {
         return true;
     }
 
-    public void copyDataFromNbt(ButterflyEntity entity, NbtCompound nbt) {
-        if (nbt.contains("NoAI")) {
-            entity.setAiDisabled(nbt.getBoolean("NoAI"));
-        }
-
-        if (nbt.contains("Silent")) {
-            entity.setSilent(nbt.getBoolean("Silent"));
-        }
-
-        if (nbt.contains("NoGravity")) {
-            entity.setNoGravity(nbt.getBoolean("NoGravity"));
-        }
-
-        if (nbt.contains("Glowing")) {
-            entity.setGlowing(nbt.getBoolean("Glowing"));
-        }
-
-        if (nbt.contains("Invulnerable")) {
-            entity.setInvulnerable(nbt.getBoolean("Invulnerable"));
-        }
-
-        if (nbt.contains("FlyingVariant")) {
-            entity.setFlyingVariant(nbt.getInt("FlyingVariant"));
-        }
-
-        if (nbt.contains("Variant")) {
-            entity.setVariant(ButterflyVariant.fromId(nbt.getString("Variant")));
-        }
-
-        if (nbt.contains("Health", 99)) {
-            entity.setHealth(nbt.getFloat("Health"));
-        }
-
-    }
-
     public void copyDataToStack(ButterflyEntity entity, ItemStack stack) {
         stack.set(DataComponentTypes.CUSTOM_NAME, entity.getCustomName());
         NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, (nbtCompound) -> {
@@ -183,7 +254,13 @@ public class ButterflyEntity extends ParentAnimalEntity {
 
             nbtCompound.putFloat("Health", entity.getHealth());
             nbtCompound.putString("Variant", entity.getTypeVariant());
+            nbtCompound.putInt("FlyingVariant", entity.getFlyingTypeVariant());
         });
+    }
+
+    @Override
+    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+        return null;
     }
 
     public int getDupeTimer() {
@@ -224,42 +301,10 @@ public class ButterflyEntity extends ParentAnimalEntity {
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
-        RegistryEntry<Biome> registryEntry = world.getBiome(this.getBlockPos());
-        ButterflyVariant variant = ButterflyVariant.getRandom(false);
-
-        if (spawnReason.equals(SpawnReason.SPAWN_EGG)) {
-            variant = Util.getRandom(ButterflyVariant.values(), this.random);
-        }
-
-        if (registryEntry.isIn(BiomeTags.IS_OVERWORLD)) {
-            variant = ButterflyVariant.getRandom(true);
-        } else if (registryEntry.isIn(BiomeTags.IS_NETHER)) {
-            if (registryEntry.matchesKey(BiomeKeys.WARPED_FOREST)) {
-                variant = ButterflyVariant.WARPED;
-            } else if (registryEntry.matchesKey(BiomeKeys.CRIMSON_FOREST)) {
-                variant = ButterflyVariant.CRIMSON;
-            } else if (registryEntry.matchesKey(BiomeKeys.SOUL_SAND_VALLEY)) {
-                variant = ButterflyVariant.SOUL;
-            } else {
-                if (random.nextBoolean()) {
-                    variant = ButterflyVariant.CRIMSON;
-                } else if (random.nextBoolean()) {
-                    variant = ButterflyVariant.WARPED;
-                } else {
-                    variant = ButterflyVariant.SOUL;
-                }
-            }
-        }
-
-        this.setVariant(variant);
-        this.setFlyingVariant(random.nextInt(3));
-        return super.initialize(world, difficulty, spawnReason, entityData);
-    }
-
-    @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        tryBottle(player, hand, this);
+        if (this.tryBottle(player, hand, this)) {
+            return ActionResult.SUCCESS;
+        }
         return super.interactMob(player, hand);
     }
 
@@ -276,16 +321,6 @@ public class ButterflyEntity extends ParentAnimalEntity {
     @Override
     public boolean isFireImmune() {
         return this.getVariant().isFireImmune();
-    }
-
-    @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.setHasCocoon(nbt.getBoolean("HasCocoon"));
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
-        this.setDupeTimer(nbt.getInt("DupeTimer"));
-        this.dataTracker.set(FLYING_TYPE_VARIANT, nbt.getInt("FlyingVariant"));
-
     }
 
     public void setFlyingVariant(int flyingVariant) {
@@ -324,14 +359,6 @@ public class ButterflyEntity extends ParentAnimalEntity {
         }
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putBoolean("HasCocoon", this.hasCocoon());
-        nbt.putString("Variant", this.getTypeVariant());
-        nbt.putInt("DupeTimer", this.getDupeTimer());
-        nbt.putInt("FlyingVariant", this.getFlyingTypeVariant());
-    }
-
     protected EntityNavigation createNavigation(World world) {
         BirdNavigation birdNavigation = new BirdNavigation(this, world) {
             public boolean isValidPosition(BlockPos pos) {
@@ -361,25 +388,6 @@ public class ButterflyEntity extends ParentAnimalEntity {
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(HAS_COCOON, false);
-        builder.add(DUPE_TIMER, 0);
-        builder.add(VARIANT, ButterflyVariant.WHITE.getId());
-        builder.add(FLYING_TYPE_VARIANT, 0);
-    }
-
-    @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new AnimalMateGoal(this, 1.0));
-        this.goalSelector.add(1, new ButterflyPlaceCocoonGoal(this, 1.0));
-        this.goalSelector.add(2, new TemptGoal(this, 1.25, Ingredient.ofItems(Items.SUGAR), false));
-        this.goalSelector.add(3, new ButterflyDupeSporeBlossomGoal(this, 1, 1200));
-        this.goalSelector.add(4, new ButterflyWanderNetherGoal(this));
-        this.goalSelector.add(4, new ButterflyWanderOverworldGoal(this));
-    }
-
-    @Override
     protected void onKilledBy(@Nullable LivingEntity adversary) {
         if (isTodayAroundHalloween() && adversary instanceof PlayerEntity && random.nextInt(10) == 0) {
             adversary.damage(this.getWorld().getDamageSources().magic(), 6.0f);
@@ -400,7 +408,7 @@ public class ButterflyEntity extends ParentAnimalEntity {
         }
     }
 
-    private void tryBottle(PlayerEntity player, Hand hand, ButterflyEntity entity) {
+    private boolean tryBottle(PlayerEntity player, Hand hand, ButterflyEntity entity) {
         ItemStack itemStack = player.getStackInHand(hand);
         if (itemStack.getItem() == Items.GLASS_BOTTLE && entity.isAlive()) {
             entity.playSound(SoundEvents.ITEM_BOTTLE_FILL_DRAGONBREATH, 1.0F, 0.75F);
@@ -411,8 +419,9 @@ public class ButterflyEntity extends ParentAnimalEntity {
             player.setStackInHand(hand, butterflyBottleStack);
 
             entity.discard();
+            return true;
         }
-
+        return false;
     }
 
     static class ButterflyLookControl extends LookControl {

@@ -9,88 +9,89 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 
 public class KoiModel<T extends KoiEntity> extends ParentFishModel<T> {
-	private final ModelPart root;
-	private final ModelPart all;
-	private final ModelPart body;
-	private final ModelPart bodyPatternLayer;
-	private final ModelPart head;
-	private final ModelPart headPatternLayer;
+    private final ModelPart root;
+    private final ModelPart all;
+    private final ModelPart body;
+    private final ModelPart bodyPatternLayer;
+    private final ModelPart head;
+    private final ModelPart headPatternLayer;
 
-	public KoiModel(ModelPart root) {
-		this.root = root;
-		this.all = root.getChild("all");
-		this.body = this.all.getChild("body");
-		this.bodyPatternLayer = this.body.getChild("bodyPatternLayer");
-		this.head = this.body.getChild("head");
-		this.headPatternLayer = this.head.getChild("headPatternLayer");
-	}
-	public static TexturedModelData getTexturedModelData() {
-		ModelData modelData = new ModelData();
-		ModelPartData modelPartData = modelData.getRoot();
-		ModelPartData all = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 23.0F, -5.0F));
+    public KoiModel(ModelPart root) {
+        this.root = root;
+        this.all = root.getChild("all");
+        this.body = this.all.getChild("body");
+        this.bodyPatternLayer = this.body.getChild("bodyPatternLayer");
+        this.head = this.body.getChild("head");
+        this.headPatternLayer = this.head.getChild("headPatternLayer");
+    }
 
-		ModelPartData body = all.addChild("body", ModelPartBuilder.create().uv(0, 0).cuboid(-2.0F, -4.0F, -1.0F, 4.0F, 4.0F, 9.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+    public static TexturedModelData getTexturedModelData() {
+        ModelData modelData = new ModelData();
+        ModelPartData modelPartData = modelData.getRoot();
+        ModelPartData all = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 23.0F, -5.0F));
 
-		ModelPartData bodyPatternLayer = body.addChild("bodyPatternLayer", ModelPartBuilder.create().uv(0, 13).cuboid(-2.0F, -4.0F, -1.0F, 4.0F, 4.0F, 9.0F, new Dilation(0.01F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+        ModelPartData body = all.addChild("body", ModelPartBuilder.create().uv(0, 0).cuboid(-2.0F, -4.0F, -1.0F, 4.0F, 4.0F, 9.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
 
-		ModelPartData bodySecondaryPatternLayer = body.addChild("bodySecondaryPatternLayer", ModelPartBuilder.create().uv(0, 40).cuboid(-2.0F, -4.0F, -1.0F, 4.0F, 4.0F, 9.0F, new Dilation(0.02F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+        ModelPartData bodyPatternLayer = body.addChild("bodyPatternLayer", ModelPartBuilder.create().uv(0, 13).cuboid(-2.0F, -4.0F, -1.0F, 4.0F, 4.0F, 9.0F, new Dilation(0.01F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
 
-		ModelPartData backFin = body.addChild("backFin", ModelPartBuilder.create().uv(26, -1).cuboid(0.0F, -2.0F, -3.5F, 0.0F, 2.0F, 7.0F, new Dilation(0.001F)), ModelTransform.pivot(0.0F, -4.0F, 3.5F));
+        ModelPartData bodySecondaryPatternLayer = body.addChild("bodySecondaryPatternLayer", ModelPartBuilder.create().uv(0, 40).cuboid(-2.0F, -4.0F, -1.0F, 4.0F, 4.0F, 9.0F, new Dilation(0.02F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
 
-		ModelPartData frontLeftFin = body.addChild("frontLeftFin", ModelPartBuilder.create().uv(28, 16).cuboid(0.0F, 0.0F, -1.5F, 2.0F, 0.0F, 3.0F, new Dilation(0.001F)), ModelTransform.pivot(2.0F, 0.0F, 0.5F));
+        ModelPartData backFin = body.addChild("backFin", ModelPartBuilder.create().uv(26, -1).cuboid(0.0F, -2.0F, -3.5F, 0.0F, 2.0F, 7.0F, new Dilation(0.001F)), ModelTransform.pivot(0.0F, -4.0F, 3.5F));
 
-		ModelPartData frontRightFin = body.addChild("frontRightFin", ModelPartBuilder.create().uv(23, 16).cuboid(-2.0F, 0.0F, -1.5F, 2.0F, 0.0F, 3.0F, new Dilation(0.001F)), ModelTransform.pivot(-2.0F, 0.0F, 0.5F));
+        ModelPartData frontLeftFin = body.addChild("frontLeftFin", ModelPartBuilder.create().uv(28, 16).cuboid(0.0F, 0.0F, -1.5F, 2.0F, 0.0F, 3.0F, new Dilation(0.001F)), ModelTransform.pivot(2.0F, 0.0F, 0.5F));
 
-		ModelPartData backLeftFin = body.addChild("backLeftFin", ModelPartBuilder.create().uv(31, 20).cuboid(0.0F, 0.0F, -1.5F, 3.0F, 0.0F, 3.0F, new Dilation(0.001F)), ModelTransform.pivot(2.0F, 0.0F, 5.5F));
+        ModelPartData frontRightFin = body.addChild("frontRightFin", ModelPartBuilder.create().uv(23, 16).cuboid(-2.0F, 0.0F, -1.5F, 2.0F, 0.0F, 3.0F, new Dilation(0.001F)), ModelTransform.pivot(-2.0F, 0.0F, 0.5F));
 
-		ModelPartData backRightFin = body.addChild("backRightFin", ModelPartBuilder.create().uv(24, 20).cuboid(-3.0F, 0.0F, -1.5F, 3.0F, 0.0F, 3.0F, new Dilation(0.001F)), ModelTransform.pivot(-2.0F, 0.0F, 5.5F));
+        ModelPartData backLeftFin = body.addChild("backLeftFin", ModelPartBuilder.create().uv(31, 20).cuboid(0.0F, 0.0F, -1.5F, 3.0F, 0.0F, 3.0F, new Dilation(0.001F)), ModelTransform.pivot(2.0F, 0.0F, 5.5F));
 
-		ModelPartData tailFin = body.addChild("tailFin", ModelPartBuilder.create().uv(0, 26).cuboid(0.0F, -4.0F, 0.0F, 0.0F, 8.0F, 6.0F, new Dilation(0.001F)), ModelTransform.pivot(0.0F, -2.0F, 8.0F));
+        ModelPartData backRightFin = body.addChild("backRightFin", ModelPartBuilder.create().uv(24, 20).cuboid(-3.0F, 0.0F, -1.5F, 3.0F, 0.0F, 3.0F, new Dilation(0.001F)), ModelTransform.pivot(-2.0F, 0.0F, 5.5F));
 
-		ModelPartData head = body.addChild("head", ModelPartBuilder.create().uv(26, 9).cuboid(-1.5F, -1.5F, -3.0F, 3.0F, 3.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -1.5F, -1.0F));
+        ModelPartData tailFin = body.addChild("tailFin", ModelPartBuilder.create().uv(0, 26).cuboid(0.0F, -4.0F, 0.0F, 0.0F, 8.0F, 6.0F, new Dilation(0.001F)), ModelTransform.pivot(0.0F, -2.0F, 8.0F));
 
-		ModelPartData headPatternLayer = head.addChild("headPatternLayer", ModelPartBuilder.create().uv(12, 26).cuboid(-1.5F, -1.5F, -3.0F, 3.0F, 3.0F, 3.0F, new Dilation(0.01F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+        ModelPartData head = body.addChild("head", ModelPartBuilder.create().uv(26, 9).cuboid(-1.5F, -1.5F, -3.0F, 3.0F, 3.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -1.5F, -1.0F));
 
-		ModelPartData leftWhisker = head.addChild("leftWhisker", ModelPartBuilder.create().uv(27, 23).cuboid(0.0F, 0.0F, -0.5F, 0.0F, 1.0F, 1.0F, new Dilation(0.001F)), ModelTransform.pivot(1.5F, 1.5F, -1.5F));
+        ModelPartData headPatternLayer = head.addChild("headPatternLayer", ModelPartBuilder.create().uv(12, 26).cuboid(-1.5F, -1.5F, -3.0F, 3.0F, 3.0F, 3.0F, new Dilation(0.01F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
 
-		ModelPartData rightWhisker = head.addChild("rightWhisker", ModelPartBuilder.create().uv(30, 23).cuboid(0.0F, 1.0F, 1.5F, 0.0F, 1.0F, 1.0F, new Dilation(0.001F)), ModelTransform.pivot(-1.5F, 0.5F, -3.5F));
-		return TexturedModelData.of(modelData, 64, 64);
-	}
+        ModelPartData leftWhisker = head.addChild("leftWhisker", ModelPartBuilder.create().uv(27, 23).cuboid(0.0F, 0.0F, -0.5F, 0.0F, 1.0F, 1.0F, new Dilation(0.001F)), ModelTransform.pivot(1.5F, 1.5F, -1.5F));
 
-	@Override
-	public void setAngles(KoiEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float headYaw, float headPitch) {
-		this.getPart().traverse().forEach(ModelPart::resetTransform);
-		this.updatePatternVisibility(entity.getPrimaryPatternTypeVariant() != KoiPrimaryPatternTypeVariant.NONE);
+        ModelPartData rightWhisker = head.addChild("rightWhisker", ModelPartBuilder.create().uv(30, 23).cuboid(0.0F, 1.0F, 1.5F, 0.0F, 1.0F, 1.0F, new Dilation(0.001F)), ModelTransform.pivot(-1.5F, 0.5F, -3.5F));
+        return TexturedModelData.of(modelData, 64, 64);
+    }
 
-		this.updateAnimation(entity.swimmingAnimationState, KoiAnimations.KOI_SWIM, ageInTicks, 1f);
-	}
+    @Override
+    public ModelPart getPart() {
+        return root;
+    }
 
-	@Override
-	public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-		matrices.push();
+    @Override
+    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
+        matrices.push();
 
-		if (this.child) {
-			float babyScale = 0.35f;
-			matrices.scale(babyScale, babyScale, babyScale);
-			matrices.translate(0.0D, 2.65D, 0D);
-			this.head.scale(createVec3f(0.6f));
-		}
+        if (this.child) {
+            float babyScale = 0.35f;
+            matrices.scale(babyScale, babyScale, babyScale);
+            matrices.translate(0.0D, 2.65D, 0D);
+            this.head.scale(createVec3f(0.6f));
+        }
 
-		this.getPart().render(matrices, vertices, light, overlay, color);
-		matrices.pop();
-	}
+        this.getPart().render(matrices, vertices, light, overlay, color);
+        matrices.pop();
+    }
 
-	private void updatePatternVisibility(boolean patternVisibility) {
-		this.bodyPatternLayer.visible = patternVisibility;
-	}
+    @Override
+    public void setAngles(KoiEntity entity, float limbSwing, float limbSwingAmount, float animationProgress, float headYaw, float headPitch) {
+        this.getPart().traverse().forEach(ModelPart::resetTransform);
+        this.updatePatternVisibility(entity.getPrimaryPatternTypeVariant() != KoiPrimaryPatternTypeVariant.NONE);
 
-	@Override
-	protected ModelPart getHeadPart() {
-		return null;
-	}
+        this.updateAnimation(entity.swimmingAnimationState, KoiAnimations.KOI_SWIM, animationProgress, 1f);
+    }
 
-	@Override
-	public ModelPart getPart() {
-		return root;
-	}
+    @Override
+    protected ModelPart getHeadPart() {
+        return null;
+    }
+
+    private void updatePatternVisibility(boolean patternVisibility) {
+        this.bodyPatternLayer.visible = patternVisibility;
+    }
 }

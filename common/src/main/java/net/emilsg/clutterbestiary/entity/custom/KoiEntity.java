@@ -18,12 +18,10 @@ import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.mob.WaterCreatureEntity;
-import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.FishEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.vehicle.BoatEntity;
-import net.minecraft.fluid.Fluids;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsage;
@@ -55,176 +53,24 @@ public class KoiEntity extends ParentFishEntity {
     private static final TrackedData<String> SECONDARY_PATTERN_COLOR = DataTracker.registerData(KoiEntity.class, TrackedDataHandlerRegistry.STRING);
     private static final TrackedData<String> SECONDARY_PATTERN_TYPE = DataTracker.registerData(KoiEntity.class, TrackedDataHandlerRegistry.STRING);
     private static final TrackedData<Boolean> CHILD = DataTracker.registerData(KoiEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-
+    public final AnimationState swimmingAnimationState = new AnimationState();
+    private final Item breedingItem = Items.KELP;
     protected int breedingAge;
     protected int forcedAge;
     protected int happyTicksRemaining;
     private int loveTicks;
-    private final Item breedingItem = Items.KELP;
     @Nullable
     private UUID lovingPlayer;
-
-    public final AnimationState swimmingAnimationState = new AnimationState();
     private int swimmingAnimationTimeout = 0;
 
     public KoiEntity(EntityType<? extends FishEntity> entityType, World world) {
         super(entityType, world);
     }
 
-    @Override
-    public void copyDataFromNbt(NbtCompound nbt) {
-        super.copyDataFromNbt(nbt);
-
-        if (nbt.contains("BaseColor", NbtElement.STRING_TYPE)) {
-            this.setBaseColorVariant(KoiBaseColorVariant.fromId(nbt.getString("BaseColor")));
-        }
-
-        if (nbt.contains("PrimaryPatternColor", NbtElement.STRING_TYPE)) {
-            this.setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant.fromId(nbt.getString("PrimaryPatternColor")));
-        }
-
-        if (nbt.contains("PrimaryPatternType", NbtElement.STRING_TYPE)) {
-            this.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.fromId(nbt.getString("PrimaryPatternType")));
-        }
-
-        if (nbt.contains("SecondaryPatternColor", NbtElement.STRING_TYPE)) {
-            this.setSecondaryPatternColorVariant(KoiSecondaryPatternColorVariant.fromId(nbt.getString("SecondaryPatternColor")));
-        }
-
-        if (nbt.contains("SecondaryPatternType", NbtElement.STRING_TYPE)) {
-            this.setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant.fromId(nbt.getString("SecondaryPatternType")));
-        }
-    }
-
     protected void initGoals() {
         super.initGoals();
         this.goalSelector.add(1, new KoiMateGoal(this, 1D, KoiEntity.class));
         this.goalSelector.add(2, new TemptGoal(this, 1.25D, Ingredient.ofItems(Items.KELP), false));
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        World world = this.getWorld();
-
-        if (world.isClient) {
-            this.setupAnimationStates();
-        }
-    }
-
-    private void setupAnimationStates() {
-        if (this.swimmingAnimationTimeout <= 0) {
-            this.swimmingAnimationTimeout = 20;
-            this.swimmingAnimationState.start(this.age);
-        } else {
-            --this.swimmingAnimationTimeout;
-        }
-    }
-
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putString("BaseColor", this.getBaseColorVariant().getID());
-        nbt.putString("PrimaryPatternColor", this.getPrimaryPatternColorVariant().getID());
-        nbt.putString("PrimaryPatternType", this.getPrimaryPatternTypeVariant().getID());
-        nbt.putString("SecondaryPatternColor", this.getSecondaryPatternColorVariant().getID());
-        nbt.putString("SecondaryPatternType", this.getSecondaryPatternTypeVariant().getID());
-        nbt.putInt("InLove", this.loveTicks);
-        if (this.lovingPlayer != null) {
-            nbt.putUuid("LoveCause", this.lovingPlayer);
-        }
-        nbt.putInt("Age", this.getBreedingAge());
-        nbt.putInt("ForcedAge", this.forcedAge);
-    }
-
-    @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.setBaseColorVariant(KoiBaseColorVariant.fromId(nbt.getString("BaseColor")));
-        this.setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant.fromId(nbt.getString("PrimaryPatternColor")));
-        this.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.fromId(nbt.getString("PrimaryPatternType")));
-        this.setSecondaryPatternColorVariant(KoiSecondaryPatternColorVariant.fromId(nbt.getString("SecondaryPatternColor")));
-        this.setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant.fromId(nbt.getString("SecondaryPatternType")));
-        this.loveTicks = nbt.getInt("InLove");
-        this.lovingPlayer = nbt.containsUuid("LoveCause") ? nbt.getUuid("LoveCause") : null;
-        this.setBreedingAge(nbt.getInt("Age"));
-        this.forcedAge = nbt.getInt("ForcedAge");
-    }
-
-    @Override
-    public void copyDataToStack(ItemStack stack) {
-        super.copyDataToStack(stack);
-        NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, nbt -> {
-            nbt.putString("BaseColor", this.getBaseColorVariant().getID());
-            nbt.putString("PrimaryPatternType", this.getPrimaryPatternTypeVariant().getID());
-            nbt.putString("PrimaryPatternColor", this.getPrimaryPatternColorVariant().getID());
-            nbt.putString("SecondaryPatternType", this.getSecondaryPatternTypeVariant().getID());
-            nbt.putString("SecondaryPatternColor", this.getSecondaryPatternColorVariant().getID());
-        });
-    }
-
-    public KoiBaseColorVariant getBaseColorVariant() {
-        return KoiBaseColorVariant.fromId(this.dataTracker.get(BASE_COLOR));
-    }
-
-    @Nullable
-    @Override
-    protected SoundEvent getDeathSound() {
-        return SoundEvents.ENTITY_SALMON_DEATH;
-    }
-
-    @Override
-    protected @Nullable SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.ENTITY_SALMON_HURT;
-    }
-
-    public void setBaseColorVariant(KoiBaseColorVariant baseColorVariant) {
-        this.dataTracker.set(BASE_COLOR, baseColorVariant.getID());
-    }
-
-    public KoiPrimaryPatternColorVariant getPrimaryPatternColorVariant() {
-        return KoiPrimaryPatternColorVariant.fromId(this.dataTracker.get(PRIMARY_PATTERN_COLOR));
-    }
-
-    public void setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant primaryPatternColorVariant) {
-        this.dataTracker.set(PRIMARY_PATTERN_COLOR, primaryPatternColorVariant.getID());
-    }
-
-    public KoiPrimaryPatternTypeVariant getPrimaryPatternTypeVariant() {
-        return KoiPrimaryPatternTypeVariant.fromId(this.dataTracker.get(PRIMARY_PATTERN_TYPE));
-    }
-
-    public void setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant primaryPatternTypeVariant) {
-        this.dataTracker.set(PRIMARY_PATTERN_TYPE, primaryPatternTypeVariant.getID());
-    }
-
-    public KoiSecondaryPatternColorVariant getSecondaryPatternColorVariant() {
-        return KoiSecondaryPatternColorVariant.fromId(this.dataTracker.get(SECONDARY_PATTERN_COLOR));
-    }
-
-    public void setSecondaryPatternColorVariant(KoiSecondaryPatternColorVariant secondaryPatternColorVariant) {
-        this.dataTracker.set(SECONDARY_PATTERN_COLOR, secondaryPatternColorVariant.getID());
-    }
-
-    public KoiSecondaryPatternTypeVariant getSecondaryPatternTypeVariant() {
-        return KoiSecondaryPatternTypeVariant.fromId(this.dataTracker.get(SECONDARY_PATTERN_TYPE));
-    }
-
-    public void setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant secondaryPatternTypeVariant) {
-        this.dataTracker.set(SECONDARY_PATTERN_TYPE, secondaryPatternTypeVariant.getID());
-    }
-
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentFishEntity.createMobAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 6D);
-    }
-
-    @Override
-    public ItemStack getBucketItem() {
-        return new ItemStack(ModItems.KOI_BUCKET.get());
-    }
-
-    @Override
-    protected SoundEvent getFlopSound() {
-        return SoundEvents.ENTITY_TROPICAL_FISH_FLOP;
     }
 
     @Override
@@ -281,51 +127,62 @@ public class KoiEntity extends ParentFishEntity {
         builder.add(CHILD, false);
     }
 
-    private ActionResult tryBucket(PlayerEntity player, Hand hand, KoiEntity koiEntity) {
-        ItemStack itemStack = player.getStackInHand(hand);
-        if (itemStack.getItem() == Items.WATER_BUCKET && koiEntity.isAlive()) {
-            koiEntity.playSound(koiEntity.getBucketFillSound(), 1.0F, 1.0F);
-            ItemStack filledBucketItem = koiEntity.getBucketItem();
-            koiEntity.copyDataToStack(filledBucketItem);
-            ItemStack itemStack3 = ItemUsage.exchangeStack(itemStack, player, filledBucketItem, false);
-            player.setStackInHand(hand, itemStack3);
-            World world = koiEntity.getWorld();
-            if (!world.isClient) {
-                Criteria.FILLED_BUCKET.trigger((ServerPlayerEntity)player, filledBucketItem);
-            }
+    @Override
+    public void copyDataFromNbt(NbtCompound nbt) {
+        super.copyDataFromNbt(nbt);
 
-            koiEntity.discard();
-            return ActionResult.success(world.isClient);
-        } else {
-            return ActionResult.PASS;
+        if (nbt.contains("BaseColor", NbtElement.STRING_TYPE)) {
+            this.setBaseColorVariant(KoiBaseColorVariant.fromId(nbt.getString("BaseColor")));
+        }
+
+        if (nbt.contains("PrimaryPatternColor", NbtElement.STRING_TYPE)) {
+            this.setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant.fromId(nbt.getString("PrimaryPatternColor")));
+        }
+
+        if (nbt.contains("PrimaryPatternType", NbtElement.STRING_TYPE)) {
+            this.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.fromId(nbt.getString("PrimaryPatternType")));
+        }
+
+        if (nbt.contains("SecondaryPatternColor", NbtElement.STRING_TYPE)) {
+            this.setSecondaryPatternColorVariant(KoiSecondaryPatternColorVariant.fromId(nbt.getString("SecondaryPatternColor")));
+        }
+
+        if (nbt.contains("SecondaryPatternType", NbtElement.STRING_TYPE)) {
+            this.setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant.fromId(nbt.getString("SecondaryPatternType")));
         }
     }
 
-    @Override
-    protected ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack itemStack = player.getStackInHand(hand);
-        if (this.isBreedingItem(itemStack)) {
-            int i = this.getBreedingAge();
-            if (!this.getWorld().isClient && i == 0 && this.canEat()) {
-                this.eat(player, hand, itemStack);
-                this.lovePlayer(player);
-                return ActionResult.SUCCESS;
-            }
-
-            if (this.isBaby()) {
-                this.eat(player, hand, itemStack);
-                this.growUp(toGrowUpAge(-i), true);
-                return ActionResult.success(this.getWorld().isClient);
-            }
-
-            if (this.getWorld().isClient) {
-                return ActionResult.CONSUME;
-            }
-        } else if (itemStack.isOf(Items.BUCKET)) {
-            return tryBucket(player, hand, this);
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putString("BaseColor", this.getBaseColorVariant().getID());
+        nbt.putString("PrimaryPatternColor", this.getPrimaryPatternColorVariant().getID());
+        nbt.putString("PrimaryPatternType", this.getPrimaryPatternTypeVariant().getID());
+        nbt.putString("SecondaryPatternColor", this.getSecondaryPatternColorVariant().getID());
+        nbt.putString("SecondaryPatternType", this.getSecondaryPatternTypeVariant().getID());
+        nbt.putInt("InLove", this.loveTicks);
+        if (this.lovingPlayer != null) {
+            nbt.putUuid("LoveCause", this.lovingPlayer);
         }
+        nbt.putInt("Age", this.getBreedingAge());
+        nbt.putInt("ForcedAge", this.forcedAge);
+    }
 
-        return super.interactMob(player, hand);
+    @Override
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.setBaseColorVariant(KoiBaseColorVariant.fromId(nbt.getString("BaseColor")));
+        this.setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant.fromId(nbt.getString("PrimaryPatternColor")));
+        this.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.fromId(nbt.getString("PrimaryPatternType")));
+        this.setSecondaryPatternColorVariant(KoiSecondaryPatternColorVariant.fromId(nbt.getString("SecondaryPatternColor")));
+        this.setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant.fromId(nbt.getString("SecondaryPatternType")));
+        this.loveTicks = nbt.getInt("InLove");
+        this.lovingPlayer = nbt.containsUuid("LoveCause") ? nbt.getUuid("LoveCause") : null;
+        this.setBreedingAge(nbt.getInt("Age"));
+        this.forcedAge = nbt.getInt("ForcedAge");
+    }
+
+    public static DefaultAttributeContainer.Builder setAttributes() {
+        return ParentFishEntity.createMobAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 6D);
     }
 
     public static boolean isValidNaturalSpawn(EntityType<? extends WaterCreatureEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
@@ -380,14 +237,6 @@ public class KoiEntity extends ParentFishEntity {
         }
     }
 
-    public <T> T getWeightedVariant(KoiEntity parent1, KoiEntity parent2, int parent1Weight, int parent2Weight, int randomWeight, Function<KoiEntity, T> getter, Supplier<T> randomSupplier) {
-        int total = parent1Weight + parent2Weight + randomWeight;
-        int decider = parent1.getRandom().nextInt(total);
-        if (decider < parent1Weight) return getter.apply(parent1);
-        if (decider < parent1Weight + parent2Weight) return getter.apply(parent2);
-        return randomSupplier.get();
-    }
-
     public boolean canBreedWith(KoiEntity other) {
         if (other == this) {
             return false;
@@ -400,6 +249,18 @@ public class KoiEntity extends ParentFishEntity {
 
     public boolean canEat() {
         return this.loveTicks <= 0;
+    }
+
+    @Override
+    public void copyDataToStack(ItemStack stack) {
+        super.copyDataToStack(stack);
+        NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, nbt -> {
+            nbt.putString("BaseColor", this.getBaseColorVariant().getID());
+            nbt.putString("PrimaryPatternType", this.getPrimaryPatternTypeVariant().getID());
+            nbt.putString("PrimaryPatternColor", this.getPrimaryPatternColorVariant().getID());
+            nbt.putString("SecondaryPatternType", this.getSecondaryPatternTypeVariant().getID());
+            nbt.putString("SecondaryPatternColor", this.getSecondaryPatternColorVariant().getID());
+        });
     }
 
     @Nullable
@@ -415,6 +276,14 @@ public class KoiEntity extends ParentFishEntity {
             this.loveTicks = 0;
             return super.damage(source, amount);
         }
+    }
+
+    public KoiBaseColorVariant getBaseColorVariant() {
+        return KoiBaseColorVariant.fromId(this.dataTracker.get(BASE_COLOR));
+    }
+
+    public void setBaseColorVariant(KoiBaseColorVariant baseColorVariant) {
+        this.dataTracker.set(BASE_COLOR, baseColorVariant.getID());
     }
 
     public int getBreedingAge() {
@@ -435,6 +304,11 @@ public class KoiEntity extends ParentFishEntity {
 
     }
 
+    @Override
+    public ItemStack getBucketItem() {
+        return new ItemStack(ModItems.KOI_BUCKET.get());
+    }
+
     public int getLoveTicks() {
         return this.loveTicks;
     }
@@ -451,6 +325,46 @@ public class KoiEntity extends ParentFishEntity {
             PlayerEntity playerEntity = this.getWorld().getPlayerByUuid(this.lovingPlayer);
             return playerEntity instanceof ServerPlayerEntity ? (ServerPlayerEntity) playerEntity : null;
         }
+    }
+
+    public KoiPrimaryPatternColorVariant getPrimaryPatternColorVariant() {
+        return KoiPrimaryPatternColorVariant.fromId(this.dataTracker.get(PRIMARY_PATTERN_COLOR));
+    }
+
+    public void setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant primaryPatternColorVariant) {
+        this.dataTracker.set(PRIMARY_PATTERN_COLOR, primaryPatternColorVariant.getID());
+    }
+
+    public KoiPrimaryPatternTypeVariant getPrimaryPatternTypeVariant() {
+        return KoiPrimaryPatternTypeVariant.fromId(this.dataTracker.get(PRIMARY_PATTERN_TYPE));
+    }
+
+    public void setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant primaryPatternTypeVariant) {
+        this.dataTracker.set(PRIMARY_PATTERN_TYPE, primaryPatternTypeVariant.getID());
+    }
+
+    public KoiSecondaryPatternColorVariant getSecondaryPatternColorVariant() {
+        return KoiSecondaryPatternColorVariant.fromId(this.dataTracker.get(SECONDARY_PATTERN_COLOR));
+    }
+
+    public void setSecondaryPatternColorVariant(KoiSecondaryPatternColorVariant secondaryPatternColorVariant) {
+        this.dataTracker.set(SECONDARY_PATTERN_COLOR, secondaryPatternColorVariant.getID());
+    }
+
+    public KoiSecondaryPatternTypeVariant getSecondaryPatternTypeVariant() {
+        return KoiSecondaryPatternTypeVariant.fromId(this.dataTracker.get(SECONDARY_PATTERN_TYPE));
+    }
+
+    public void setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant secondaryPatternTypeVariant) {
+        this.dataTracker.set(SECONDARY_PATTERN_TYPE, secondaryPatternTypeVariant.getID());
+    }
+
+    public <T> T getWeightedVariant(KoiEntity parent1, KoiEntity parent2, int parent1Weight, int parent2Weight, int randomWeight, Function<KoiEntity, T> getter, Supplier<T> randomSupplier) {
+        int total = parent1Weight + parent2Weight + randomWeight;
+        int decider = parent1.getRandom().nextInt(total);
+        if (decider < parent1Weight) return getter.apply(parent1);
+        if (decider < parent1Weight + parent2Weight) return getter.apply(parent2);
+        return randomSupplier.get();
     }
 
     public void growUp(int age, boolean overGrow) {
@@ -536,6 +450,16 @@ public class KoiEntity extends ParentFishEntity {
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        World world = this.getWorld();
+
+        if (world.isClient) {
+            this.setupAnimationStates();
+        }
+    }
+
+    @Override
     public void tickMovement() {
         if (!this.isTouchingWater() && this.isOnGround() && this.verticalCollision) {
             this.setVelocity(this.getVelocity().add(((this.random.nextFloat() * 2.0F - 1.0F) * 0.05F), 0.4000000059604645, ((this.random.nextFloat() * 2.0F - 1.0F) * 0.05F)));
@@ -587,6 +511,49 @@ public class KoiEntity extends ParentFishEntity {
 
     }
 
+    @Nullable
+    @Override
+    protected SoundEvent getDeathSound() {
+        return SoundEvents.ENTITY_SALMON_DEATH;
+    }
+
+    @Override
+    protected SoundEvent getFlopSound() {
+        return SoundEvents.ENTITY_TROPICAL_FISH_FLOP;
+    }
+
+    @Override
+    protected @Nullable SoundEvent getHurtSound(DamageSource source) {
+        return SoundEvents.ENTITY_SALMON_HURT;
+    }
+
+    @Override
+    protected ActionResult interactMob(PlayerEntity player, Hand hand) {
+        ItemStack itemStack = player.getStackInHand(hand);
+        if (this.isBreedingItem(itemStack)) {
+            int i = this.getBreedingAge();
+            if (!this.getWorld().isClient && i == 0 && this.canEat()) {
+                this.eat(player, hand, itemStack);
+                this.lovePlayer(player);
+                return ActionResult.SUCCESS;
+            }
+
+            if (this.isBaby()) {
+                this.eat(player, hand, itemStack);
+                this.growUp(toGrowUpAge(-i), true);
+                return ActionResult.success(this.getWorld().isClient);
+            }
+
+            if (this.getWorld().isClient) {
+                return ActionResult.CONSUME;
+            }
+        } else if (itemStack.isOf(Items.BUCKET)) {
+            return tryBucket(player, hand, this);
+        }
+
+        return super.interactMob(player, hand);
+    }
+
     @Override
     protected void mobTick() {
         if (this.getBreedingAge() != 0) {
@@ -606,6 +573,35 @@ public class KoiEntity extends ParentFishEntity {
             }
         }
 
+    }
+
+    private void setupAnimationStates() {
+        if (this.swimmingAnimationTimeout <= 0) {
+            this.swimmingAnimationTimeout = 20;
+            this.swimmingAnimationState.start(this.age);
+        } else {
+            --this.swimmingAnimationTimeout;
+        }
+    }
+
+    private ActionResult tryBucket(PlayerEntity player, Hand hand, KoiEntity koiEntity) {
+        ItemStack itemStack = player.getStackInHand(hand);
+        if (itemStack.getItem() == Items.WATER_BUCKET && koiEntity.isAlive()) {
+            koiEntity.playSound(koiEntity.getBucketFillSound(), 1.0F, 1.0F);
+            ItemStack filledBucketItem = koiEntity.getBucketItem();
+            koiEntity.copyDataToStack(filledBucketItem);
+            ItemStack itemStack3 = ItemUsage.exchangeStack(itemStack, player, filledBucketItem, false);
+            player.setStackInHand(hand, itemStack3);
+            World world = koiEntity.getWorld();
+            if (!world.isClient) {
+                Criteria.FILLED_BUCKET.trigger((ServerPlayerEntity) player, filledBucketItem);
+            }
+
+            koiEntity.discard();
+            return ActionResult.success(world.isClient);
+        } else {
+            return ActionResult.PASS;
+        }
     }
 
 

@@ -20,11 +20,19 @@ public abstract class ParentAnimalEntity extends AnimalEntity {
         super(entityType, world);
     }
 
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(MOVING, false);
+        builder.add(IS_FLEEING, false);
+    }
+
     @Nullable
     @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return null;
-    }
+    public abstract PassiveEntity createChild(ServerWorld world, PassiveEntity entity);
+
+    @Override
+    public abstract boolean isBreedingItem(ItemStack stack);
 
     public boolean isFleeing() {
         return this.dataTracker.get(IS_FLEEING);
@@ -50,15 +58,5 @@ public abstract class ParentAnimalEntity extends AnimalEntity {
             this.setMoving(isMoving);
         }
         super.tickMovement();
-    }
-
-    @Override
-    public abstract boolean isBreedingItem(ItemStack stack);
-
-    @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(MOVING, false);
-        builder.add(IS_FLEEING, false);
     }
 }

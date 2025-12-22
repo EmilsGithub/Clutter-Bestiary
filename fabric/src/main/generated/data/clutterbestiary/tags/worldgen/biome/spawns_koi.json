@@ -1,0 +1,9 @@
+{
+  "values": [
+    "minecraft:warped_forest",
+    {
+      "id": "biomesoplenty:hot_springs",
+      "required": false
+    }
+  ]
+}

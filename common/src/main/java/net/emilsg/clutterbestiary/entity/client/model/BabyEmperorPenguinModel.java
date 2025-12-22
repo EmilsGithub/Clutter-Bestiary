@@ -14,27 +14,29 @@ public class BabyEmperorPenguinModel<T extends EmperorPenguinEntity> extends Bes
 
     public BabyEmperorPenguinModel(ModelPart root) {
         this.root = root;
-        this.all = root.getChild("All");
-        this.head = all.getChild("Head");
+        this.all = root.getChild("all");
+        this.head = all.getChild("head");
     }
 
     public static TexturedModelData getTexturedModelData() {
         ModelData modelData = new ModelData();
         ModelPartData modelPartData = modelData.getRoot();
-        ModelPartData All = modelPartData.addChild("All", ModelPartBuilder.create().uv(0, 12).cuboid(-3.0F, -2.0F, -2.0F, 6.0F, 1.0F, 5.0F, new Dilation(0.0F))
-                .uv(0, 0).cuboid(-3.0F, -8.0F, -3.0F, 6.0F, 6.0F, 6.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 24.0F, 0.0F));
+        ModelPartData All = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 24.0F, 0.0F));
 
-        ModelPartData Head = All.addChild("Head", ModelPartBuilder.create().uv(0, 19).cuboid(-2.0F, -3.0F, -2.0F, 4.0F, 3.0F, 4.0F, new Dilation(0.0F))
+        ModelPartData body = All.addChild("body", ModelPartBuilder.create().uv(0, 12).cuboid(-3.0F, -2.0F, -2.0F, 6.0F, 1.0F, 5.0F, new Dilation(0.0F))
+                .uv(0, 0).cuboid(-3.0F, -8.0F, -3.0F, 6.0F, 6.0F, 6.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+
+        ModelPartData head = All.addChild("head", ModelPartBuilder.create().uv(0, 19).cuboid(-2.0F, -3.0F, -2.0F, 4.0F, 3.0F, 4.0F, new Dilation(0.0F))
                 .uv(18, 20).cuboid(-0.5F, -2.0F, -3.0F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -8.0F, 0.0F));
 
-        ModelPartData L_Wing = All.addChild("L_Wing", ModelPartBuilder.create().uv(24, 0).cuboid(0.0F, 0.0F, -1.0F, 1.0F, 5.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(3.0F, -8.0F, 0.0F));
+        ModelPartData leftWing = All.addChild("leftWing", ModelPartBuilder.create().uv(24, 0).cuboid(0.0F, 0.0F, -1.0F, 1.0F, 5.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(3.0F, -8.0F, 0.0F));
 
-        ModelPartData R_Wing = All.addChild("R_Wing", ModelPartBuilder.create().uv(24, 8).cuboid(-1.0F, 0.0F, -1.0F, 1.0F, 5.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(-3.0F, -8.0F, 0.0F));
+        ModelPartData rightWing = All.addChild("rightWing", ModelPartBuilder.create().uv(24, 8).cuboid(-1.0F, 0.0F, -1.0F, 1.0F, 5.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(-3.0F, -8.0F, 0.0F));
 
-        ModelPartData L_Leg = All.addChild("L_Leg", ModelPartBuilder.create().uv(24, 21).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 1.0F, 2.0F, new Dilation(0.0F))
+        ModelPartData leftLeg = All.addChild("leftLeg", ModelPartBuilder.create().uv(24, 21).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 1.0F, 2.0F, new Dilation(0.0F))
                 .uv(-2, 27).cuboid(-1.0F, 1.0F, -3.0F, 2.0F, 0.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(2.0F, -1.0F, 0.0F));
 
-        ModelPartData R_Leg = All.addChild("R_Leg", ModelPartBuilder.create().uv(24, 17).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 1.0F, 2.0F, new Dilation(0.0F))
+        ModelPartData rightLeg = All.addChild("rightLeg", ModelPartBuilder.create().uv(24, 17).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 1.0F, 2.0F, new Dilation(0.0F))
                 .uv(2, 27).cuboid(-1.0F, 1.0F, -3.0F, 2.0F, 0.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(-2.0F, -1.0F, 0.0F));
         return TexturedModelData.of(modelData, 32, 32);
     }
@@ -50,15 +52,15 @@ public class BabyEmperorPenguinModel<T extends EmperorPenguinEntity> extends Bes
     }
 
     @Override
-    public void setAngles(EmperorPenguinEntity emperorPenguinEntity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setAngles(EmperorPenguinEntity emperorPenguinEntity, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(emperorPenguinEntity, netHeadYaw, headPitch, ageInTicks);
+        this.setHeadAngles(emperorPenguinEntity, netHeadYaw, headPitch, animationProgress);
 
-        this.animateMovement(EmperorPenguinEntityAnimations.EMPEROR_PENGUIN_WADDLE, limbSwing, limbSwingAmount, 1.5f, 1f);
+        this.animateMovement(EmperorPenguinEntityAnimations.EMPEROR_PENGUIN_WALK, limbSwing, limbSwingAmount, 1.5f, 1f);
 
-        this.updateAnimation(emperorPenguinEntity.flapAnimationStateOne, EmperorPenguinEntityAnimations.EMPEROR_PENGUIN_RANDOM_FLAP, ageInTicks, 1f);
-        this.updateAnimation(emperorPenguinEntity.flapAnimationStateTwo, EmperorPenguinEntityAnimations.EMPEROR_PENGUIN_RANDOM_FLAP_TWO, ageInTicks, 1f);
-        this.updateAnimation(emperorPenguinEntity.preenAnimationState, EmperorPenguinEntityAnimations.EMPEROR_PENGUIN_PREEN, ageInTicks, 1f);
+        this.updateAnimation(emperorPenguinEntity.flapAnimationStateOne, EmperorPenguinEntityAnimations.EMPEROR_PENGUIN_RANDOM_FLAP, animationProgress, 1f);
+        this.updateAnimation(emperorPenguinEntity.flapAnimationStateTwo, EmperorPenguinEntityAnimations.EMPEROR_PENGUIN_RANDOM_FLAP_TWO, animationProgress, 1f);
+        this.updateAnimation(emperorPenguinEntity.preenAnimationState, EmperorPenguinEntityAnimations.EMPEROR_PENGUIN_PREEN, animationProgress, 1f);
     }
 
     @Override

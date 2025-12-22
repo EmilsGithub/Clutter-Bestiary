@@ -90,18 +90,18 @@ public class EmberTortoiseModel<T extends EmberTortoiseEntity> extends BestiaryM
     }
 
     @Override
-    public void setAngles(EmberTortoiseEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setAngles(EmberTortoiseEntity entity, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.setHeadAngles(entity, netHeadYaw, headPitch, ageInTicks);
+        this.setHeadAngles(entity, netHeadYaw, headPitch, animationProgress);
 
         if (!entity.isShielding())
             this.animateMovement(EmberTortoiseEntityAnimations.EMBER_TORTOISE_WALK, limbSwing, limbSwingAmount, 3f, 2f);
         if (entity.isShielding()) {
-            this.updateAnimation(entity.shieldingAnimationState, EmberTortoiseEntityAnimations.EMBER_TORTOISE_SHIELD, ageInTicks, 1f);
-            this.updateAnimation(entity.shieldingTubeAnimationState, EmberTortoiseEntityAnimations.EMBER_TORTOISE_SHIELD_TUBE_LOOP, ageInTicks, 1f);
+            this.updateAnimation(entity.shieldingAnimationState, EmberTortoiseEntityAnimations.EMBER_TORTOISE_SHIELD, animationProgress, 1f);
+            this.updateAnimation(entity.shieldingTubeAnimationState, EmberTortoiseEntityAnimations.EMBER_TORTOISE_SHIELD_TUBE_LOOP, animationProgress, 1f);
         }
 
-        this.updateAnimation(entity.attackAnimationState, EmberTortoiseEntityAnimations.EMBER_TORTOISE_ATTACK, ageInTicks, 1f);
+        this.updateAnimation(entity.attackAnimationState, EmberTortoiseEntityAnimations.EMBER_TORTOISE_ATTACK, animationProgress, 1f);
     }
 
     @Override

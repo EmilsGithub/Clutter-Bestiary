@@ -1,0 +1,11 @@
+{
+  "values": [
+    "minecraft:jungle",
+    "minecraft:bamboo_jungle",
+    "minecraft:old_growth_spruce_taiga",
+    {
+      "id": "biomesoplenty:bamboo_grove",
+      "required": false
+    }
+  ]
+}

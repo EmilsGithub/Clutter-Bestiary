@@ -1,0 +1,20 @@
+{
+  "parent": "minecraft:item/generated",
+  "overrides": [
+    {
+      "model": "clutterbestiary:item/sandy_river_turtle_bucket",
+      "predicate": {
+        "type": 0.0
+      }
+    },
+    {
+      "model": "clutterbestiary:item/coconut_river_turtle_bucket",
+      "predicate": {
+        "type": 0.1
+      }
+    }
+  ],
+  "textures": {
+    "layer0": "clutterbestiary:item/sandy_river_turtle_bucket"
+  }
+}

@@ -12,9 +12,9 @@ public class PotionWaspSoundInstance extends MovingSoundInstance {
     public PotionWaspSoundInstance(PotionWaspEntity potionWasp) {
         super(ModSoundEvents.ENTITY_POTION_WASP_FLY.get(), SoundCategory.NEUTRAL, SoundInstance.createRandom());
         this.potionWasp = potionWasp;
-        this.x = ((float)potionWasp.getX());
-        this.y = ((float)potionWasp.getY());
-        this.z = ((float)potionWasp.getZ());
+        this.x = ((float) potionWasp.getX());
+        this.y = ((float) potionWasp.getY());
+        this.z = ((float) potionWasp.getZ());
         this.repeat = true;
         this.repeatDelay = 0;
         this.volume = 0.0F;
@@ -30,10 +30,10 @@ public class PotionWaspSoundInstance extends MovingSoundInstance {
 
     public void tick() {
         if (!this.potionWasp.isRemoved()) {
-            this.x = ((float)this.potionWasp.getX());
-            this.y = ((float)this.potionWasp.getY());
-            this.z = ((float)this.potionWasp.getZ());
-            float f = (float)this.potionWasp.getVelocity().horizontalLength();
+            this.x = ((float) this.potionWasp.getX());
+            this.y = ((float) this.potionWasp.getY());
+            this.z = ((float) this.potionWasp.getZ());
+            float f = (float) this.potionWasp.getVelocity().horizontalLength();
             if (f >= 0.01F) {
                 this.pitch = MathHelper.lerp(MathHelper.clamp(f, this.getMinPitch(), this.getMaxPitch()), this.getMinPitch(), this.getMaxPitch());
                 this.volume = MathHelper.lerp(MathHelper.clamp(f, 0.0F, 0.5F), 0.0F, 1.2F);

@@ -7,6 +7,10 @@
   "sounds.clutterbestiary.entity_mossbloom_hurt": "Mossbloom hurts",
   "sounds.clutterbestiary.entity_emperor_penguin_ambient": "Emperor Penguin honks",
   "sounds.clutterbestiary.entity_ember_tortoise_hurt": "Ember Tortoise hurts",
+  "sounds.clutterbestiary.entity_coati_ambient": "Coati Peeps",
+  "sounds.clutterbestiary.entity_beaver_chainsaw": "Beaver Saws Wood",
+  "sounds.clutterbestiary.entity_river_turtle_ambient": "River Turtle Squeaks",
+  "sounds.clutterbestiary.entity_river_turtle_hurt": "River Turtle Hurts",
 
   "entity.clutterbestiary.butterfly": "Butterfly",
   "entity.clutterbestiary.chameleon": "Chameleon",
@@ -28,6 +32,7 @@
   "entity.clutterbestiary.koi": "Koi",
   "entity.clutterbestiary.river_turtle": "River Turtle",
   "entity.clutterbestiary.coati": "Coati",
+  "entity.clutterbestiary.red_panda": "Red Panda",
 
   "clutterbestiary.yellow.butterfly": "Yellow Butterfly",
   "clutterbestiary.red.butterfly": "Red Butterfly",
@@ -48,6 +53,9 @@
   "clutterbestiary.warped.butterfly": "Warped Butterfly",
   "clutterbestiary.crimson.butterfly": "Crimson Butterfly",
   "clutterbestiary.soul.butterfly": "Soul Butterfly",
+
+  "clutterbestiary.sandy.river_turtle": "Sandy River Turtle",
+  "clutterbestiary.coconut.river_turtle": "Coconut River Turtle",
 
   "itemgroup.clutterbestiary.item_group": "Clutter: Bestiary",
 
@@ -73,7 +81,9 @@
   "item.clutterbestiary.butterfly_elytra_smithing_template": "Butterfly Elytra Smithing Template",
   "item.clutterbestiary.butterfly_elytra_smithing_template_shards": "Butterfly Elytra Smithing Template Shards",
   "item.clutterbestiary.butterfly_in_a_bottle": "Butterfly in a Bottle",
+  "block.clutterbestiary.butterfly_in_a_bottle": "Butterfly in a Bottle",
   "item.clutterbestiary.seahorse_bucket": "Bucket of Seahorse",
+  "item.clutterbestiary.river_turtle_bucket": "Bucket of River Turtle",
   "item.clutterbestiary.chorus_echofin_bucket": "Bucket of Chorus Echofin",
   "item.clutterbestiary.levitating_echofin_bucket": "Bucket of Levitating Echofin",
   "item.clutterbestiary.koi_bucket": "Bucket of Koi",
@@ -118,6 +128,7 @@
   "item.clutterbestiary.koi_spawn_egg": "Koi Spawn Egg",
   "item.clutterbestiary.river_turtle_spawn_egg": "River Turtle Spawn Egg",
   "item.clutterbestiary.coati_spawn_egg": "Coati Spawn Egg",
+  "item.clutterbestiary.red_panda_spawn_egg": "Red Panda Spawn Egg",
 
   "tooltip.clutterbestiary.base_color.koi": "Base Color",
   "tooltip.clutterbestiary.primary_pattern.koi": "Primary Pattern",
@@ -138,6 +149,7 @@
   "tooltip.clutterbestiary.striped.koi": "Striped",
   "tooltip.clutterbestiary.small_spots.koi": "Small Spots",
   "tooltip.clutterbestiary.medium_spots.koi": "Medium Spots",
+  "tooltip.clutterbestiary.place_sneak": "Placeable While Sneaking",
 
   "advancements.bestiary.root.title": "Clutter Bestiary",
   "advancements.bestiary.root.description": "That's a lot of aminals",
@@ -156,5 +168,10 @@
   "advancements.bestiary.fishy_business.title": "Fishy Business",
   "advancements.bestiary.fishy_business.description": "Capture a Koi with a water bucket",
   "advancements.bestiary.makes_sense.title": "Makes Sense",
-  "advancements.bestiary.makes_sense.description": "Capture an Echofin with an empty bucket"
+  "advancements.bestiary.makes_sense.description": "Capture an Echofin with an empty bucket",
+
+  "translation.clutterbestiary.red_panda.name": "%1$s",
+  "translation.clutterbestiary.red_panda.craving": " is currently craving: ",
+  "translation.clutterbestiary.red_panda.is_staying": " is now staying near this area.",
+  "translation.clutterbestiary.red_panda.not_staying": " is now following the player."
 }

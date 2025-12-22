@@ -30,6 +30,8 @@ public class ModBlockTags {
     public static final TagKey<Block> BOOPLETS_SPAWN_ON = create(ClutterBestiary.MOD_ID, "booplets_spawn_on");
     public static final TagKey<Block> KOI_SPAWN_ON = create(ClutterBestiary.MOD_ID, "koi_spawn_on");
     public static final TagKey<Block> RIVER_TURTLES_SPAWN_ON = create(ClutterBestiary.MOD_ID, "river_turtles_spawn_on");
+    public static final TagKey<Block> COATIS_SPAWN_ON = create(ClutterBestiary.MOD_ID, "coatis_spawn_on");
+    public static final TagKey<Block> RED_PANDAS_SPAWN_ON = create(ClutterBestiary.MOD_ID, "coatis_spawn_on");
 
 
     public static final TagKey<Block> WOODS = create("c", "woods");

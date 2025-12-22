@@ -92,29 +92,51 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
         this.setPathfindingPenalty(PathNodeType.WATER_BORDER, 16.0F);
     }
 
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(MOVING, false);
+        builder.add(ATTACKING, false);
+        builder.add(SHIELDING, false);
+        builder.add(SHIELDING_COOLDOWN, 0);
+        builder.add(SHIELDING_DURATION, 400);
+    }
+
+    @Override
+    protected void initGoals() {
+        this.goalSelector.add(1, new SwimGoal(this));
+        this.goalSelector.add(2, new EmberTortoiseMeleeGoal(this, 1.0f, true));
+        this.goalSelector.add(3, new EmberTortoiseMateGoal(this, 1.2f));
+        this.goalSelector.add(4, new EmberTortoiseTemptGoal(this, 1.2f, BREEDING_INGREDIENT, false));
+        this.goalSelector.add(5, new EmberTortoiseFollowParentGoal(this, 1.2f));
+        this.goalSelector.add(6, new EmberTortoiseWanderAroundFarGoal(this, 1.0f, 0.001f));
+        this.goalSelector.add(7, new EmberTortoiseLookAtEntityGoal(this, PlayerEntity.class, 6.0f));
+        this.goalSelector.add(8, new EmberTortoiseLookAroundGoal(this));
+        this.targetSelector.add(1, new RevengeGoal(this));
+        this.targetSelector.add(2, new ActiveTargetGoal<>(this, HoglinEntity.class, true));
+        this.targetSelector.add(3, new ActiveTargetGoal<>(this, ZoglinEntity.class, true));
+
+    }
+
+    public void readCustomDataFromNbt(NbtCompound nbt) {
+        super.readCustomDataFromNbt(nbt);
+        this.setShielding(nbt.getBoolean("Shielding"));
+        this.setShieldingDuration(nbt.getInt("ShieldingDuration"));
+        this.setShieldingCooldown(nbt.getInt("ShieldingCooldown"));
+    }
+
+    public void writeCustomDataToNbt(NbtCompound nbt) {
+        super.writeCustomDataToNbt(nbt);
+        nbt.putBoolean("Shielding", this.isShielding());
+        nbt.putInt("ShieldingDuration", this.getShieldingDuration());
+        nbt.putInt("ShieldingCooldown", this.getShieldingCooldown());
+    }
+
     public static DefaultAttributeContainer.Builder setAttributes() {
         return ParentAnimalEntity.createMobAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 80.0D)
                 .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.175f)
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 8.0f);
-    }
-
-    @Override
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack stackInHand = player.getStackInHand(hand);
-        if (stackInHand.isOf(this.getShieldingRechargeItem())) {
-            if (this.canShield()) {
-                this.startShielding();
-                player.playSound(SoundEvents.ITEM_FIRECHARGE_USE, 0.5F + random.nextFloat(), 0.75F);
-                player.swingHand(hand);
-                if (!player.getAbilities().creativeMode) stackInHand.decrement(1);
-            } else {
-                int cooldown = this.getShieldingCooldown();
-                this.setShieldingCooldown(cooldown - 100);
-            }
-        }
-
-        return super.interactMob(player, hand);
     }
 
     public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, net.minecraft.util.math.random.Random random) {
@@ -143,15 +165,15 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
     @Override
     public boolean damage(DamageSource source, float amount) {
         if (this.isShielding()) {
-            LivingEntity livingEntity = (LivingEntity) source.getAttacker();
+            if (source.getAttacker() instanceof LivingEntity livingEntity) {
+                if (livingEntity.getMainHandStack().getItem() instanceof PickaxeItem) {
+                    return super.damage(source, amount * 2);
+                }
+            }
 
             if (source.getSource() instanceof ProjectileEntity projectile) {
                 projectile.setVelocity(projectile.getVelocity().multiply(-1));
                 return false;
-            }
-
-            if (livingEntity != null && livingEntity.getMainHandStack().getItem() instanceof PickaxeItem) {
-                return super.damage(source, amount * 2);
             }
 
             return super.damage(source, amount / 16);
@@ -177,6 +199,73 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
 
     public Item getShieldingRechargeItem() {
         return Items.BLAZE_POWDER;
+    }
+
+    @Override
+    public ActionResult interactMob(PlayerEntity player, Hand hand) {
+        ItemStack stackInHand = player.getStackInHand(hand);
+        if (stackInHand.isOf(this.getShieldingRechargeItem())) {
+            if (this.canShield()) {
+                this.startShielding();
+                player.playSound(SoundEvents.ITEM_FIRECHARGE_USE, 0.5F + random.nextFloat(), 0.75F);
+                player.swingHand(hand);
+                if (!player.getAbilities().creativeMode) stackInHand.decrement(1);
+            } else {
+                int cooldown = this.getShieldingCooldown();
+                this.setShieldingCooldown(cooldown - 100);
+            }
+        }
+
+        return super.interactMob(player, hand);
+    }
+
+    public boolean isAttacking() {
+        return this.dataTracker.get(ATTACKING);
+    }
+
+    public void setAttacking(boolean attacking) {
+        this.dataTracker.set(ATTACKING, attacking);
+    }
+
+    @Override
+    public boolean isBreedingItem(ItemStack stack) {
+        return stack.isOf(Items.FIRE_CHARGE);
+    }
+
+    @Override
+    public boolean isFireImmune() {
+        return true;
+    }
+
+    @Override
+    public boolean isInvulnerable() {
+        return this.isShielding();
+    }
+
+    public boolean isMoving() {
+        return this.dataTracker.get(MOVING);
+    }
+
+    public void setMoving(boolean moving) {
+        this.dataTracker.set(MOVING, moving);
+    }
+
+    @Override
+    public boolean isPushable() {
+        return !this.isShielding();
+    }
+
+    public boolean isShielding() {
+        return this.dataTracker.get(SHIELDING);
+    }
+
+    public void setShielding(boolean shielding) {
+        this.dataTracker.set(SHIELDING, shielding);
+    }
+
+    @Override
+    public void takeKnockback(double strength, double x, double z) {
+        super.takeKnockback(0, x, z);
     }
 
     @Override
@@ -250,67 +339,6 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
         }
     }
 
-    public boolean isAttacking() {
-        return this.dataTracker.get(ATTACKING);
-    }
-
-    public void setAttacking(boolean attacking) {
-        this.dataTracker.set(ATTACKING, attacking);
-    }
-
-    @Override
-    public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(Items.FIRE_CHARGE);
-    }
-
-    @Override
-    public boolean isFireImmune() {
-        return true;
-    }
-
-    @Override
-    public boolean isInvulnerable() {
-        return this.isShielding();
-    }
-
-    public boolean isMoving() {
-        return this.dataTracker.get(MOVING);
-    }
-
-    public void setMoving(boolean moving) {
-        this.dataTracker.set(MOVING, moving);
-    }
-
-    @Override
-    public boolean isPushable() {
-        return !this.isShielding();
-    }
-
-    public boolean isShielding() {
-        return this.dataTracker.get(SHIELDING);
-    }
-
-    public void setShielding(boolean shielding) {
-        this.dataTracker.set(SHIELDING, shielding);
-    }
-
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.setShielding(nbt.getBoolean("Shielding"));
-        this.setShieldingDuration(nbt.getInt("ShieldingDuration"));
-        this.setShieldingCooldown(nbt.getInt("ShieldingCooldown"));
-    }
-
-    @Override
-    public void takeKnockback(double strength, double x, double z) {
-        super.takeKnockback(0, x, z);
-    }
-
-    @Override
-    protected @Nullable SoundEvent getHurtSound(DamageSource source) {
-        return ModSoundEvents.ENTITY_EMBER_TORTOISE_HURT.get();
-    }
-
     @Override
     public void tickMovement() {
         super.tickMovement();
@@ -321,37 +349,9 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
         }
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putBoolean("Shielding", this.isShielding());
-        nbt.putInt("ShieldingDuration", this.getShieldingDuration());
-        nbt.putInt("ShieldingCooldown", this.getShieldingCooldown());
-    }
-
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(MOVING, false);
-        builder.add(ATTACKING, false);
-        builder.add(SHIELDING, false);
-        builder.add(SHIELDING_COOLDOWN, 0);
-        builder.add(SHIELDING_DURATION, 400);
-    }
-
-    @Override
-    protected void initGoals() {
-        this.goalSelector.add(1, new SwimGoal(this));
-        this.goalSelector.add(2, new EmberTortoiseMeleeGoal(this, 1.0f, true));
-        this.goalSelector.add(3, new EmberTortoiseMateGoal(this, 1.2f));
-        this.goalSelector.add(4, new EmberTortoiseTemptGoal(this, 1.2f, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(5, new EmberTortoiseFollowParentGoal(this, 1.2f));
-        this.goalSelector.add(6, new EmberTortoiseWanderAroundFarGoal(this, 1.0f, 0.001f));
-        this.goalSelector.add(7, new EmberTortoiseLookAtEntityGoal(this, PlayerEntity.class, 6.0f));
-        this.goalSelector.add(8, new EmberTortoiseLookAroundGoal(this));
-        this.targetSelector.add(1, new RevengeGoal(this));
-        this.targetSelector.add(2, new ActiveTargetGoal<>(this, HoglinEntity.class, true));
-        this.targetSelector.add(3, new ActiveTargetGoal<>(this, ZoglinEntity.class, true));
-
+    protected @Nullable SoundEvent getHurtSound(DamageSource source) {
+        return ModSoundEvents.ENTITY_EMBER_TORTOISE_HURT.get();
     }
 
     protected void updateLimbs(float v) {

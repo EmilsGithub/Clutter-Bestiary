@@ -20,10 +20,24 @@ public abstract class ParentTameableEntity extends TameableEntity {
         super(entityType, world);
     }
 
+    @Override
+    protected void initDataTracker(DataTracker.Builder builder) {
+        super.initDataTracker(builder);
+        builder.add(MOVING, false);
+        builder.add(IS_FLEEING, false);
+    }
+
     @Nullable
     @Override
     public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
         return null;
+    }
+
+    @Override
+    public abstract boolean isBreedingItem(ItemStack stack);
+
+    public boolean isFleeing() {
+        return this.dataTracker.get(IS_FLEEING);
     }
 
     public boolean isMoving() {
@@ -38,10 +52,6 @@ public abstract class ParentTameableEntity extends TameableEntity {
         this.dataTracker.set(IS_FLEEING, moving);
     }
 
-    public boolean isFleeing() {
-        return this.dataTracker.get(IS_FLEEING);
-    }
-
     @Override
     public void tickMovement() {
         if (!this.getWorld().isClient) {
@@ -50,15 +60,5 @@ public abstract class ParentTameableEntity extends TameableEntity {
             this.setMoving(isMoving);
         }
         super.tickMovement();
-    }
-
-    @Override
-    public abstract boolean isBreedingItem(ItemStack stack);
-
-    @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(MOVING, false);
-        builder.add(IS_FLEEING, false);
     }
 }

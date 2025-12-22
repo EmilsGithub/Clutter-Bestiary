@@ -1,10 +1,12 @@
 package net.emilsg.clutterbestiary.fabric;
 
+import dev.architectury.registry.menu.MenuRegistry;
 import net.emilsg.clutterbestiary.ClutterBestiaryClient;
 import net.emilsg.clutterbestiary.fabric.entity.client.player.RendererRegistration;
 import net.emilsg.clutterbestiary.fabric.util.ModModelPredicateProvider;
+import net.emilsg.clutterbestiary.menu.ModMenuTypes;
+import net.emilsg.clutterbestiary.menu.screen.CoatiInventoryScreen;
 import net.fabricmc.api.ClientModInitializer;
-import net.minecraft.client.gui.screen.ingame.HandledScreens;
 
 public final class ClutterBestiaryClientFabric implements ClientModInitializer {
 
@@ -13,9 +15,11 @@ public final class ClutterBestiaryClientFabric implements ClientModInitializer {
         ClutterBestiaryClient.init();
         RendererRegistration.register();
         ModModelPredicateProvider.register();
-
-        //LivingEntityFeatureRendererRegistrationCallback.EVENT.register((entityType, entityRenderer, registrationHelper, context) -> {
-        //    registrationHelper.register(new ModElytraRenderer<>(entityRenderer, context.getModelLoader()));
-        //});
+        registerFabricMenus();
     }
+
+    public static void registerFabricMenus() {
+        MenuRegistry.registerScreenFactory(ModMenuTypes.COATI.get(), CoatiInventoryScreen::new);
+    }
+
 }

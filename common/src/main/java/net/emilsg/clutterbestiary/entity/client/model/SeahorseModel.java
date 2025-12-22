@@ -69,13 +69,13 @@ public class SeahorseModel<T extends SeahorseEntity> extends ParentFishModel<T> 
     }
 
     @Override
-    public void setAngles(SeahorseEntity seahorse, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setAngles(SeahorseEntity seahorse, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
         this.getPart().traverse().forEach(ModelPart::resetTransform);
         this.updateParts(seahorse);
         if (seahorse.isTouchingWater() && !seahorse.isDead())
-            this.updateAnimation(seahorse.swimmingAnimationState, SeahorseEntityAnimations.SEAHORSE_SWIM, ageInTicks, 1.0f);
+            this.updateAnimation(seahorse.swimmingAnimationState, SeahorseEntityAnimations.SEAHORSE_SWIM, animationProgress, 1.0f);
         else if (!seahorse.isDead())
-            this.updateAnimation(seahorse.flopAnimationState, SeahorseEntityAnimations.SEAHORSE_FLOP, ageInTicks, 1.0f);
+            this.updateAnimation(seahorse.flopAnimationState, SeahorseEntityAnimations.SEAHORSE_FLOP, animationProgress, 1.0f);
     }
 
     @Override
