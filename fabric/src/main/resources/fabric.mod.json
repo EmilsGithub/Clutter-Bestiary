@@ -5,7 +5,9 @@
   "name": "Clutter: Bestiary",
   "description": "The entities from Clutter, plus more, updated, improved and split into a separate mod.",
   "authors": [
-    "EmilSG"
+    "EmilSG",
+    "cebularz_",
+    "_funado"
   ],
   "contact": {
     "homepage": "https://modrinth.com/mod/clutterbestiary",
