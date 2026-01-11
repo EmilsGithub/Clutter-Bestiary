@@ -7,9 +7,13 @@ license = "MIT"
 modId = "clutterbestiary"
 version = "${version}-NeoForge-1.21.1"
 displayName = "Clutter: Bestiary"
-authors = "EmilSG"
+authors = '''
+EmilSG
+cebularz_
+_funado
+'''
 description = '''
-The entities from Clutter, plus more, updated, improved and split into a separate mod.
+Lots and lots of creatures, still with a vanilla-ish feeling.
 '''
 logoFile = "icon.png"
 
@@ -31,6 +35,13 @@ side = "BOTH"
 modId = "architectury"
 type = "required"
 versionRange = "[13.0.8,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.clutterbestiary]]
+modId = "curios"
+type = "optional"
+versionRange = "[9.5.1,)"
 ordering = "AFTER"
 side = "BOTH"
 

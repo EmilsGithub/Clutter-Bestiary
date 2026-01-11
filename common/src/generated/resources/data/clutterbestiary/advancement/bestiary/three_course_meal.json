@@ -1,0 +1,26 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "satisfy_three_cravings": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.three_course_meal.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:red_panda_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.bestiary.three_course_meal.title"
+    }
+  },
+  "requirements": [
+    [
+      "satisfy_three_cravings"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

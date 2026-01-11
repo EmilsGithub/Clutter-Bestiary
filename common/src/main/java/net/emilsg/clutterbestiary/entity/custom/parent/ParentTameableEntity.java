@@ -6,6 +6,7 @@ import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.TameableEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Vec3d;
@@ -32,6 +33,8 @@ public abstract class ParentTameableEntity extends TameableEntity {
     public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
         return null;
     }
+
+    public abstract Item getTamingItem();
 
     @Override
     public abstract boolean isBreedingItem(ItemStack stack);

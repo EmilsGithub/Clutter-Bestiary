@@ -124,6 +124,6 @@ public class ButterflyBottleItem extends NonDecrementingBlockItem {
     private void spawnEntity(ServerWorld world, ItemStack stack, BlockPos pos) {
         ButterflyEntity butterfly = ModEntityTypes.BUTTERFLY.get().spawnFromItemStack(world, stack, null, pos, SpawnReason.BUCKET, true, false);
         NbtComponent nbtComponent = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
-        if (butterfly != null) butterfly.copyDataFromNbt(butterfly, nbtComponent.copyNbt());
+        if (butterfly != null) butterfly.copyDataFromNbt(nbtComponent.copyNbt());
     }
 }

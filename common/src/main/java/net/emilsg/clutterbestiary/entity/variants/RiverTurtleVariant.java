@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-public enum RiverTurtleVariant {
+public enum RiverTurtleVariant implements BestiaryBasicVariant {
     SANDY("sandy", Formatting.YELLOW),
     COCONUT("coconut", Formatting.DARK_GREEN);
 
@@ -32,15 +32,15 @@ public enum RiverTurtleVariant {
                     v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName())
             );
     private final String name;
-    private final Formatting colorFormatting;
+    private final Formatting formatting;
 
-    RiverTurtleVariant(String name, Formatting colorFormatting) {
+    RiverTurtleVariant(String name, Formatting formatting) {
         this.name = name;
-        this.colorFormatting = colorFormatting;
+        this.formatting = formatting;
     }
 
     public static RiverTurtleVariant fromId(String id) {
-        return Arrays.stream(values()).filter(v -> v.getId().equals(id)).findFirst().orElse(SANDY);
+        return Arrays.stream(values()).filter(v -> v.getID().equals(id)).findFirst().orElse(SANDY);
     }
 
     public static RiverTurtleVariant getRandom() {
@@ -48,11 +48,13 @@ public enum RiverTurtleVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
-    public Formatting getColorFormatting() {
-        return this.colorFormatting;
+    @Override
+    public Formatting getFormatting() {
+        return this.formatting;
     }
 
-    public String getId() {
+    @Override
+    public String getID() {
         return ClutterBestiary.MOD_ID + ":" + this.getName();
     }
 

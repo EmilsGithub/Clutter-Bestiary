@@ -18,7 +18,6 @@ import net.minecraft.world.World;
 
 public class ButterflyBottleBlockEntityRenderer implements BlockEntityRenderer<ButterflyBottleBlockEntity> {
     private final ButterflyModel<ButterflyEntity> model;
-    private float ticker;
 
     public ButterflyBottleBlockEntityRenderer(BlockEntityRendererFactory.Context ctx) {
         this.model = new ButterflyModel<>(ctx.getLayerModelPart(ModModelLayers.BUTTERFLY));

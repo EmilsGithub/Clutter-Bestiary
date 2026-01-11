@@ -1,11 +1,15 @@
 package net.emilsg.clutterbestiary.entity.custom;
 
+import net.emilsg.clutterbestiary.animation_handling.AnimationPlayback;
 import net.emilsg.clutterbestiary.entity.custom.goal.JellyfishAvoidSurfaceGoal;
+import net.emilsg.clutterbestiary.entity.custom.goal.JellyfishSwimGoal;
 import net.emilsg.clutterbestiary.entity.variants.JellyfishVariant;
+import net.emilsg.clutterbestiary.item.ModItems;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.TargetPredicate;
-import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
@@ -16,11 +20,14 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.WaterCreatureEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.tag.EntityTypeTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -34,9 +41,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class JellyfishEntity extends WaterCreatureEntity {
+public class JellyfishEntity extends WaterCreatureEntity implements Bucketable {
 
     private static final TrackedData<String> VARIANT = DataTracker.registerData(JellyfishEntity.class, TrackedDataHandlerRegistry.STRING);
+    private static final TrackedData<Boolean> FROM_BUCKET = DataTracker.registerData(JellyfishEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     private static final Predicate<LivingEntity> TARGET_FILTER = entity -> {
         if (entity instanceof PlayerEntity && ((PlayerEntity) entity).isCreative()) {
@@ -58,7 +66,6 @@ public class JellyfishEntity extends WaterCreatureEntity {
     private float swimX;
     private float swimY;
     private float swimZ;
-    private int animationTimeout = 0;
 
     public JellyfishEntity(EntityType<? extends WaterCreatureEntity> entityType, World world) {
         super(entityType, world);
@@ -76,11 +83,12 @@ public class JellyfishEntity extends WaterCreatureEntity {
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
         builder.add(VARIANT, JellyfishVariant.GREEN.getId());
+        builder.add(FROM_BUCKET, false);
     }
 
     @Override
     protected void initGoals() {
-        this.goalSelector.add(0, new SwimGoal(this));
+        this.goalSelector.add(0, new JellyfishSwimGoal(this));
         this.goalSelector.add(1, new JellyfishAvoidSurfaceGoal(this));
     }
 
@@ -88,11 +96,27 @@ public class JellyfishEntity extends WaterCreatureEntity {
     public void readCustomDataFromNbt(NbtCompound nbt) {
         super.readCustomDataFromNbt(nbt);
         this.dataTracker.set(VARIANT, nbt.getString("Variant"));
+        this.setFromBucket(nbt.getBoolean("FromBucket"));
     }
 
     public void writeCustomDataToNbt(NbtCompound nbt) {
         super.writeCustomDataToNbt(nbt);
         nbt.putString("Variant", this.getTypeVariant());
+        nbt.putBoolean("FromBucket", this.isFromBucket());
+    }
+
+    @Override
+    public void copyDataFromNbt(NbtCompound nbt) {
+        Bucketable.copyDataFromNbt(this, nbt);
+        if (nbt.contains("Variant")) {
+            this.setVariant(JellyfishVariant.fromId(nbt.getString("Variant")));
+        }
+    }
+
+    @Override
+    public void copyDataToStack(ItemStack stack) {
+        Bucketable.copyDataToStack(this, stack);
+        NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, nbt -> nbt.putString("Variant", this.getTypeVariant()));
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
@@ -104,37 +128,58 @@ public class JellyfishEntity extends WaterCreatureEntity {
     }
 
     @Override
+    public boolean canImmediatelyDespawn(double distanceSquared) {
+        return !this.isFromBucket() && !this.hasCustomName();
+    }
+
+    @Override
+    public boolean cannotDespawn() {
+        return super.cannotDespawn() || this.isFromBucket();
+    }
+
+    @Override
+    public boolean isFromBucket() {
+        return this.dataTracker.get(FROM_BUCKET);
+    }
+
+    @Override
+    public void setFromBucket(boolean fromBucket) {
+        this.dataTracker.set(FROM_BUCKET, fromBucket);
+    }
+
+    @Override
+    public ItemStack getBucketItem() {
+        return new ItemStack(ModItems.JELLYFISH_BUCKET.get());
+    }
+
+    @Override
+    public SoundEvent getBucketFillSound() {
+        return SoundEvents.ITEM_BUCKET_FILL_FISH;
+    }
+
+    @Override
+    protected ActionResult interactMob(PlayerEntity player, Hand hand) {
+        return Bucketable.tryBucket(player, hand, this).orElseGet(() -> super.interactMob(player, hand));
+    }
+
+    @Override
     public boolean damage(DamageSource source, float amount) {
-        if (source.getAttacker() instanceof LivingEntity attacker && attacker.getWorld() instanceof ServerWorld && !attacker.getType().isIn(EntityTypeTags.AQUATIC)) {
+        boolean damaged = super.damage(source, amount);
+        if (damaged && source.getAttacker() instanceof LivingEntity attacker
+                && attacker.getWorld() instanceof ServerWorld && !attacker.getType().isIn(EntityTypeTags.AQUATIC)) {
             if (random.nextInt(3) == 0) {
                 attacker.addStatusEffect(new StatusEffectInstance(StatusEffects.POISON, 100, 1), this);
             }
         }
-        return super.damage(source, amount);
+        return damaged;
     }
 
     public float getSwimX() {
         return swimX;
     }
 
-    public void setSwimX(float swimX) {
-        this.swimX = swimX;
-    }
-
-    public float getSwimY() {
-        return swimY;
-    }
-
-    public void setSwimY(float swimY) {
-        this.swimY = swimY;
-    }
-
     public float getSwimZ() {
         return swimZ;
-    }
-
-    public void setSwimZ(float swimZ) {
-        this.swimZ = swimZ;
     }
 
     public String getTypeVariant() {
@@ -164,7 +209,7 @@ public class JellyfishEntity extends WaterCreatureEntity {
         super.tick();
         World world = this.getWorld();
         if (world.isClient) {
-            this.setupAnimationStates();
+            AnimationPlayback.updateLoop(this, this.swimmingAnimationState, this.isAlive());
         }
     }
 
@@ -172,7 +217,7 @@ public class JellyfishEntity extends WaterCreatureEntity {
     public void tickMovement() {
         super.tickMovement();
 
-        if (this.isAlive()) {
+        if (this.isAlive() && !this.getWorld().isClient) {
             List<LivingEntity> list = this.getWorld().getEntitiesByClass(LivingEntity.class, this.getBoundingBox().expand(0.3), entity -> TARGET_PREDICATE.test(this, entity));
             for (LivingEntity mobEntity : list) {
                 if (!mobEntity.isAlive()) continue;
@@ -228,8 +273,9 @@ public class JellyfishEntity extends WaterCreatureEntity {
         } else {
             if (!this.getWorld().isClient) {
                 double e = this.getVelocity().y;
-                if (this.hasStatusEffect(StatusEffects.LEVITATION)) {
-                    e = 0.05 * (double) (this.getStatusEffect(StatusEffects.LEVITATION).getAmplifier() + 1);
+                StatusEffectInstance levitation = this.getStatusEffect(StatusEffects.LEVITATION);
+                if (levitation != null) {
+                    e = 0.05 * (double) (levitation.getAmplifier() + 1);
                 } else if (!this.hasNoGravity()) {
                     e -= 0.08;
                 }
@@ -265,46 +311,10 @@ public class JellyfishEntity extends WaterCreatureEntity {
         this.limbAnimator.updateLimbs(f * 1.25f, 0.5F);
     }
 
-    private void setupAnimationStates() {
-        if (this.animationTimeout <= 0) {
-            this.animationTimeout = 80;
-            this.swimmingAnimationState.start(this.age);
-        } else {
-            --this.animationTimeout;
-        }
-    }
-
     private void sting(LivingEntity mob) {
         if (mob.damage(this.getDamageSources().mobAttack(this), 2)) {
             mob.addStatusEffect(new StatusEffectInstance(StatusEffects.POISON, 60 * 2, 1), this);
             this.playSound(SoundEvents.ENTITY_SLIME_ATTACK, 1.0f, 1.0f);
-        }
-    }
-
-    static class SwimGoal extends Goal {
-        private final JellyfishEntity jellyfish;
-
-        public SwimGoal(JellyfishEntity jellyfish) {
-            this.jellyfish = jellyfish;
-        }
-
-        @Override
-        public boolean canStart() {
-            return this.jellyfish.isInsideWaterOrBubbleColumn();
-        }
-
-        @Override
-        public void tick() {
-            int i = this.jellyfish.getDespawnCounter();
-            if (i > 100) {
-                this.jellyfish.setSwimmingVector(0.0f, 0.0f, 0.0f);
-            } else if (this.jellyfish.getRandom().nextInt(SwimGoal.toGoalTicks(50)) == 0 || !this.jellyfish.isTouchingWater() || !this.jellyfish.hasSwimmingVector()) {
-                float f = this.jellyfish.getRandom().nextFloat() * ((float) Math.PI * 2);
-                float g = MathHelper.cos(f) * 0.2f;
-                float h = -0.1f + this.jellyfish.getRandom().nextFloat() * 0.2f;
-                float j = MathHelper.sin(f) * 0.2f;
-                this.jellyfish.setSwimmingVector(g, h, j);
-            }
         }
     }
 

@@ -1,10 +1,13 @@
 package net.emilsg.clutterbestiary.block.custom;
 
+import com.mojang.serialization.MapCodec;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
+import net.emilsg.clutterbestiary.block.entity.ButterflyCocoonBlockEntity;
 import net.emilsg.clutterbestiary.entity.custom.ButterflyEntity;
 import net.emilsg.clutterbestiary.entity.variants.ButterflyVariant;
 import net.emilsg.clutterbestiary.item.ModItems;
 import net.minecraft.block.*;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -34,7 +37,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.dimension.DimensionTypes;
 
-public class ButterflyCocoonBlock extends Block {
+public class ButterflyCocoonBlock extends BlockWithEntity {
     public static final BooleanProperty CAN_HATCH = BooleanProperty.of("can_hatch");
     public static final IntProperty HATCH = IntProperty.of("hatch", 0, 3);
     private static final VoxelShape SHAPE = VoxelShapes.union(
@@ -46,6 +49,16 @@ public class ButterflyCocoonBlock extends Block {
     public ButterflyCocoonBlock(Settings settings) {
         super(settings);
         this.setDefaultState(this.stateManager.getDefaultState().with(HATCH, 0));
+    }
+
+    @Override
+    public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+        return new ButterflyCocoonBlockEntity(pos, state);
+    }
+
+    @Override
+    protected MapCodec<? extends BlockWithEntity> getCodec() {
+        return createCodec(ButterflyCocoonBlock::new);
     }
 
     @Override
@@ -92,6 +105,7 @@ public class ButterflyCocoonBlock extends Block {
                 world.playSound(null, pos, SoundEvents.BLOCK_MOSS_BREAK, SoundCategory.BLOCKS, 0.7F, 0.9F + random.nextFloat() * 0.2F);
                 world.setBlockState(pos, state.with(HATCH, i + 1), 2);
             } else {
+                ButterflyVariant variant = this.getButterFlyVariant(world, pos, random);
                 world.playSound(null, pos, SoundEvents.BLOCK_MOSS_BREAK, SoundCategory.BLOCKS, 0.7F, 0.9F + random.nextFloat() * 0.2F);
                 world.removeBlock(pos, false);
                 if (random.nextInt(2) == 0)
@@ -101,25 +115,6 @@ public class ButterflyCocoonBlock extends Block {
                     world.syncWorldEvent(2001, pos, Block.getRawIdFromState(state));
                     ButterflyEntity butterflyEntity = ModEntityTypes.BUTTERFLY.get().create(world);
                     if (butterflyEntity != null) {
-                        RegistryEntry<Biome> registryEntry = world.getBiome(pos);
-                        ButterflyVariant variant = ButterflyVariant.getRandom(false);
-                        if (registryEntry.isIn(BiomeTags.IS_OVERWORLD)) {
-                            variant = ButterflyVariant.getRandom(true);
-                        } else if (registryEntry.isIn(BiomeTags.IS_NETHER)) {
-                            if (registryEntry.matchesKey(BiomeKeys.WARPED_FOREST)) {
-                                variant = ButterflyVariant.WARPED;
-                            } else if (registryEntry.matchesKey(BiomeKeys.CRIMSON_FOREST)) {
-                                variant = ButterflyVariant.CRIMSON;
-                            } else if (registryEntry.matchesKey(BiomeKeys.SOUL_SAND_VALLEY)) {
-                                variant = ButterflyVariant.SOUL;
-                            } else if (random.nextBoolean()) {
-                                variant = ButterflyVariant.CRIMSON;
-                            } else if (random.nextBoolean()) {
-                                variant = ButterflyVariant.WARPED;
-                            } else {
-                                variant = ButterflyVariant.SOUL;
-                            }
-                        }
                         butterflyEntity.setBreedingAge(6000);
                         butterflyEntity.refreshPositionAndAngles((double) pos.getX() + 0.3 + (double) j * 0.2, (double) pos.getY() + 0.5, (double) pos.getZ() + 0.3, 0.0F, 0.0F);
                         butterflyEntity.setVariant(variant);
@@ -152,6 +147,44 @@ public class ButterflyCocoonBlock extends Block {
             return ActionResult.SUCCESS;
         }
         return super.onUse(state, world, pos, player, hit);
+    }
+
+    private ButterflyVariant getButterFlyVariant(ServerWorld world, BlockPos pos, Random random) {
+        RegistryEntry<Biome> registryEntry = world.getBiome(pos);
+
+        for (int i = 1; i <= 5; i++) {
+            BlockPos checkPos = pos.down(i);
+            Block block = world.getBlockState(checkPos).getBlock();
+
+            if (ButterflyVariant.isVariantDecider(block)) {
+                return ButterflyVariant.fromVariantDecider(block);
+            }
+        }
+
+        ButterflyVariant parentVariant = world.getBlockEntity(pos) instanceof ButterflyCocoonBlockEntity cocoon
+                ? cocoon.getParentVariant() : null;
+
+        if (registryEntry.isIn(BiomeTags.IS_NETHER)) {
+            if (registryEntry.matchesKey(BiomeKeys.WARPED_FOREST)) return ButterflyVariant.WARPED;
+            if (registryEntry.matchesKey(BiomeKeys.CRIMSON_FOREST)) return ButterflyVariant.CRIMSON;
+            if (registryEntry.matchesKey(BiomeKeys.SOUL_SAND_VALLEY)) return ButterflyVariant.SOUL;
+
+            if (parentVariant != null) return parentVariant;
+
+            return switch (random.nextInt(3)) {
+                case 0 -> ButterflyVariant.CRIMSON;
+                case 1 -> ButterflyVariant.WARPED;
+                default -> ButterflyVariant.SOUL;
+            };
+        }
+
+        if (parentVariant != null) return parentVariant;
+
+        if (registryEntry.isIn(BiomeTags.IS_OVERWORLD)) {
+            return ButterflyVariant.getRandom(true);
+        }
+
+        return ButterflyVariant.WHITE;
     }
 
     private boolean shouldHatchProgress(World world, BlockState state) {

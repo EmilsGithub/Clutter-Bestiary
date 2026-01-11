@@ -1,0 +1,33 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "that_stings": {
+      "conditions": {
+        "damage": {
+          "source_entity": {
+            "type": "clutterbestiary:jellyfish"
+          }
+        }
+      },
+      "trigger": "minecraft:entity_hurt_player"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.that_stings.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:slime_ball"
+    },
+    "title": {
+      "translate": "advancements.bestiary.that_stings.title"
+    }
+  },
+  "requirements": [
+    [
+      "that_stings"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

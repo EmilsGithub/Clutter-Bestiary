@@ -38,7 +38,7 @@ public class KoiEggsEntity extends MobEntity {
 
     public KoiEggsEntity(EntityType<? extends MobEntity> entityType, World world) {
         super(entityType, world);
-        this.timeToHatch = 120;
+        this.timeToHatch = 1200;
     }
 
     @Override
@@ -54,6 +54,7 @@ public class KoiEggsEntity extends MobEntity {
     @Override
     public void readCustomDataFromNbt(NbtCompound nbt) {
         super.readCustomDataFromNbt(nbt);
+        this.timeToHatch = nbt.contains("HatchTime") ? nbt.getInt("HatchTime") : 120;
         this.setBaseColorVariant(KoiBaseColorVariant.fromId(nbt.getString("BaseColor")));
         this.setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant.fromId(nbt.getString("PrimaryPatternColor")));
         this.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.fromId(nbt.getString("PrimaryPatternType")));
@@ -64,6 +65,7 @@ public class KoiEggsEntity extends MobEntity {
     @Override
     public void writeCustomDataToNbt(NbtCompound nbt) {
         super.writeCustomDataToNbt(nbt);
+        nbt.putInt("HatchTime", this.timeToHatch);
         nbt.putString("BaseColor", this.getBaseColorVariant().getID());
         nbt.putString("PrimaryPatternColor", this.getPrimaryPatternColorVariant().getID());
         nbt.putString("PrimaryPatternType", this.getPrimaryPatternTypeVariant().getID());
@@ -72,7 +74,7 @@ public class KoiEggsEntity extends MobEntity {
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
-        return LivingEntity.createLivingAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 1D);
+        return LivingEntity.createLivingAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 1D).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 1D);
     }
 
     @Override
@@ -137,11 +139,8 @@ public class KoiEggsEntity extends MobEntity {
     @Override
     public void tick() {
         this.setNoGravity(this.isSubmergedInWater());
-
-
-        this.tickHatching(this.getWorld());
-
         super.tick();
+        if (this.getWorld() instanceof ServerWorld serverWorld) this.tickHatching(serverWorld);
     }
 
     @Override
@@ -191,50 +190,41 @@ public class KoiEggsEntity extends MobEntity {
         }
     }
 
-    private void hatch(World world) {
+    private void hatch(ServerWorld world) {
         int amount = random.nextInt(13) == 0 ? random.nextBoolean() ? 3 : 2 : 1;
 
         double x = this.getX() + (amount > 1 ? ((random.nextBoolean() ? 1 : -1) * random.nextFloat() / 5) : 0);
         double y = this.getY() + (amount > 1 ? ((random.nextBoolean() ? 1 : -1) * random.nextFloat() / 5) : 0);
         double z = this.getZ() + (amount > 1 ? ((random.nextBoolean() ? 1 : -1) * random.nextFloat() / 5) : 0);
 
-        for (int i = 0; i < amount; i++) {
-            if (world.isClient) world.addParticle(ParticleTypes.BUBBLE, x, y, z, 0.0, 5.0E-4, 0.0);
-        }
+        world.spawnParticles(ParticleTypes.BUBBLE, x, y, z, amount, 0.1, 0.1, 0.1, 5.0E-4);
 
         for (int i = 0; i < amount; i++) {
-            if (world instanceof ServerWorld serverWorld) {
-                KoiEntity koiEntity = ModEntityTypes.KOI.get().create(serverWorld);
-                if (koiEntity == null) return;
+            KoiEntity koiEntity = ModEntityTypes.KOI.get().create(world);
+            if (koiEntity == null) return;
 
-                koiEntity.setBaby(true);
-
-                koiEntity.setBaseColorVariant(this.getBaseColorVariant());
-                koiEntity.setPrimaryPatternColorVariant(this.getPrimaryPatternColorVariant());
-                koiEntity.setPrimaryPatternTypeVariant(this.getPrimaryPatternTypeVariant());
-                koiEntity.setSecondaryPatternColorVariant(this.getSecondaryPatternColorVariant());
-                koiEntity.setSecondaryPatternTypeVariant(this.getSecondaryPatternTypeVariant());
-
-                koiEntity.refreshPositionAndAngles(x, y, z, this.getYaw(), this.getPitch());
-
-                serverWorld.spawnEntity(koiEntity);
-            }
+            koiEntity.setBaby(true);
+            koiEntity.setBaseColorVariant(this.getBaseColorVariant());
+            koiEntity.setPrimaryPatternColorVariant(this.getPrimaryPatternColorVariant());
+            koiEntity.setPrimaryPatternTypeVariant(this.getPrimaryPatternTypeVariant());
+            koiEntity.setSecondaryPatternColorVariant(this.getSecondaryPatternColorVariant());
+            koiEntity.setSecondaryPatternTypeVariant(this.getSecondaryPatternTypeVariant());
+            koiEntity.refreshPositionAndAngles(x, y, z, this.getYaw(), this.getPitch());
+            world.spawnEntity(koiEntity);
         }
-        this.kill();
         this.discard();
     }
 
-    private void tickHatching(World world) {
-        if (this.timeToHatch <= 0) this.hatch(world);
-        this.timeToHatch--;
-
-        if (world.isClient) {
-            if (this.timeToHatch % 1200 == 0 && this.timeToHatch != 0) {
-                world.sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
-                world.playSound(null, this.getBlockPos(), SoundEvents.BLOCK_SNIFFER_EGG_CRACK, SoundCategory.NEUTRAL, 0.5f, 1.5f);
-            }
+    private void tickHatching(ServerWorld world) {
+        if (this.timeToHatch <= 0) {
+            this.hatch(world);
+            return;
         }
-
+        this.timeToHatch--;
+        if (this.timeToHatch == 800 || this.timeToHatch == 40) {
+            world.sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
+            world.playSound(null, this.getBlockPos(), SoundEvents.BLOCK_SNIFFER_EGG_CRACK, SoundCategory.NEUTRAL, 0.5f, 1.5f);
+        }
     }
 
 }

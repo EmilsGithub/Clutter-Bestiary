@@ -13,10 +13,10 @@ import net.minecraft.text.Text;
 public class ModItemGroups {
     public static final DeferredRegister<ItemGroup> TABS = DeferredRegister.create(ClutterBestiary.MOD_ID, RegistryKeys.ITEM_GROUP);
 
-    public static RegistrySupplier<ItemGroup> CLUTTER_BESTIARY;
+    public static final RegistrySupplier<ItemGroup> CLUTTER_BESTIARY = TABS.register("clutter_bestiary", () ->
+            CreativeTabRegistry.create(Text.translatable("itemgroup.clutterbestiary.item_group"), () -> new ItemStack(ModItems.MOSSBLOOM_SPAWN_EGG)));
 
     public static void register() {
-        CLUTTER_BESTIARY = TABS.register("clutter_bestiary", () -> CreativeTabRegistry.create(Text.translatable("itemgroup.clutterbestiary.item_group"), () -> new ItemStack(ModItems.MOSSBLOOM_SPAWN_EGG)));
         TABS.register();
     }
 }

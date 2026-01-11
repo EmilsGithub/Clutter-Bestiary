@@ -13,6 +13,8 @@ public class PotionWaspModel<T extends PotionWaspEntity> extends BestiaryModel<T
     private final ModelPart all;
     private final ModelPart body;
     private final ModelPart potionSac;
+    private final ModelPart inner;
+    private final ModelPart outer;
     private final ModelPart head;
 
     public PotionWaspModel(ModelPart root) {
@@ -20,6 +22,8 @@ public class PotionWaspModel<T extends PotionWaspEntity> extends BestiaryModel<T
         this.all = root.getChild("all");
         this.body = this.all.getChild("body");
         this.potionSac = this.body.getChild("potionSac");
+        this.inner = this.potionSac.getChild("inner");
+        this.outer = this.potionSac.getChild("outer");
         this.head = this.body.getChild("head");
     }
 
@@ -30,7 +34,11 @@ public class PotionWaspModel<T extends PotionWaspEntity> extends BestiaryModel<T
 
         ModelPartData body = all.addChild("body", ModelPartBuilder.create().uv(24, 15).cuboid(-2.0F, -1.5F, -3.0F, 4.0F, 3.0F, 6.0F, new Dilation(0.0F)), ModelTransform.pivot(-2.5F, -0.5F, -0.5F));
 
-        ModelPartData potionSac = body.addChild("potionSac", ModelPartBuilder.create().uv(0, 0).cuboid(-3.5F, 0.0F, -3.5F, 7.0F, 8.0F, 7.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 1.5F, 0.5F));
+        ModelPartData potionSac = body.addChild("potionSac", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 1.5F, 0.5F));
+
+        ModelPartData inner = potionSac.addChild("inner", ModelPartBuilder.create().uv(2, 35).cuboid(-3.0F, -7.5F, -4.0F, 5.0F, 7.0F, 5.0F, new Dilation(0.0F)), ModelTransform.pivot(0.5F, 8.0F, 1.5F));
+
+        ModelPartData outer = potionSac.addChild("outer", ModelPartBuilder.create().uv(0, 0).cuboid(-4.0F, -8.0F, -5.0F, 7.0F, 8.0F, 7.0F, new Dilation(0.0F)), ModelTransform.pivot(0.5F, 8.0F, 1.5F));
 
         ModelPartData tail = body.addChild("tail", ModelPartBuilder.create().uv(24, 24).cuboid(-1.5F, -1.0F, -1.0F, 3.0F, 2.0F, 3.0F, new Dilation(0.0F)), ModelTransform.of(0.0F, 0.0F, 3.0F, -0.5236F, 0.0F, 0.0F));
 
@@ -79,13 +87,13 @@ public class PotionWaspModel<T extends PotionWaspEntity> extends BestiaryModel<T
         return root;
     }
 
-    public ModelPart getPotionSacPart() {
-        return potionSac;
-    }
-
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
         this.getPart().render(matrices, vertices, light, overlay, color);
+    }
+
+    public void setAllPartsHidden(boolean hidden) {
+        this.root.traverse().forEach(part -> part.hidden = hidden);
     }
 
     @Override
@@ -93,9 +101,23 @@ public class PotionWaspModel<T extends PotionWaspEntity> extends BestiaryModel<T
         this.getPart().traverse().forEach(ModelPart::resetTransform);
         this.setHeadAngles(potionWasp, netHeadYaw, headPitch, animationProgress);
 
-        this.getPotionSacPart().hidden = !potionWasp.hasPotionSac();
+        this.inner.hidden = !potionWasp.hasPotionSac();
 
         this.updateAnimation(potionWasp.flyingAnimState, potionWasp.hasPotionSac() ? PotionWaspEntityAnimations.POTIONWASP_FLY : PotionWaspEntityAnimations.POTIONWASP_FLY_NO_SAC, animationProgress, 1f);
+    }
+
+    public void setOuterHidden(boolean hidden) {
+        this.outer.hidden = hidden;
+    }
+
+    public void showOnlyOuter() {
+        this.setAllPartsHidden(true);
+
+        this.root.hidden = false;
+        this.all.hidden = false;
+        this.body.hidden = false;
+        this.potionSac.hidden = false;
+        this.outer.hidden = false;
     }
 
     @Override

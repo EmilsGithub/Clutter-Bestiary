@@ -11,10 +11,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPlayNetworkHandler.class)
-public class ClientPlayNetworkHandlerMixin {
+public abstract class ClientPlayNetworkHandlerMixin {
 
     @Inject(method = "playSpawnSound", at = @At("HEAD"))
-    private void onPlaySpawnSound(Entity entity, CallbackInfo ci) {
+    private void clutterbestiary$playPotionWaspSpawnSound(Entity entity, CallbackInfo callbackInfo) {
         if (entity instanceof PotionWaspEntity potionWasp) {
             MinecraftClient client = ((ClientCommonNetworkHandlerAccessor) this).getClient();
             client.getSoundManager().playNextTick(new PotionWaspSoundInstance(potionWasp));

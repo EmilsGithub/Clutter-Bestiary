@@ -23,8 +23,16 @@ public class CoatiUnburrowingGoal extends Goal {
     @Override
     public void start() {
         this.coatiEntity.getNavigation().stop();
-        this.unBurrowingTicker = 90;
+        this.unBurrowingTicker = this.getTickCount(CoatiEntity.UNBURROW_DURATION_TICKS);
         this.coatiEntity.startState(CoatiEntityAnimationState.UNBURROWING);
+    }
+
+    @Override
+    public void stop() {
+        this.coatiEntity.setUnBurrowing(false);
+        if (this.coatiEntity.getAnimationController().getState() == CoatiEntityAnimationState.UNBURROWING) {
+            this.coatiEntity.startState(CoatiEntityAnimationState.IDLING);
+        }
     }
 
     @Override

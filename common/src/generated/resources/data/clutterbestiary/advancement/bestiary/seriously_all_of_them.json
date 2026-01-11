@@ -1,0 +1,28 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "complete_bestiary": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.seriously_all_of_them.description"
+    },
+    "frame": "challenge",
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "minecraft:nether_star"
+    },
+    "title": {
+      "translate": "advancements.bestiary.seriously_all_of_them.title"
+    }
+  },
+  "requirements": [
+    [
+      "complete_bestiary"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

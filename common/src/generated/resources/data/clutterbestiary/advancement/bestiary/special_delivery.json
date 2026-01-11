@@ -1,0 +1,26 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "receive_chorus_flower": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.special_delivery.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:chorus_flower"
+    },
+    "title": {
+      "translate": "advancements.bestiary.special_delivery.title"
+    }
+  },
+  "requirements": [
+    [
+      "receive_chorus_flower"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

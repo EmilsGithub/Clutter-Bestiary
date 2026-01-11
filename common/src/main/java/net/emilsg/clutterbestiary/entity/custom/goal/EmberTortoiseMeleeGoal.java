@@ -12,8 +12,6 @@ public class EmberTortoiseMeleeGoal extends MeleeAttackGoal {
     private final double speed;
     private int attackDelay = 20;
     private Path path;
-    private int updateCountdownTicks;
-    private int cooldown;
     private long lastUpdateTime;
     private int ticksUntilNextAttack = 20;
     private boolean shouldCountTillNextAttack = false;
@@ -33,15 +31,15 @@ public class EmberTortoiseMeleeGoal extends MeleeAttackGoal {
     public void start() {
         this.mob.getNavigation().startMovingAlong(this.path, this.speed);
         this.mob.setAttacking(true);
-        this.updateCountdownTicks = 0;
-        this.cooldown = 0;
         attackDelay = 20;
         ticksUntilNextAttack = 20;
+        shouldCountTillNextAttack = false;
     }
 
     @Override
     public void stop() {
         entity.setAttacking(false);
+        shouldCountTillNextAttack = false;
         super.stop();
     }
 
@@ -106,7 +104,8 @@ public class EmberTortoiseMeleeGoal extends MeleeAttackGoal {
     }
 
     private boolean isEnemyWithinAttackDistance(LivingEntity pEnemy) {
-        return this.mob.squaredDistanceTo(pEnemy) < 8f;
+        double width = this.mob.getWidth() * 2.0;
+        return this.mob.squaredDistanceTo(pEnemy) < width * width + pEnemy.getWidth();
     }
 
     private boolean startAttack() {

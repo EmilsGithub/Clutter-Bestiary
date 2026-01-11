@@ -1,0 +1,33 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "fishy_business": {
+      "conditions": {
+        "items": [
+          {
+            "items": "clutterbestiary:koi_bucket"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.fishy_business.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:koi_bucket"
+    },
+    "title": {
+      "translate": "advancements.bestiary.fishy_business.title"
+    }
+  },
+  "requirements": [
+    [
+      "fishy_business"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

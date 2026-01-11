@@ -19,5 +19,9 @@ public class ModBlockEntityTypes {
             ModBlocks.BUTTERFLY_IN_A_BOTTLE.get()
     ).build(null));
 
+    public static final RegistrySupplier<BlockEntityType<ButterflyCocoonBlockEntity>> BUTTERFLY_COCOON = BLOCK_ENTITIES.register("butterfly_cocoon", () -> BlockEntityType.Builder.create(ButterflyCocoonBlockEntity::new,
+            ModBlocks.BUTTERFLY_COCOON.get()
+    ).build(null));
+
 
 }

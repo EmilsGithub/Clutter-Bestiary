@@ -1,0 +1,36 @@
+{
+  "parent": "clutterbestiary:bestiary/fishy_business",
+  "criteria": {
+    "makes_sense": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "clutterbestiary:chorus_echofin_bucket",
+              "clutterbestiary:levitating_echofin_bucket"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.makes_sense.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:chorus_echofin_bucket"
+    },
+    "title": {
+      "translate": "advancements.bestiary.makes_sense.title"
+    }
+  },
+  "requirements": [
+    [
+      "makes_sense"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

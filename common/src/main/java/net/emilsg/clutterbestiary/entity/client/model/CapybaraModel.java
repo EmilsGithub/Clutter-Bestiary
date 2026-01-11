@@ -1,5 +1,7 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import net.emilsg.clutterbestiary.animation_handling.animation_states.CapybaraEntityAnimationState;
+import net.emilsg.clutterbestiary.entity.client.animation.AnimationBindings;
 import net.emilsg.clutterbestiary.entity.client.animation.CapybaraEntityAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.ParentTameableModel;
 import net.emilsg.clutterbestiary.entity.custom.CapybaraEntity;
@@ -8,6 +10,10 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 
 public class CapybaraModel<T extends CapybaraEntity> extends ParentTameableModel<T> {
+    private static final AnimationBindings<CapybaraEntity, CapybaraEntityAnimationState> ANIMATIONS = new AnimationBindings<CapybaraEntity, CapybaraEntityAnimationState>()
+            .bind(CapybaraEntityAnimationState.LAYING_DOWN, entity -> entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY_START : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE_START, 1f)
+            .bind(CapybaraEntityAnimationState.SLEEPING, entity -> entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE, 1f)
+            .bind(CapybaraEntityAnimationState.STANDING_UP, entity -> entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY_STOP : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE_STOP, 1f);
     private final ModelPart all;
     private final ModelPart torso;
     private final ModelPart head;
@@ -79,9 +85,7 @@ public class CapybaraModel<T extends CapybaraEntity> extends ParentTameableModel
 
         this.updateAnimation(entity.earTwitchAnimationStateOne, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_ONE, animationProgress, 1f);
         this.updateAnimation(entity.earTwitchAnimationStateTwo, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_TWO, animationProgress, 1f);
-        this.updateAnimation(entity.layingDownAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY_START : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE_START, animationProgress, 1f);
-        this.updateAnimation(entity.sleepingAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE, animationProgress, 1f);
-        this.updateAnimation(entity.standingUpAnimationState, entity.sleeperType() == 0 ? CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_BELLY_STOP : CapybaraEntityAnimations.CAPYBARA_LAY_DOWN_SIDE_STOP, animationProgress, 1f);
+        ANIMATIONS.apply(entity, entity.getAnimationController(), animationProgress, this::updateAnimation);
         this.updateAnimation(entity.swimAnimationState, CapybaraEntityAnimations.CAPYBARA_SWIM, animationProgress, 1f);
 
     }

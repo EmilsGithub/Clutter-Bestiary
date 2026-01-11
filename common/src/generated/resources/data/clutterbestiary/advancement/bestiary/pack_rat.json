@@ -1,0 +1,26 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "use_coati_storage": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.pack_rat.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:chest"
+    },
+    "title": {
+      "translate": "advancements.bestiary.pack_rat.title"
+    }
+  },
+  "requirements": [
+    [
+      "use_coati_storage"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

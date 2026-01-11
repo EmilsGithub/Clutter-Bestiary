@@ -34,7 +34,7 @@ public class KiwiBirdMateGoal extends AnimalMateGoal {
             Criteria.BRED_ANIMALS.trigger(serverPlayerEntity, this.animal, this.mate, null);
         }
 
-        this.kiwiBird.setHasEgg(true);
+        this.kiwiBird.beginCarryingEgg();
         this.animal.setBreedingAge(6000);
         this.mate.setBreedingAge(6000);
         this.animal.resetLoveTicks();

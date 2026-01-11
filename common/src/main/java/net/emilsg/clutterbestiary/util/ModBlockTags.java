@@ -10,6 +10,7 @@ public class ModBlockTags {
 
     public static final TagKey<Block> KIWI_EGG_HATCH_BOOST = create(ClutterBestiary.MOD_ID, "kiwi_egg_hatch_boost");
     public static final TagKey<Block> EMPEROR_PENGUIN_EGG_HATCH_BOOST = create(ClutterBestiary.MOD_ID, "emperor_penguin_egg_hatch_boost");
+    public static final TagKey<Block> CROCODILE_EGG_HATCH_BOOST = create(ClutterBestiary.MOD_ID, "crocodile_egg_hatch_boost");
 
     public static final TagKey<Block> CRIMSON_NEWTS_SPAWN_ON = create(ClutterBestiary.MOD_ID, "crimson_newts_spawn_on");
     public static final TagKey<Block> WARPED_NEWTS_SPAWN_ON = create(ClutterBestiary.MOD_ID, "warped_newts_spawn_on");
@@ -31,8 +32,12 @@ public class ModBlockTags {
     public static final TagKey<Block> KOI_SPAWN_ON = create(ClutterBestiary.MOD_ID, "koi_spawn_on");
     public static final TagKey<Block> RIVER_TURTLES_SPAWN_ON = create(ClutterBestiary.MOD_ID, "river_turtles_spawn_on");
     public static final TagKey<Block> COATIS_SPAWN_ON = create(ClutterBestiary.MOD_ID, "coatis_spawn_on");
-    public static final TagKey<Block> RED_PANDAS_SPAWN_ON = create(ClutterBestiary.MOD_ID, "coatis_spawn_on");
-
+    public static final TagKey<Block> RED_PANDAS_SPAWN_ON = create(ClutterBestiary.MOD_ID, "red_pandas_spawn_on");
+    public static final TagKey<Block> STOATS_SPAWN_ON = create(ClutterBestiary.MOD_ID, "stoats_spawn_on");
+    public static final TagKey<Block> CROCODILES_SPAWN_ON = create(ClutterBestiary.MOD_ID, "crocodiles_spawn_on");
+    public static final TagKey<Block> CHORUS_BEETLES_SPAWN_ON = create(ClutterBestiary.MOD_ID, "chorus_beetles_spawn_on");
+    public static final TagKey<Block> WOODPECKERS_SPAWN_ON = create(ClutterBestiary.MOD_ID, "woodpeckers_spawn_on");
+    public static final TagKey<Block> ARROWFISH_SPAWN_ON = create(ClutterBestiary.MOD_ID, "arrowfish_spawn_on");
 
     public static final TagKey<Block> WOODS = create("c", "woods");
     public static final TagKey<Block> STRIPPED_WOODS = create("c", "stripped_woods");

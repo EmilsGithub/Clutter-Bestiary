@@ -2,6 +2,7 @@ package net.emilsg.clutterbestiary.entity.client.render;
 
 import net.emilsg.clutterbestiary.entity.client.layer.ModModelLayers;
 import net.emilsg.clutterbestiary.entity.client.model.PotionWaspModel;
+import net.emilsg.clutterbestiary.entity.client.render.feature.PotionWaspOuterFeatureRenderer;
 import net.emilsg.clutterbestiary.entity.custom.PotionWaspEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRendererFactory;
@@ -13,6 +14,7 @@ public class PotionWaspRenderer extends MobEntityRenderer<PotionWaspEntity, Poti
 
     public PotionWaspRenderer(EntityRendererFactory.Context ctx) {
         super(ctx, new PotionWaspModel<>(ctx.getPart(ModModelLayers.POTION_WASP)), 0.4f);
+        this.addFeature(new PotionWaspOuterFeatureRenderer(this));
     }
 
     @Override
@@ -21,7 +23,9 @@ public class PotionWaspRenderer extends MobEntityRenderer<PotionWaspEntity, Poti
     }
 
     @Override
-    public void render(PotionWaspEntity potionWasp, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
-        super.render(potionWasp, f, g, matrixStack, vertexConsumerProvider, i);
+    public void render(PotionWaspEntity entity, float entityYaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+        this.model.setOuterHidden(true);
+        super.render(entity, entityYaw, tickDelta, matrices, vertexConsumers, light);
+        this.model.setOuterHidden(false);
     }
 }

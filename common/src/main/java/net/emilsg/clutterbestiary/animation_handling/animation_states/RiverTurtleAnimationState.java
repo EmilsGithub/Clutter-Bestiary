@@ -15,11 +15,6 @@ public enum RiverTurtleAnimationState implements IndexedAnimationState {
         this.index = index;
     }
 
-    public static RiverTurtleAnimationState fromIndex(int idx) {
-        for (var s : values()) if (s.index == idx) return s;
-        return IDLING;
-    }
-
     public int getIndex() {
         return this.index;
     }

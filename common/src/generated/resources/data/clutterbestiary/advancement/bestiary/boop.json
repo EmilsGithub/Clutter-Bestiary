@@ -1,0 +1,26 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "boop": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.boop.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:booplet_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.bestiary.boop.title"
+    }
+  },
+  "requirements": [
+    [
+      "boop"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

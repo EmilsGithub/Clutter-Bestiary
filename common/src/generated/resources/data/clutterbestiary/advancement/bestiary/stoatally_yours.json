@@ -1,0 +1,26 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "tame_stoat": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.stoatally_yours.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:stoat_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.bestiary.stoatally_yours.title"
+    }
+  },
+  "requirements": [
+    [
+      "tame_stoat"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

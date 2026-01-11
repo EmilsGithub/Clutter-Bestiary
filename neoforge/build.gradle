@@ -45,8 +45,8 @@ dependencies {
     common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
     shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
 
-    // Compile against only the API artifact
-    compileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}:api"
+    // Curios. Optional
+    modCompileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}:api"
 }
 
 processResources {
@@ -66,8 +66,17 @@ remapJar {
     inputFile.set shadowJar.archiveFile
 }
 
+def localDevUsername = rootProject.ext.localDevUsername
+def localDevUuid = rootProject.ext.localDevUuid
 loom {
     accessWidenerPath.set(project(":common").loom.accessWidenerPath)
+
+    if (localDevUsername && localDevUuid) {
+        runs.named("client") {
+            programArgs("--username", localDevUsername)
+            programArgs("--uuid", localDevUuid)
+        }
+    }
 
     runs.create("datagen") {
         data()

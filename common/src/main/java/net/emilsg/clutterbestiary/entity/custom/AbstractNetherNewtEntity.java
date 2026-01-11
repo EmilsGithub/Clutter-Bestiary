@@ -17,6 +17,7 @@ import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.mob.Angerable;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.PassiveEntity;
@@ -47,7 +48,6 @@ import java.util.UUID;
 public abstract class AbstractNetherNewtEntity extends ParentTameableEntity implements Angerable {
     private static final TrackedData<Integer> ANGER_TIME = DataTracker.registerData(AbstractNetherNewtEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final UniformIntProvider ANGER_TIME_RANGE = TimeHelper.betweenSeconds(20, 39);
-    private static final TrackedData<Boolean> MOVING = DataTracker.registerData(AbstractNetherNewtEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Float> SIZE = DataTracker.registerData(AbstractNetherNewtEntity.class, TrackedDataHandlerRegistry.FLOAT);
     private static final TrackedData<Integer> FUNGI = DataTracker.registerData(AbstractNetherNewtEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Boolean> SITTING = DataTracker.registerData(AbstractNetherNewtEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
@@ -87,7 +87,6 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
         super.initDataTracker(builder);
         builder.add(ANGER_TIME, 0);
         builder.add(SIZE, 1f);
-        builder.add(MOVING, false);
         builder.add(FUNGI, 1);
         builder.add(SITTING, false);
     }
@@ -234,10 +233,22 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
     public abstract RegistryEntry<StatusEffect> getOnAttackEffect();
 
     @Override
+    public boolean tryAttack(Entity target) {
+        if (!super.tryAttack(target)) return false;
+        RegistryEntry<StatusEffect> effect = this.getOnAttackEffect();
+        if (effect != null && target instanceof LivingEntity livingEntity && !this.getWorld().isClient) {
+            livingEntity.addStatusEffect(new StatusEffectInstance(effect, 100), this);
+        }
+        return true;
+    }
+
+    @Override
     public float getSoundPitch() {
         float multiplier = this.getNewtSize() > 1.0f ? 1.05f : 1.2f;
         return this.isBaby() ? ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.5F) * multiplier : ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F) * multiplier;
     }
+
+    public abstract Item getTamingItem();
 
     @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
@@ -302,14 +313,6 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
         return stack.isOf(this.getBreedingItem());
     }
 
-    public boolean isMoving() {
-        return this.dataTracker.get(MOVING);
-    }
-
-    public void setMoving(boolean moving) {
-        this.dataTracker.set(MOVING, moving);
-    }
-
     public boolean isSitting() {
         return this.dataTracker.get(SITTING);
     }
@@ -368,9 +371,6 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
     public void tickMovement() {
         super.tickMovement();
         if (!this.getWorld().isClient) {
-            BlockPos oldPos = this.getBlockPos();
-            BlockPos newPos = this.getBlockPos();
-            this.setMoving(oldPos != newPos);
             this.tickAngerLogic((ServerWorld) this.getWorld(), true);
         }
     }
@@ -387,8 +387,6 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
     protected SoundEvent getHurtSound(DamageSource source) {
         return ModSoundEvents.ENTITY_NETHER_NEWT_HURT.get();
     }
-
-    protected abstract Item getTamingItem();
 
     @Override
     protected void playHurtSound(DamageSource source) {

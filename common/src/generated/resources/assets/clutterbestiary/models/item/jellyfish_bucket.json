@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:item/generated",
+  "overrides": [
+    {
+      "model": "clutterbestiary:item/green_jellyfish_bucket",
+      "predicate": {
+        "type": 0.0
+      }
+    },
+    {
+      "model": "clutterbestiary:item/blue_jellyfish_bucket",
+      "predicate": {
+        "type": 0.1
+      }
+    },
+    {
+      "model": "clutterbestiary:item/purple_jellyfish_bucket",
+      "predicate": {
+        "type": 0.2
+      }
+    }
+  ],
+  "textures": {
+    "layer0": "clutterbestiary:item/green_jellyfish_bucket"
+  }
+}

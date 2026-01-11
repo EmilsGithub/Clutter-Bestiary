@@ -6,8 +6,12 @@ import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.entity.variants.EchofinVariant;
 import net.emilsg.clutterbestiary.item.ModItems;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
+import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.BlockState;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.AnimationState;
+import net.minecraft.entity.Bucketable;
 import net.minecraft.entity.EntityData;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
@@ -32,9 +36,11 @@ import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsage;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
@@ -48,16 +54,14 @@ import net.minecraft.world.*;
 import net.minecraft.world.event.GameEvent;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 public class EchofinEntity extends ParentAnimalEntity {
 
     private static final TrackedData<BlockPos> HOME_POS = DataTracker.registerData(EchofinEntity.class, TrackedDataHandlerRegistry.BLOCK_POS);
     private static final TrackedData<String> VARIANT = DataTracker.registerData(EchofinEntity.class, TrackedDataHandlerRegistry.STRING);
-    private static final TrackedData<Integer> ABILITY_TIMER = DataTracker.registerData(EchofinEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Boolean> ABILITY_ACTIVE = DataTracker.registerData(EchofinEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     public final AnimationState movingAnimState = new AnimationState();
-    final int maxAbilityTimer = 2400;
     private int animationTimeout = 0;
+    private int abilityTimer;
 
 
     public EchofinEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
@@ -83,7 +87,7 @@ public class EchofinEntity extends ParentAnimalEntity {
         super.initDataTracker(builder);
         builder.add(HOME_POS, BlockPos.ORIGIN);
         builder.add(VARIANT, EchofinVariant.CHORUS.getId());
-        builder.add(ABILITY_TIMER, 0);
+        builder.add(ABILITY_ACTIVE, false);
     }
 
     @Override
@@ -114,6 +118,24 @@ public class EchofinEntity extends ParentAnimalEntity {
         nbt.putInt("AbilityTimer", this.getAbilityTimerEntitiesTimer());
     }
 
+    public void copyDataFromNbt(NbtCompound nbt) {
+        Bucketable.copyDataFromNbt(this, nbt);
+        if (nbt.contains("Variant")) {
+            this.setVariant(EchofinVariant.fromId(nbt.getString("Variant")));
+        }
+        if (nbt.contains("AbilityTimer")) {
+            this.setEntityAbilityTimer(nbt.getInt("AbilityTimer"));
+        }
+    }
+
+    public void copyDataToStack(ItemStack stack) {
+        Bucketable.copyDataToStack(this, stack);
+        NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, nbt -> {
+            nbt.putString("Variant", this.getTypeVariant());
+            nbt.putInt("AbilityTimer", this.getAbilityTimerEntitiesTimer());
+        });
+    }
+
     public static DefaultAttributeContainer.Builder setAttributes() {
         return ParentAnimalEntity.createMobAttributes()
                 .add(EntityAttributes.GENERIC_MAX_HEALTH, 10D)
@@ -138,7 +160,7 @@ public class EchofinEntity extends ParentAnimalEntity {
     }
 
     public int getAbilityTimerEntitiesTimer() {
-        return this.dataTracker.get(ABILITY_TIMER);
+        return this.abilityTimer;
     }
 
     public BlockPos getHomePos() {
@@ -176,34 +198,30 @@ public class EchofinEntity extends ParentAnimalEntity {
     }
 
     public boolean hasAbility() {
-        return this.getAbilityTimerEntitiesTimer() >= maxAbilityTimer;
+        return this.dataTracker.get(ABILITY_ACTIVE);
     }
 
     @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
         ItemStack heldItem = player.getStackInHand(hand);
 
-        if (!this.getWorld().isClient && heldItem.isOf(Items.BUCKET)) {
+        if (heldItem.isOf(Items.BUCKET) && this.isAlive()) {
             EchofinVariant variant = this.getVariant();
-            Item returnItem;
-            if (Objects.requireNonNull(variant) == EchofinVariant.CHORUS) {
-                returnItem = ModItems.CHORUS_ECHOFIN_BUCKET.get();
-            } else {
-                returnItem = ModItems.LEVITATING_ECHOFIN_BUCKET.get();
+            Item bucketItem = variant == EchofinVariant.CHORUS
+                    ? ModItems.CHORUS_ECHOFIN_BUCKET.get()
+                    : ModItems.LEVITATING_ECHOFIN_BUCKET.get();
+            ItemStack bucketStack = new ItemStack(bucketItem);
+            this.copyDataToStack(bucketStack);
+            player.setStackInHand(hand, ItemUsage.exchangeStack(heldItem, player, bucketStack, false));
+            this.playSound(SoundEvents.ITEM_BUCKET_FILL_FISH, 1.0f, 1.5f);
+
+            World world = this.getWorld();
+            if (player instanceof ServerPlayerEntity serverPlayer) {
+                Criteria.FILLED_BUCKET.trigger(serverPlayer, bucketStack);
             }
-            if (player.getStackInHand(hand).getCount() == 1) {
-                player.setStackInHand(hand, new ItemStack(returnItem));
-            } else {
-                heldItem.decrement(1);
-                if (player.getInventory().getEmptySlot() > 0) {
-                    player.giveItemStack(new ItemStack(returnItem));
-                } else {
-                    this.dropItem(returnItem);
-                }
-            }
-            player.playSound(SoundEvents.ITEM_BUCKET_FILL_FISH, 1.0f, 1.5f);
-            this.remove(RemovalReason.DISCARDED);
-            return ActionResult.SUCCESS;
+
+            this.discard();
+            return ActionResult.success(world.isClient);
         }
         return super.interactMob(player, hand);
     }
@@ -243,7 +261,8 @@ public class EchofinEntity extends ParentAnimalEntity {
     }
 
     public void setEntityAbilityTimer(int timer) {
-        this.dataTracker.set(ABILITY_TIMER, timer);
+        this.abilityTimer = Math.max(0, Math.min(2400, timer));
+        this.dataTracker.set(ABILITY_ACTIVE, this.abilityTimer >= 2400);
     }
 
     public boolean shouldLevitatePlayers() {

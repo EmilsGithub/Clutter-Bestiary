@@ -20,15 +20,19 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
 public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEntity, ChameleonModel<ChameleonEntity>> {
     private final ChameleonModel<ChameleonEntity> layerModel;
+    private final Map<ChameleonEntity, CachedColor> colorCache = new WeakHashMap<>();
 
     public ChameleonColorFeatureRenderer(FeatureRendererContext<ChameleonEntity, ChameleonModel<ChameleonEntity>> ctx, EntityModelLoader loader) {
         super(ctx);
         this.layerModel = new ChameleonModel<>(loader.getModelPart(ModModelLayers.CHAMELEON));
     }
 
-    private static int getColor(ChameleonEntity chameleonEntity) {
+    private int getColor(ChameleonEntity chameleonEntity) {
         if (chameleonEntity.isDead()) return 0xFF7070;
 
         World world = chameleonEntity.getWorld();
@@ -49,6 +53,11 @@ public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEnti
             blockColorPos = belowPos;
         }
 
+        CachedColor cachedColor = this.colorCache.get(chameleonEntity);
+        if (cachedColor != null && cachedColor.pos.equals(blockColorPos) && cachedColor.state == blockState) {
+            return cachedColor.color;
+        }
+
         BlockColors blockColorProvider = MinecraftClient.getInstance().getBlockColors();
         int color = -1;
 
@@ -60,24 +69,22 @@ public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEnti
             MapColor mapColor = blockState.getMapColor(world, blockColorPos);
             color = (mapColor != null && mapColor.color != 0) ? mapColor.color : 0x90C47C;
         }
+        this.colorCache.put(chameleonEntity, new CachedColor(blockColorPos, blockState, color));
         return color;
+    }
+
+    private record CachedColor(BlockPos pos, BlockState state, int color) {
     }
 
 
     @Override
-    public void render(MatrixStack matrices, VertexConsumerProvider providers, int light, ChameleonEntity entity,
-                       float limbAngle, float limbDistance, float tickDelta,
-                       float animationProgress, float headYaw, float headPitch) {
-
-        // 1) Get the *environment* color (block under/around the chameleon)
+    public void render(MatrixStack matrices, VertexConsumerProvider providers, int light, ChameleonEntity entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
         int envColor = getColor(entity);
 
-        // 2) Push that into the entity as the new target color
         if (envColor != entity.getTargetColor()) {
             entity.setTargetColor(envColor);
         }
 
-        // 3) Use the *smoothed* color from the entity
         int rgb = entity.getCurrentColor();
         int argb = 0xFF000000 | (rgb & 0x00FFFFFF);
         Identifier texture = getTexture(entity);
@@ -95,31 +102,9 @@ public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEnti
             return;
         }
 
-        // 4) Render with the interpolated color
         render(getContextModel(), layerModel, texture,
                 matrices, providers, light, entity,
                 limbAngle, limbDistance, animationProgress, headYaw, headPitch,
                 tickDelta, argb);
     }
-
-
-    //@Override
-    //public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, ChameleonEntity chameleonEntity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
-    //    int color = getColor(chameleonEntity);
-//
-    //    if (color != chameleonEntity.getTargetColor()) {
-    //        chameleonEntity.setTargetColor(color);
-    //    }
-//
-    //    int currentColor = chameleonEntity.getCurrentColor();
-//
-    //    float r = ((currentColor >> 16) & 0xFF) / 255.0f;
-    //    float g = ((currentColor >> 8) & 0xFF) / 255.0f;
-    //    float b = (currentColor & 0xFF) / 255.0f;
-//
-    //    VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucent(this.getTexture(chameleonEntity)));
-    //    int packed = (int)(r * 255) << 16 | (int)(g * 255) << 8 | (int)(b * 255);
-    //    this.getContextModel().render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, packed);
-    //}
-
 }

@@ -3,7 +3,6 @@ package net.emilsg.clutterbestiary.fabric.datagen;
 import net.emilsg.clutterbestiary.util.ModBiomeTags;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
-import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.util.Identifier;
@@ -14,37 +13,41 @@ import java.util.concurrent.CompletableFuture;
 
 public class BiomeTagDataGenerator extends FabricTagProvider<Biome> {
 
-    public BiomeTagDataGenerator(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
+	public BiomeTagDataGenerator(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
         super(output, RegistryKeys.BIOME, registriesFuture);
     }
 
     @Override
     protected void configure(RegistryWrapper.WrapperLookup arg) {
+        String biomesOPlentyNamespace = "biomesoplenty";
+        String regionsUnexploredNamespace = "regions_unexplored";
+        String clutterBiomesNamespace = "clutterbiomes";
+        String terralithNamespace = "terralith";
 
-        getOrCreateTagBuilder(ModBiomeTags.SPAWNS_BUTTERFLIES).add(
-                BiomeKeys.CRIMSON_FOREST,
-                BiomeKeys.WARPED_FOREST,
-                BiomeKeys.SOUL_SAND_VALLEY,
-                BiomeKeys.FLOWER_FOREST,
-                BiomeKeys.SUNFLOWER_PLAINS,
-                BiomeKeys.MEADOW,
-                BiomeKeys.CHERRY_GROVE
-        )
-                .addOptional(Identifier.of("biomesoplenty", "cherry_blossom_grove"))
-                .addOptional(Identifier.of("biomesoplenty", "bamboo_grove"))
-                .addOptional(Identifier.of("biomesoplenty", "lavender_field"))
-                .addOptional(Identifier.of("regions_unexplored", "clover_plains"))
-                .addOptional(Identifier.of("regions_unexplored", "flower_fields"))
-                .addOptional(Identifier.of("regions_unexplored", "poppy_fields"))
-                .addOptional(Identifier.of("regions_unexplored", "rocky_meadow"))
+	    getOrCreateTagBuilder(ModBiomeTags.SPAWNS_BUTTERFLIES).add(
+                        BiomeKeys.CRIMSON_FOREST,
+                        BiomeKeys.WARPED_FOREST,
+                        BiomeKeys.SOUL_SAND_VALLEY,
+                        BiomeKeys.FLOWER_FOREST,
+                        BiomeKeys.SUNFLOWER_PLAINS,
+                        BiomeKeys.MEADOW,
+                        BiomeKeys.CHERRY_GROVE
+                )
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "cherry_blossom_grove"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "bamboo_grove"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "lavender_field"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "clover_plains"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "flower_fields"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "poppy_fields"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "rocky_meadow"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_EMBER_TORTOISES).add(
-                BiomeKeys.BASALT_DELTAS
-        )
-                .addOptional(Identifier.of("biomesoplenty", "volcano"))
-                .addOptional(Identifier.of("biomesoplenty", "erupting_inferno"))
-                .addOptional(Identifier.of("regions_unexplored", "infernal_holt"))
+                        BiomeKeys.BASALT_DELTAS
+                )
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "volcano"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "erupting_inferno"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "infernal_holt"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_ECHOFINS).add(
@@ -56,7 +59,7 @@ public class BiomeTagDataGenerator extends FabricTagProvider<Biome> {
                         BiomeKeys.WARM_OCEAN,
                         BiomeKeys.LUKEWARM_OCEAN
                 )
-                .addOptional(Identifier.of("regions_unexplored", "rocky_reef"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "rocky_reef"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_MANTA_RAYS)
@@ -64,20 +67,20 @@ public class BiomeTagDataGenerator extends FabricTagProvider<Biome> {
                         BiomeKeys.WARM_OCEAN,
                         BiomeKeys.LUKEWARM_OCEAN
                 )
-                .addOptional(Identifier.of("regions_unexplored", "rocky_reef"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "rocky_reef"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_SEAHORSES).add(
                 BiomeKeys.WARM_OCEAN
         );
 
-        getOrCreateTagBuilder(ModBiomeTags.SPAWNS_POTION_WASPS)
+	    getOrCreateTagBuilder(ModBiomeTags.SPAWNS_POTION_WASPS)
                 .add(
                         BiomeKeys.JUNGLE
                 )
-                .addOptional(Identifier.of("terralith", "tropical_jungle"))
-                .addOptional(Identifier.of("biomesoplenty", "rainforest"))
-                .addOptional(Identifier.of("regions_unexplored", "rainforest"))
+                .addOptional(Identifier.of(terralithNamespace, "tropical_jungle"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "rainforest"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "rainforest"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_CAPYBARAS)
@@ -86,28 +89,28 @@ public class BiomeTagDataGenerator extends FabricTagProvider<Biome> {
                         BiomeKeys.WINDSWEPT_SAVANNA,
                         BiomeKeys.SAVANNA
                 )
-                .addOptional(Identifier.of("terralith", "fractured_savanna"))
-                .addOptional(Identifier.of("terralith", "savanna_badlands"))
-                .addOptional(Identifier.of("terralith", "savanna_slopes"))
-                .addOptional(Identifier.of("terralith", "lush_desert"))
-                .addOptional(Identifier.of("regions_unexplored", "steppe"))
+                .addOptional(Identifier.of(terralithNamespace, "fractured_savanna"))
+                .addOptional(Identifier.of(terralithNamespace, "savanna_badlands"))
+                .addOptional(Identifier.of(terralithNamespace, "savanna_slopes"))
+                .addOptional(Identifier.of(terralithNamespace, "lush_desert"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "steppe"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_BEAVERS)
                 .add(BiomeKeys.RIVER)
-                .addOptional(Identifier.of("terralith", "warm_river"))
-                .addOptional(Identifier.of("biomesoplenty", "bayou"))
-                .addOptional(Identifier.of("biomesoplenty", "wetland"))
+                .addOptional(Identifier.of(terralithNamespace, "warm_river"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "bayou"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "wetland"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_EMPEROR_PENGUINS).add(
-                BiomeKeys.ICE_SPIKES,
-                BiomeKeys.SNOWY_PLAINS,
-                BiomeKeys.SNOWY_BEACH
-        )
-                .addOptional(Identifier.of("terralith", "ice_marsh"))
-                .addOptional(Identifier.of("terralith", "muskeg"))
-                .addOptional(Identifier.of("regions_unexplored", "frozen_tundra"))
+                        BiomeKeys.ICE_SPIKES,
+                        BiomeKeys.SNOWY_PLAINS,
+                        BiomeKeys.SNOWY_BEACH
+                )
+                .addOptional(Identifier.of(terralithNamespace, "ice_marsh"))
+                .addOptional(Identifier.of(terralithNamespace, "muskeg"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "frozen_tundra"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_KIWIS)
@@ -116,14 +119,14 @@ public class BiomeTagDataGenerator extends FabricTagProvider<Biome> {
                         BiomeKeys.JUNGLE,
                         BiomeKeys.SPARSE_JUNGLE
                 )
-                .addOptional(Identifier.of("terralith", "jungle_mountains"))
-                .addOptional(Identifier.of("terralith", "rocky_jungle"))
-                .addOptional(Identifier.of("terralith", "tropical_jungle"))
-                .addOptional(Identifier.of("terralith", "rubble_jungle"))
-                .addOptional(Identifier.of("biomesoplenty", "rainforest"))
-                .addOptional(Identifier.of("biomesoplenty", "rocky_rainforest"))
-                .addOptional(Identifier.of("biomesoplenty", "tropics"))
-                .addOptional(Identifier.of("regions_unexplored", "rainforest"))
+                .addOptional(Identifier.of(terralithNamespace, "jungle_mountains"))
+                .addOptional(Identifier.of(terralithNamespace, "rocky_jungle"))
+                .addOptional(Identifier.of(terralithNamespace, "tropical_jungle"))
+                .addOptional(Identifier.of(terralithNamespace, "rubble_jungle"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "rainforest"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "rocky_rainforest"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "tropics"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "rainforest"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_CHAMELEONS)
@@ -132,33 +135,33 @@ public class BiomeTagDataGenerator extends FabricTagProvider<Biome> {
                         BiomeKeys.JUNGLE,
                         BiomeKeys.SPARSE_JUNGLE
                 )
-                .addOptional(Identifier.of("terralith", "jungle_mountains"))
-                .addOptional(Identifier.of("terralith", "rocky_jungle"))
-                .addOptional(Identifier.of("terralith", "tropical_jungle"))
-                .addOptional(Identifier.of("terralith", "rubble_jungle"))
-                .addOptional(Identifier.of("biomesoplenty", "rainforest"))
-                .addOptional(Identifier.of("biomesoplenty", "rocky_rainforest"))
-                .addOptional(Identifier.of("biomesoplenty", "tropics"))
-                .addOptional(Identifier.of("regions_unexplored", "rainforest"))
-                .addOptional(Identifier.of("regions_unexplored", "sparse_rainforest"))
-                .addOptional(Identifier.of("regions_unexplored", "tropics"))
+                .addOptional(Identifier.of(terralithNamespace, "jungle_mountains"))
+                .addOptional(Identifier.of(terralithNamespace, "rocky_jungle"))
+                .addOptional(Identifier.of(terralithNamespace, "tropical_jungle"))
+                .addOptional(Identifier.of(terralithNamespace, "rubble_jungle"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "rainforest"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "rocky_rainforest"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "tropics"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "rainforest"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "sparse_rainforest"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "tropics"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_COATIS)
                 .add(
-                    BiomeKeys.JUNGLE,
-                    BiomeKeys.BAMBOO_JUNGLE,
-                    BiomeKeys.OLD_GROWTH_SPRUCE_TAIGA
+                        BiomeKeys.JUNGLE,
+                        BiomeKeys.BAMBOO_JUNGLE,
+                        BiomeKeys.OLD_GROWTH_SPRUCE_TAIGA
                 )
-                .addOptional(Identifier.of("biomesoplenty", "bamboo_grove"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "bamboo_grove"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_RED_PANDAS)
                 .add(
-                    BiomeKeys.GROVE,
-                    BiomeKeys.BAMBOO_JUNGLE
+                        BiomeKeys.GROVE,
+                        BiomeKeys.BAMBOO_JUNGLE
                 )
-                .addOptional(Identifier.of("biomesoplenty", "bamboo_grove"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "bamboo_grove"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_DRAGONFLIES)
@@ -166,7 +169,6 @@ public class BiomeTagDataGenerator extends FabricTagProvider<Biome> {
                         BiomeKeys.SWAMP,
                         BiomeKeys.MANGROVE_SWAMP
                 )
-                //.addOptional(Identifier.of("biomesoplenty", "bamboo_grove"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_MOSSBLOOMS).add(
@@ -183,9 +185,9 @@ public class BiomeTagDataGenerator extends FabricTagProvider<Biome> {
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_KOI)
                 .add(
-                        BiomeKeys.WARPED_FOREST
+                        BiomeKeys.MANGROVE_SWAMP
                 )
-                .addOptional(Identifier.of("biomesoplenty", "hot_springs"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "hot_springs"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_RIVER_TURTLES)
@@ -193,9 +195,9 @@ public class BiomeTagDataGenerator extends FabricTagProvider<Biome> {
                         BiomeKeys.RIVER,
                         BiomeKeys.MANGROVE_SWAMP
                 )
-                .addOptional(Identifier.of("terralith", "warm_river"))
-                .addOptional(Identifier.of("biomesoplenty", "bayou"))
-                .addOptional(Identifier.of("biomesoplenty", "wetland"))
+                .addOptional(Identifier.of(terralithNamespace, "warm_river"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "bayou"))
+                .addOptional(Identifier.of(biomesOPlentyNamespace, "wetland"))
         ;
 
         getOrCreateTagBuilder(ModBiomeTags.SPAWNS_BOOPLETS)
@@ -203,9 +205,39 @@ public class BiomeTagDataGenerator extends FabricTagProvider<Biome> {
                         BiomeKeys.SNOWY_PLAINS,
                         BiomeKeys.SNOWY_TAIGA
                 )
-                .addOptional(Identifier.of("terralith", "muskeg"))
+                .addOptional(Identifier.of(terralithNamespace, "muskeg"))
 
-                .addOptional(Identifier.of("regions_unexplored", "frozen_tundra"))
+                .addOptional(Identifier.of(regionsUnexploredNamespace, "frozen_tundra"))
         ;
+
+        getOrCreateTagBuilder(ModBiomeTags.SPAWNS_STOATS).add(
+                BiomeKeys.TAIGA,
+                BiomeKeys.SNOWY_TAIGA,
+                BiomeKeys.OLD_GROWTH_PINE_TAIGA,
+                BiomeKeys.OLD_GROWTH_SPRUCE_TAIGA,
+                BiomeKeys.GROVE
+        );
+
+        getOrCreateTagBuilder(ModBiomeTags.SPAWNS_CROCODILES).add(
+                BiomeKeys.SWAMP,
+                BiomeKeys.MANGROVE_SWAMP
+        );
+
+        getOrCreateTagBuilder(ModBiomeTags.SPAWNS_CHORUS_BEETLES).add(
+                BiomeKeys.END_HIGHLANDS
+        );
+
+	    getOrCreateTagBuilder(ModBiomeTags.SPAWNS_WOODPECKERS)
+                .add(
+                        BiomeKeys.OLD_GROWTH_PINE_TAIGA,
+                        BiomeKeys.OLD_GROWTH_BIRCH_FOREST
+                )
+                .addOptional(Identifier.of(clutterBiomesNamespace, "giant_redwood_forest"))
+        ;
+
+        getOrCreateTagBuilder(ModBiomeTags.SPAWNS_ARROWFISH).add(
+                BiomeKeys.SWAMP,
+                BiomeKeys.MANGROVE_SWAMP
+        );
     }
 }

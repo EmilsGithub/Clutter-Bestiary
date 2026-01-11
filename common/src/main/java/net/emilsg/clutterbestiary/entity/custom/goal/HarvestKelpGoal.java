@@ -19,7 +19,9 @@ public class HarvestKelpGoal extends MoveToTargetPosGoal {
 
     @Override
     public boolean canStart() {
-        return this.findTargetPos() && this.riverTurtleEntity.getRandom().nextFloat() <= this.chancePerTick && this.riverTurtleEntity.getWorld().isDay();
+        return this.riverTurtleEntity.getWorld().isDay()
+                && this.riverTurtleEntity.getRandom().nextFloat() <= this.chancePerTick
+                && this.findTargetPos();
     }
 
     @Override

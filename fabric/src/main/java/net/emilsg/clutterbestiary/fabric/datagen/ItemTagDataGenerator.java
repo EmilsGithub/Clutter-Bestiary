@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.minecraft.item.Items;
 import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.registry.tag.ItemTags;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -20,16 +21,27 @@ public class ItemTagDataGenerator extends FabricTagProvider.ItemTagProvider {
 
         /** Vanilla **/
 
+        getOrCreateTagBuilder(ItemTags.MEAT).add(
+                ModItems.RAW_VENISON.get(),
+                ModItems.COOKED_VENISON.get(),
+                ModItems.RAW_VENISON_RIBS.get(),
+                ModItems.COOKED_VENISON_RIBS.get()
+        );
+
         /** Common **/
 
         getOrCreateTagBuilder(ModItemTags.C_ENTITY_WATER_BUCKETS).add(
                 ModItems.SEAHORSE_BUCKET.get(),
-                ModItems.KOI_BUCKET.get()
+                ModItems.KOI_BUCKET.get(),
+                ModItems.RIVER_TURTLE_BUCKET.get(),
+                ModItems.JELLYFISH_BUCKET.get(),
+                ModItems.ARROWFISH_BUCKET.get()
         );
 
         getOrCreateTagBuilder(ModItemTags.C_EGGS).add(
                 ModItems.EMPEROR_PENGUIN_EGG.get(),
-                ModItems.KIWI_BIRD_EGG.get()
+                ModItems.KIWI_BIRD_EGG.get(),
+                ModItems.CROCODILE_EGG.get()
         );
 
         getOrCreateTagBuilder(ModItemTags.C_ELYTRA).add(

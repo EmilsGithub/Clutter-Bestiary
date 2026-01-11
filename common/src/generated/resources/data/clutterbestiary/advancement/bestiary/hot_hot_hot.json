@@ -1,0 +1,26 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "thats_hot": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.hot_hot_hot.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:ember_tortoise_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.bestiary.hot_hot_hot.title"
+    }
+  },
+  "requirements": [
+    [
+      "thats_hot"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

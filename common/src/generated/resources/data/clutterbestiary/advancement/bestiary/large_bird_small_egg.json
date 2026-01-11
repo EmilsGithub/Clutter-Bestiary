@@ -1,0 +1,33 @@
+{
+  "parent": "clutterbestiary:bestiary/happy_feet",
+  "criteria": {
+    "large_bird_small_egg": {
+      "conditions": {
+        "items": [
+          {
+            "items": "clutterbestiary:emperor_penguin_egg"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.large_bird_small_egg.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:emperor_penguin_egg"
+    },
+    "title": {
+      "translate": "advancements.bestiary.large_bird_small_egg.title"
+    }
+  },
+  "requirements": [
+    [
+      "large_bird_small_egg"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

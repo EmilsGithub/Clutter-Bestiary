@@ -1,8 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom;
 
-import net.emilsg.clutterbestiary.animation_handling.AnimationConditions;
-import net.emilsg.clutterbestiary.animation_handling.AnimationStateMachine;
-import net.emilsg.clutterbestiary.animation_handling.animation_states.RedPandaEntityAnimationState;
+import net.emilsg.clutterbestiary.animation_handling.EntityAnimationController;
+import net.emilsg.clutterbestiary.animation_handling.HandledEntityAnimations;
 import net.emilsg.clutterbestiary.animation_handling.animation_states.RiverTurtleAnimationState;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.goal.*;
@@ -32,9 +31,9 @@ import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.SalmonEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsage;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.recipe.Ingredient;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
@@ -50,26 +49,24 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import org.jetbrains.annotations.Nullable;
 
-public class RiverTurtleEntity extends ParentAnimalEntity {
+public class RiverTurtleEntity extends ParentAnimalEntity implements Bucketable, HandledEntityAnimations<RiverTurtleEntity, RiverTurtleAnimationState> {
+    private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.APPLE);
+    private static final int SIT_END_TICKS = 5;
+    private static final int UNHIDE_TICKS = 50;
     private static final TrackedData<String> VARIANT = DataTracker.registerData(RiverTurtleEntity.class, TrackedDataHandlerRegistry.STRING);
     private static final TrackedData<Integer> ANIMATION_STATE = DataTracker.registerData(RiverTurtleEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Integer> ANIMATION_REVISION = DataTracker.registerData(RiverTurtleEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Long> ANIMATION_START = DataTracker.registerData(RiverTurtleEntity.class, TrackedDataHandlerRegistry.LONG);
     private static final TrackedData<Integer> BASKING_DURATION = DataTracker.registerData(RiverTurtleEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Boolean> HIDING = DataTracker.registerData(RiverTurtleEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> IS_SITTING = DataTracker.registerData(RiverTurtleEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-
-    public final AnimationState hidingAnimationState = new AnimationState();
-    public final AnimationState unhidingAnimationState = new AnimationState();
-    public final AnimationState sitStartAnimationState = new AnimationState();
-    public final AnimationState sitEndAnimationState = new AnimationState();
+    private static final TrackedData<Boolean> FROM_BUCKET = DataTracker.registerData(RiverTurtleEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     protected final SwimNavigation waterNavigation;
     protected final MobNavigation landNavigation;
-    private RiverTurtleAnimationState lastSyncedAnimState = RiverTurtleAnimationState.IDLING;
-
-    private final AnimationStateMachine<RiverTurtleEntity, RiverTurtleAnimationState> animMachine = new AnimationStateMachine<>(this, RiverTurtleAnimationState.IDLING, RiverTurtleAnimationState.class);
-
-
+    private final EntityAnimationController<RiverTurtleEntity, RiverTurtleAnimationState> animationController = new EntityAnimationController<>(this, RiverTurtleAnimationState.IDLING, RiverTurtleAnimationState.class, ANIMATION_STATE, ANIMATION_REVISION, ANIMATION_START);
     private int healthTicker = 0;
+    private int healCooldown;
     private boolean canHealPassively = false;
 
     public RiverTurtleEntity(EntityType<? extends AnimalEntity> entityType, World world) {
@@ -79,7 +76,7 @@ public class RiverTurtleEntity extends ParentAnimalEntity {
         this.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
         this.waterNavigation = new SwimNavigation(this, world);
         this.landNavigation = new MobNavigation(this, world);
-        this.setupAnimationStateMachine();
+        this.setupAnimationController();
     }
 
     @Override
@@ -107,41 +104,21 @@ public class RiverTurtleEntity extends ParentAnimalEntity {
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
         builder.add(ANIMATION_STATE, RiverTurtleAnimationState.IDLING.getIndex());
+        builder.add(ANIMATION_REVISION, 0);
+        builder.add(ANIMATION_START, -1L);
         builder.add(BASKING_DURATION, 0);
         builder.add(HIDING, false);
-        builder.add(VARIANT, RiverTurtleVariant.SANDY.getId());
+        builder.add(VARIANT, RiverTurtleVariant.SANDY.getID());
         builder.add(IS_SITTING, false);
+        builder.add(FROM_BUCKET, false);
     }
 
-    public void copyDataFromNbt(RiverTurtleEntity entity, NbtCompound nbt) {
-        if (nbt.contains("NoAI")) {
-            entity.setAiDisabled(nbt.getBoolean("NoAI"));
-        }
-
-        if (nbt.contains("Silent")) {
-            entity.setSilent(nbt.getBoolean("Silent"));
-        }
-
-        if (nbt.contains("NoGravity")) {
-            entity.setNoGravity(nbt.getBoolean("NoGravity"));
-        }
-
-        if (nbt.contains("Glowing")) {
-            entity.setGlowing(nbt.getBoolean("Glowing"));
-        }
-
-        if (nbt.contains("Invulnerable")) {
-            entity.setInvulnerable(nbt.getBoolean("Invulnerable"));
-        }
-
+    @Override
+    public void copyDataFromNbt(NbtCompound nbt) {
+        Bucketable.copyDataFromNbt(this, nbt);
         if (nbt.contains("Variant")) {
-            entity.setVariant(RiverTurtleVariant.fromId(nbt.getString("Variant")));
+            this.setVariant(RiverTurtleVariant.fromId(nbt.getString("Variant")));
         }
-
-        if (nbt.contains("Health", 99)) {
-            entity.setHealth(nbt.getFloat("Health"));
-        }
-
     }
 
     @Override
@@ -150,6 +127,7 @@ public class RiverTurtleEntity extends ParentAnimalEntity {
         this.setBaskingDuration(nbt.getInt("BaskingDuration"));
         this.setVariant(RiverTurtleVariant.fromId(nbt.getString("Variant")));
         this.setSit(nbt.getBoolean("IsSitting"));
+        this.setFromBucket(nbt.getBoolean("FromBucket"));
     }
 
     public void writeCustomDataToNbt(NbtCompound nbt) {
@@ -157,6 +135,7 @@ public class RiverTurtleEntity extends ParentAnimalEntity {
         nbt.putInt("BaskingDuration", this.getBaskingDuration());
         nbt.putString("Variant", this.getTypeVariant());
         nbt.putBoolean("IsSitting", this.isSat());
+        nbt.putBoolean("FromBucket", this.isFromBucket());
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
@@ -170,32 +149,10 @@ public class RiverTurtleEntity extends ParentAnimalEntity {
         return world.getBlockState(pos.down()).isIn(ModBlockTags.RIVER_TURTLES_SPAWN_ON);
     }
 
-    public void copyDataToStack(RiverTurtleEntity entity, ItemStack stack) {
-        stack.set(DataComponentTypes.CUSTOM_NAME, entity.getCustomName());
-        NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, (nbtCompound) -> {
-            if (entity.isAiDisabled()) {
-                nbtCompound.putBoolean("NoAI", entity.isAiDisabled());
-            }
-
-            if (entity.isSilent()) {
-                nbtCompound.putBoolean("Silent", entity.isSilent());
-            }
-
-            if (entity.hasNoGravity()) {
-                nbtCompound.putBoolean("NoGravity", entity.hasNoGravity());
-            }
-
-            if (entity.isGlowing()) {
-                nbtCompound.putBoolean("Glowing", entity.isGlowing());
-            }
-
-            if (entity.isInvulnerable()) {
-                nbtCompound.putBoolean("Invulnerable", entity.isInvulnerable());
-            }
-
-            nbtCompound.putFloat("Health", entity.getHealth());
-            nbtCompound.putString("Variant", entity.getTypeVariant());
-        });
+    @Override
+    public void copyDataToStack(ItemStack stack) {
+        Bucketable.copyDataToStack(this, stack);
+        NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, nbt -> nbt.putString("Variant", this.getTypeVariant()));
     }
 
     @Nullable
@@ -214,6 +171,16 @@ public class RiverTurtleEntity extends ParentAnimalEntity {
         this.dataTracker.set(BASKING_DURATION, baskingDuration);
     }
 
+    @Override
+    public int getMinAmbientSoundDelay() {
+        return 240;
+    }
+
+    @Override
+    public float getSoundPitch() {
+        return super.getSoundPitch() * 1.25f;
+    }
+
     public String getTypeVariant() {
         return this.dataTracker.get(VARIANT);
     }
@@ -223,20 +190,37 @@ public class RiverTurtleEntity extends ParentAnimalEntity {
     }
 
     public void setVariant(RiverTurtleVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId());
+        this.dataTracker.set(VARIANT, variant.getID());
+    }
+
+    @Override
+    public boolean isFromBucket() {
+        return this.dataTracker.get(FROM_BUCKET);
+    }
+
+    @Override
+    public void setFromBucket(boolean fromBucket) {
+        this.dataTracker.set(FROM_BUCKET, fromBucket);
+    }
+
+    @Override
+    public ItemStack getBucketItem() {
+        return new ItemStack(ModItems.RIVER_TURTLE_BUCKET.get());
+    }
+
+    @Override
+    public SoundEvent getBucketFillSound() {
+        return SoundEvents.ITEM_BUCKET_FILL_AXOLOTL;
     }
 
     @Override
     public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        if (this.tryBucket(player, hand, this)) {
-            return ActionResult.SUCCESS;
-        }
-        return super.interactMob(player, hand);
+        return Bucketable.tryBucket(player, hand, this).orElseGet(() -> super.interactMob(player, hand));
     }
 
     @Override
     public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(Items.APPLE);
+        return BREEDING_INGREDIENT.test(stack);
     }
 
     public boolean isHiding() {
@@ -248,83 +232,45 @@ public class RiverTurtleEntity extends ParentAnimalEntity {
         return false;
     }
 
+    public boolean isSat() {
+        return this.dataTracker.get(IS_SITTING);
+    }
+
     public void onDeath(DamageSource damageSource) {
         this.startState(RiverTurtleAnimationState.IDLING);
         super.onDeath(damageSource);
     }
 
+    @Override
     public void onTrackedDataSet(TrackedData<?> data) {
-        if (ANIMATION_STATE.equals(data)) {
-            RiverTurtleAnimationState animationState = RiverTurtleAnimationState.fromIndex(this.getState());
-            this.stopAnimations();
-            switch (animationState) {
-                case HIDING -> this.hidingAnimationState.startIfNotRunning(this.age);
-                case UNHIDING -> this.unhidingAnimationState.startIfNotRunning(this.age);
-                case SIT_START -> this.sitStartAnimationState.startIfNotRunning(this.age);
-                case SIT_END -> this.sitEndAnimationState.startIfNotRunning(this.age);
-                default -> {
-                }
-            }
-
-            this.calculateDimensions();
-        }
-
+        if (ANIMATION_STATE.equals(data)) this.calculateDimensions();
         super.onTrackedDataSet(data);
-    }
-
-    @Override
-    protected @Nullable SoundEvent getAmbientSound() {
-        return ModSoundEvents.ENTITY_RIVER_TURTLE_AMBIENT.get();
-    }
-
-    @Override
-    public int getMinAmbientSoundDelay() {
-        return 240;
-    }
-
-    @Override
-    protected @Nullable SoundEvent getHurtSound(DamageSource source) {
-        return ModSoundEvents.ENTITY_RIVER_TURTLE_HURT.get();
-    }
-
-    @Override
-    public float getSoundPitch() {
-        return super.getSoundPitch() * 1.25f;
     }
 
     public void setIsHiding(boolean isHiding) {
         this.dataTracker.set(HIDING, isHiding);
     }
 
-    public void startState(RiverTurtleAnimationState state) {
-        switch (state) {
-            case IDLING -> this.setState(RiverTurtleAnimationState.IDLING.getIndex());
-            case HIDING -> this.setState(RiverTurtleAnimationState.HIDING.getIndex());
-            case UNHIDING -> this.setState(RiverTurtleAnimationState.UNHIDING.getIndex());
-            case SIT_START -> this.setState(RiverTurtleAnimationState.SIT_START.getIndex());
-            case SIT_END -> this.setState(RiverTurtleAnimationState.SIT_END.getIndex());
-        }
+    public void setSit(boolean sitting) {
+        this.dataTracker.set(IS_SITTING, sitting);
+    }
+
+    private void setupAnimationController() {
+        animationController.addTransition(RiverTurtleAnimationState.IDLING, RiverTurtleAnimationState.SIT_START, (e, s, age) -> e.isSat());
+        animationController.addTransition(RiverTurtleAnimationState.SIT_START, RiverTurtleAnimationState.SIT_END, (e, s, age) -> !e.isSat());
+        animationController.addTransition(RiverTurtleAnimationState.SIT_END, RiverTurtleAnimationState.SIT_START, (e, s, age) -> e.isSat());
+        animationController.addCompletion(RiverTurtleAnimationState.SIT_END, RiverTurtleAnimationState.IDLING, SIT_END_TICKS);
+        animationController.addCompletion(RiverTurtleAnimationState.UNHIDING, RiverTurtleAnimationState.IDLING, UNHIDE_TICKS);
+    }
+
+    @Override
+    public EntityAnimationController<RiverTurtleEntity, RiverTurtleAnimationState> getAnimationController() {
+        return animationController;
     }
 
     @Override
     public void tick() {
         if (!this.getWorld().isClient()) {
-            boolean changed = animMachine.tick();
-            RiverTurtleAnimationState current = animMachine.getCurrent();
-
-            if (!changed) {
-                RiverTurtleAnimationState tracked = RiverTurtleAnimationState.fromIndex(this.getState());
-                if (tracked != current) {
-                    animMachine.forceState(tracked);
-                    current = tracked;
-                }
-            }
-
-            if (current != lastSyncedAnimState) {
-                this.setState(current.getIndex());
-                lastSyncedAnimState = current;
-            }
-
             if (this.getBaskingDuration() > 0) this.setBaskingDuration(this.getBaskingDuration() - 1);
 
             if (this.getHealth() < this.getMaxHealth()) {
@@ -334,20 +280,25 @@ public class RiverTurtleEntity extends ParentAnimalEntity {
                 }
 
                 if (canHealPassively) {
+                    if (this.healCooldown == 0) this.healCooldown = 150 + random.nextInt(100);
                     healthTicker++;
 
-                    if (healthTicker >= 150 + random.nextInt(100)) {
+                    if (healthTicker >= this.healCooldown) {
                         this.heal(1);
                         healthTicker = 0;
+                        this.healCooldown = 0;
                     }
                 }
             } else {
                 canHealPassively = false;
+                healthTicker = 0;
+                this.healCooldown = 0;
                 this.setIsHiding(false);
             }
         }
 
         super.tick();
+        this.animationController.tick();
     }
 
     public void travel(Vec3d movementInput) {
@@ -369,6 +320,16 @@ public class RiverTurtleEntity extends ParentAnimalEntity {
     }
 
     @Override
+    protected @Nullable SoundEvent getAmbientSound() {
+        return ModSoundEvents.ENTITY_RIVER_TURTLE_AMBIENT.get();
+    }
+
+    @Override
+    protected @Nullable SoundEvent getHurtSound(DamageSource source) {
+        return ModSoundEvents.ENTITY_RIVER_TURTLE_HURT.get();
+    }
+
+    @Override
     protected int getNextAirUnderwater(int air) {
         return air;
     }
@@ -382,37 +343,6 @@ public class RiverTurtleEntity extends ParentAnimalEntity {
         }
 
         this.limbAnimator.updateLimbs(f * 1.15f, 0.7F);
-    }
-
-    private int getState() {
-        return this.dataTracker.get(ANIMATION_STATE);
-    }
-
-    private void setState(int state) {
-        this.dataTracker.set(ANIMATION_STATE, state);
-    }
-
-    private void stopAnimations() {
-        this.hidingAnimationState.stop();
-        this.unhidingAnimationState.stop();
-        this.sitStartAnimationState.stop();
-        this.sitEndAnimationState.stop();
-    }
-
-    private boolean tryBucket(PlayerEntity player, Hand hand, RiverTurtleEntity entity) {
-        ItemStack itemStack = player.getStackInHand(hand);
-        if (itemStack.getItem() == Items.WATER_BUCKET && entity.isAlive()) {
-            entity.playSound(SoundEvents.ITEM_BUCKET_FILL_AXOLOTL, 1.0F, 0.75F);
-            ItemStack bucketStack = new ItemStack(ModItems.RIVER_TURTLE_BUCKET.get());
-            copyDataToStack(entity, bucketStack);
-            ItemStack riverTurtleBucketStack = ItemUsage.exchangeStack(itemStack, player, bucketStack, false);
-            player.swingHand(hand);
-            player.setStackInHand(hand, riverTurtleBucketStack);
-
-            entity.discard();
-            return true;
-        }
-        return false;
     }
 
     private static class RiverTurtleMoveControl extends MoveControl {
@@ -449,37 +379,6 @@ public class RiverTurtleEntity extends ParentAnimalEntity {
                 super.tick();
             }
         }
-    }
-
-    public boolean isSat() {
-        return this.dataTracker.get(IS_SITTING);
-    }
-
-    public void setSit(boolean sitting) {
-        this.dataTracker.set(IS_SITTING, sitting);
-    }
-
-    public void setupAnimationStateMachine() {
-        animMachine.addTransition(
-                RiverTurtleAnimationState.IDLING,
-                RiverTurtleAnimationState.SIT_START,
-                (e, s, age) -> e.isSat()
-        );
-
-        animMachine.addTransition(
-                RiverTurtleAnimationState.SIT_START,
-                RiverTurtleAnimationState.SIT_END,
-                (e, s, age) -> !e.isSat()
-        );
-
-        animMachine.addTransition(
-                RiverTurtleAnimationState.SIT_END,
-                RiverTurtleAnimationState.IDLING,
-                AnimationConditions.and(
-                        (e, s, age) -> !e.isSat(),
-                        AnimationConditions.timeAtLeast(5)
-                )
-        );
     }
 
     private static class RiverTurtleSwimNavigation extends AmphibiousSwimNavigation {

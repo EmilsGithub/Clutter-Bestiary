@@ -1,6 +1,5 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
-import net.emilsg.clutterbestiary.animation_handling.animation_states.RedPandaEntityAnimationState;
 import net.emilsg.clutterbestiary.entity.custom.RedPandaEntity;
 import net.minecraft.entity.ai.goal.Goal;
 
@@ -31,7 +30,6 @@ public class RedPandaSleepGoal extends Goal {
     @Override
     public void start() {
         this.redPandaEntity.getNavigation().stop();
-        this.redPandaEntity.startState(RedPandaEntityAnimationState.LAYING_DOWN);
     }
 
     @Override
@@ -39,6 +37,5 @@ public class RedPandaSleepGoal extends Goal {
         this.redPandaEntity.setSleepTracker(0);
         this.redPandaEntity.setSleepTimer(0);
         this.redPandaEntity.setIsSleeping(false);
-        this.redPandaEntity.startState(RedPandaEntityAnimationState.STANDING_UP);
     }
 }

@@ -1,6 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom;
 
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
+import net.emilsg.clutterbestiary.entity.custom.goal.PotionWaspWanderAroundGoal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.entity.variants.PotionWaspVariant;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
@@ -9,11 +10,8 @@ import net.minecraft.entity.AnimationState;
 import net.minecraft.entity.EntityData;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.ai.AboveGroundTargeting;
-import net.minecraft.entity.ai.NoPenaltySolidTargeting;
 import net.minecraft.entity.ai.control.FlightMoveControl;
 import net.minecraft.entity.ai.control.LookControl;
-import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.ai.pathing.BirdNavigation;
 import net.minecraft.entity.ai.pathing.EntityNavigation;
 import net.minecraft.entity.attribute.DefaultAttributeContainer;
@@ -24,21 +22,17 @@ import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
 import java.util.List;
 
 public class PotionWaspEntity extends ParentAnimalEntity {
@@ -47,11 +41,12 @@ public class PotionWaspEntity extends ParentAnimalEntity {
 
     public final AnimationState flyingAnimState = new AnimationState();
     private int animationTimeout = 0;
+    private int regrowthTicker = 0;
 
     public PotionWaspEntity(EntityType<? extends AnimalEntity> entityType, World world) {
         super(entityType, world);
         this.moveControl = new FlightMoveControl(this, 20, true);
-        this.lookControl = new PotionWaspLookControl(this);
+        this.lookControl = new LookControl(this);
     }
 
     @Override
@@ -80,12 +75,14 @@ public class PotionWaspEntity extends ParentAnimalEntity {
         super.readCustomDataFromNbt(nbt);
         this.dataTracker.set(VARIANT, nbt.getString("Variant"));
         this.dataTracker.set(HAS_POTION_SAC, nbt.getBoolean("HasPotionSac"));
+        this.regrowthTicker = Math.max(0, nbt.getInt("RegrowthTicker"));
     }
 
     public void writeCustomDataToNbt(NbtCompound nbt) {
         super.writeCustomDataToNbt(nbt);
         nbt.putString("Variant", this.getTypeVariant());
         nbt.putBoolean("HasPotionSac", this.hasPotionSac());
+        nbt.putInt("RegrowthTicker", this.regrowthTicker);
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
@@ -116,11 +113,12 @@ public class PotionWaspEntity extends ParentAnimalEntity {
 
     @Override
     public boolean damage(DamageSource source, float amount) {
+        if (!super.damage(source, amount)) return false;
         if (this.hasPotionSac()) {
             if (this.getWorld() instanceof ServerWorld serverWorld) {
                 PotionSacEntity potionSacEntity = ModEntityTypes.POTION_SAC.get().create(serverWorld);
 
-                if (potionSacEntity == null) return super.damage(source, amount);
+                if (potionSacEntity == null) return true;
 
                 potionSacEntity.setVariant(this.getVariant());
                 potionSacEntity.setPosition(this.getPos().add(0D, -0.25D, 0D));
@@ -130,7 +128,7 @@ public class PotionWaspEntity extends ParentAnimalEntity {
                 this.setHasPotionSac(false);
             }
         }
-        return super.damage(source, amount);
+        return true;
     }
 
     public float getPathfindingFavor(BlockPos pos, WorldView world) {
@@ -177,6 +175,16 @@ public class PotionWaspEntity extends ParentAnimalEntity {
         super.tick();
         World world = this.getWorld();
 
+        if (!world.isClient && !this.hasPotionSac()) {
+            if (this.regrowthTicker >= 1200) {
+                if (random.nextFloat() <= 0.0125) {
+                    this.setHasPotionSac(true);
+                    this.regrowthTicker = 0;
+                }
+            }
+            this.regrowthTicker++;
+        }
+
         if (world.isClient) {
             this.setupAnimationStates();
         }
@@ -199,62 +207,12 @@ public class PotionWaspEntity extends ParentAnimalEntity {
     protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
     }
 
-    @Override
-    protected @Nullable SoundEvent getAmbientSound() {
-        return null;
-    }
-
     private void setupAnimationStates() {
         if (this.animationTimeout <= 0) {
             this.animationTimeout = 40;
             this.flyingAnimState.start(this.age);
         } else {
             --this.animationTimeout;
-        }
-    }
-
-    static class PotionWaspLookControl extends LookControl {
-        PotionWaspLookControl(MobEntity entity) {
-            super(entity);
-        }
-
-        public void tick() {
-            super.tick();
-        }
-
-        protected boolean shouldStayHorizontal() {
-            return true;
-        }
-    }
-
-    class PotionWaspWanderAroundGoal extends Goal {
-
-        PotionWaspWanderAroundGoal(PotionWaspEntity potionWasp) {
-            this.setControls(EnumSet.of(Control.MOVE));
-        }
-
-        public boolean canStart() {
-            return PotionWaspEntity.this.navigation.isIdle() && PotionWaspEntity.this.random.nextInt(4) == 0;
-        }
-
-        public boolean shouldContinue() {
-            return PotionWaspEntity.this.navigation.isFollowingPath();
-        }
-
-        public void start() {
-            Vec3d vec3d = this.getRandomLocation();
-            if (vec3d != null) {
-                PotionWaspEntity.this.navigation.startMovingAlong(PotionWaspEntity.this.navigation.findPathTo(BlockPos.ofFloored(vec3d), 1), 1.0F);
-            }
-
-        }
-
-        @Nullable
-        private Vec3d getRandomLocation() {
-            Vec3d vec3d2 = PotionWaspEntity.this.getRotationVec(0.0F);
-
-            Vec3d vec3d3 = AboveGroundTargeting.find(PotionWaspEntity.this, 8, 7, vec3d2.x, vec3d2.z, ((float) Math.PI / 2F), 3, 1);
-            return vec3d3 != null ? vec3d3 : NoPenaltySolidTargeting.find(PotionWaspEntity.this, 8, 4, -2, vec3d2.x, vec3d2.z, (float) Math.PI / 2F);
         }
     }
 

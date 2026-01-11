@@ -1,5 +1,7 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import net.emilsg.clutterbestiary.animation_handling.animation_states.CoatiEntityAnimationState;
+import net.emilsg.clutterbestiary.entity.client.animation.AnimationBindings;
 import net.emilsg.clutterbestiary.entity.client.animation.CoatiAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.ParentTameableModel;
 import net.emilsg.clutterbestiary.entity.custom.CoatiEntity;
@@ -8,6 +10,14 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 
 public class CoatiModel<T extends CoatiEntity> extends ParentTameableModel<T> {
+    private static final AnimationBindings<CoatiEntity, CoatiEntityAnimationState> ANIMATIONS = new AnimationBindings<CoatiEntity, CoatiEntityAnimationState>()
+            .bind(CoatiEntityAnimationState.IDLING, CoatiAnimations.COATI_IDLE)
+            .bind(CoatiEntityAnimationState.SITTING, CoatiAnimations.COATI_SIT_START)
+            .bind(CoatiEntityAnimationState.STANDING_UP, CoatiAnimations.COATI_SIT_STOP)
+            .bind(CoatiEntityAnimationState.SNIFFING, CoatiAnimations.COATI_SNIFF)
+            .bind(CoatiEntityAnimationState.DIGGING, CoatiAnimations.COATI_DIG, CoatiEntity.DIG_ANIMATION_SPEED)
+            .bind(CoatiEntityAnimationState.UNBURROWING, CoatiAnimations.COATI_UNBURROW)
+            .bind(CoatiEntityAnimationState.PICKING_UP_ITEM, CoatiAnimations.COATI_PICK_UP_ITEM);
     private final ModelPart root;
     private final ModelPart all;
     private final ModelPart body;
@@ -90,13 +100,7 @@ public class CoatiModel<T extends CoatiEntity> extends ParentTameableModel<T> {
             this.animateMovement(CoatiAnimations.COATI_WALK, limbAngle, limbDistance, 3f, 2f);
         }
 
-        this.updateAnimation(entity.diggingAnimationState, CoatiAnimations.COATI_DIG, animationProgress, 2.0f);
-        this.updateAnimation(entity.sniffingAnimationState, CoatiAnimations.COATI_SNIFF, animationProgress, 1.0f);
-        this.updateAnimation(entity.sittingAnimationState, CoatiAnimations.COATI_SIT_START, animationProgress, 1.0f);
-        this.updateAnimation(entity.standingUpAnimationState, CoatiAnimations.COATI_SIT_STOP, animationProgress, 1.0f);
-        this.updateAnimation(entity.unBurrowingAnimationState, CoatiAnimations.COATI_UNBURROW, animationProgress, 1.0f);
-        this.updateAnimation(entity.pickUpItemAnimationState, CoatiAnimations.COATI_PICK_UP_ITEM, animationProgress, 1.0f);
-        this.updateAnimation(entity.idlingAnimationState, CoatiAnimations.COATI_IDLE, animationProgress, 1.0f);
+        ANIMATIONS.apply(entity, entity.getAnimationController(), animationProgress, this::updateAnimation);
         this.updateAnimation(entity.leftEarTwitchAnimationState, CoatiAnimations.COATI_LEFT_EAR_TWITCH, animationProgress, 1.0f);
         this.updateAnimation(entity.rightEarTwitchAnimationState, CoatiAnimations.COATI_RIGHT_EAR_TWITCH, animationProgress, 1.0f);
 

@@ -4,9 +4,13 @@
   "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
   "client": [
+    "CapeFeatureRendererMixin",
+    "ClientPlayerEntityMixin",
     "ElytraFeatureRendererMixin"
   ],
   "mixins": [
+    "LivingEntityMixin",
+    "PlayerEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

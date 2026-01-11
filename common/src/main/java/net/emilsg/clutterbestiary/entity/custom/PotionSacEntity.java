@@ -89,26 +89,19 @@ public class PotionSacEntity extends MobEntity {
     }
 
     @Override
-    public boolean isCollidable() {
-        return false;
-    }
-
-    @Override
     public void tick() {
         super.tick();
+        if (!(this.getWorld() instanceof ServerWorld serverWorld) || !this.isAlive()) return;
+        if (!this.isOnGround() && !this.horizontalCollision && !this.isInsideWall()) return;
 
-        if (this.isOnGround() || this.horizontalCollision || this.isInsideWall() && this.isAlive()) {
-            World world = this.getWorld();
-            AreaEffectCloudEntity potionCloud = EntityType.AREA_EFFECT_CLOUD.create(world);
-            if (this.getWorld() instanceof ServerWorld serverWorld && potionCloud != null) {
-                potionCloud.setPotionContents(new PotionContentsComponent(this.getVariant().getPotionEffect()));
-                potionCloud.setDuration(300);
-                potionCloud.setRadius(1.5f);
-                potionCloud.setPosition(this.getPos());
-                serverWorld.spawnEntity(potionCloud);
-                this.kill();
-            }
-        }
+        AreaEffectCloudEntity potionCloud = EntityType.AREA_EFFECT_CLOUD.create(serverWorld);
+        if (potionCloud == null) return;
+
+        potionCloud.setPotionContents(new PotionContentsComponent(this.getVariant().getPotionEffect()));
+        potionCloud.setDuration(300);
+        potionCloud.setRadius(1.5f);
+        potionCloud.setPosition(this.getPos());
+        if (serverWorld.spawnEntity(potionCloud)) this.discard();
     }
 
     @Override

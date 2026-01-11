@@ -1,10 +1,21 @@
 package net.emilsg.clutterbestiary.entity.custom;
 
-import net.emilsg.clutterbestiary.animation_handling.AnimationConditions;
-import net.emilsg.clutterbestiary.animation_handling.AnimationStateMachine;
+import net.emilsg.clutterbestiary.animation_handling.AnimationPlayback;
+import net.emilsg.clutterbestiary.animation_handling.EntityAnimationController;
+import net.emilsg.clutterbestiary.animation_handling.HandledEntityAnimations;
+import net.emilsg.clutterbestiary.animation_handling.IdleAnimationGroup;
 import net.emilsg.clutterbestiary.animation_handling.animation_states.CapybaraEntityAnimationState;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
+import net.emilsg.clutterbestiary.entity.custom.goal.CapybaraEscapeDangerGoal;
+import net.emilsg.clutterbestiary.entity.custom.goal.CapybaraFollowOwnerGoal;
+import net.emilsg.clutterbestiary.entity.custom.goal.CapybaraLookAroundGoal;
+import net.emilsg.clutterbestiary.entity.custom.goal.CapybaraLookAtEntityGoal;
+import net.emilsg.clutterbestiary.entity.custom.goal.CapybaraMateGoal;
+import net.emilsg.clutterbestiary.entity.custom.goal.CapybaraSitGoal;
+import net.emilsg.clutterbestiary.entity.custom.goal.CapybaraTemptGoal;
+import net.emilsg.clutterbestiary.entity.custom.goal.CapybaraWanderGoal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
+import net.emilsg.clutterbestiary.util.ModAdvancements;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.FoodComponent;
@@ -17,8 +28,6 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -41,36 +50,36 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
 import java.util.List;
 
-public class CapybaraEntity extends ParentTameableEntity {
+public class CapybaraEntity extends ParentTameableEntity implements HandledEntityAnimations<CapybaraEntity, CapybaraEntityAnimationState> {
+    private static final int LAY_DOWN_TICKS = 10;
+    private static final int STAND_UP_TICKS = 10;
     private static final TrackedData<Boolean> IS_SLEEPING = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> FORCE_SLEEPING = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Integer> SLEEPER = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Integer> ANIMATION_STATE = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Integer> ANIMATION_REVISION = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Long> ANIMATION_START = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.LONG);
 
     private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.MELON);
+    private static final Item TAMING_ITEM = Items.MELON_SLICE;
     public final AnimationState earTwitchAnimationStateOne = new AnimationState();
     public final AnimationState earTwitchAnimationStateTwo = new AnimationState();
 
-    public final AnimationState idlingAnimationState = new AnimationState();
-    public final AnimationState layingDownAnimationState = new AnimationState();
-    public final AnimationState sleepingAnimationState = new AnimationState();
-    public final AnimationState standingUpAnimationState = new AnimationState();
     public final AnimationState swimAnimationState = new AnimationState();
 
-    private final AnimationStateMachine<CapybaraEntity, CapybaraEntityAnimationState> animMachine = new AnimationStateMachine<>(this, CapybaraEntityAnimationState.IDLING, CapybaraEntityAnimationState.class);
-    public int earTwitchAnimationTimeout = 0;
-    public int swimAnimationTimeout = 0;
-    private CapybaraEntityAnimationState lastSyncedAnimState = CapybaraEntityAnimationState.IDLING;
+    private final EntityAnimationController<CapybaraEntity, CapybaraEntityAnimationState> animationController = new EntityAnimationController<>(this, CapybaraEntityAnimationState.IDLING, CapybaraEntityAnimationState.class, ANIMATION_STATE, ANIMATION_REVISION, ANIMATION_START);
+    private final IdleAnimationGroup idleAnimations = new IdleAnimationGroup(3, 3, 100)
+            .add(1, earTwitchAnimationStateOne)
+            .add(1, earTwitchAnimationStateTwo);
 
     public CapybaraEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
         super(entityType, world);
         this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
         this.setPathfindingPenalty(PathNodeType.WATER, -1.0F);
         this.setPathfindingPenalty(PathNodeType.WATER_BORDER, 16.0F);
-        this.setupAnimationStateMachine();
+        this.setupAnimationController();
     }
 
     @Override
@@ -87,6 +96,8 @@ public class CapybaraEntity extends ParentTameableEntity {
         builder.add(FORCE_SLEEPING, false);
         builder.add(SLEEPER, 0);
         builder.add(ANIMATION_STATE, CapybaraEntityAnimationState.IDLING.getIndex());
+        builder.add(ANIMATION_REVISION, 0);
+        builder.add(ANIMATION_START, -1L);
     }
 
     @Override
@@ -145,14 +156,20 @@ public class CapybaraEntity extends ParentTameableEntity {
     @Override
     public boolean damage(DamageSource source, float amount) {
         if (source.getSource() instanceof ProjectileEntity projectile && this.isSleeping()) {
-            projectile.setVelocity(projectile.getVelocity().multiply(-1));
+            if (!this.getWorld().isClient) projectile.setVelocity(projectile.getVelocity().multiply(-1));
             return false;
         }
 
         return super.damage(source, amount);
     }
 
+    @Override
+    public Item getTamingItem() {
+        return TAMING_ITEM;
+    }
+
     public void healNearbyEntities(Entity centerEntity, double radius) {
+        if (this.getWorld().isClient) return;
         if (random.nextInt(1000) != 0) return;
 
         Box area = new Box(
@@ -173,9 +190,10 @@ public class CapybaraEntity extends ParentTameableEntity {
         ItemStack stackInHand = player.getStackInHand(hand);
         Item item = stackInHand.getItem();
 
-        Item itemForTaming = Items.MELON_SLICE;
+        Item itemForTaming = this.getTamingItem();
 
         if (item == itemForTaming && this.getHealth() < this.getMaxHealth()) {
+            if (this.getWorld().isClient) return ActionResult.CONSUME;
             if (!player.getAbilities().creativeMode) {
                 stackInHand.decrement(1);
             }
@@ -197,6 +215,7 @@ public class CapybaraEntity extends ParentTameableEntity {
 
                 if (this.random.nextInt(3) == 0 && !this.getWorld().isClient()) {
                     super.setOwner(player);
+                    ModAdvancements.grant(player, ModAdvancements.MELON_FRIENDS);
                     this.navigation.recalculatePath();
                     this.setHealth(this.getMaxHealth());
                     this.setTarget(null);
@@ -227,7 +246,7 @@ public class CapybaraEntity extends ParentTameableEntity {
 
     @Override
     public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(Items.MELON);
+        return BREEDING_INGREDIENT.test(stack);
     }
 
     public boolean isForceSleeping() {
@@ -243,21 +262,6 @@ public class CapybaraEntity extends ParentTameableEntity {
         super.onDeath(damageSource);
     }
 
-    public void onTrackedDataSet(TrackedData<?> data) {
-        if (ANIMATION_STATE.equals(data)) {
-            int state = this.getState();
-            this.stopAnimations();
-            switch (state) {
-                case 1 -> this.layingDownAnimationState.startIfNotRunning(this.age);
-                case 2 -> this.sleepingAnimationState.startIfNotRunning(this.age);
-                case 3 -> this.standingUpAnimationState.startIfNotRunning(this.age);
-                default -> this.idlingAnimationState.startIfNotRunning(this.age);
-            }
-        }
-
-        super.onTrackedDataSet(data);
-    }
-
     public void setIsForceSleeping(boolean isForceSleeping) {
         if (!this.isTamed()) isForceSleeping = false;
         this.dataTracker.set(FORCE_SLEEPING, isForceSleeping);
@@ -271,84 +275,30 @@ public class CapybaraEntity extends ParentTameableEntity {
         this.dataTracker.set(SLEEPER, sleeperType);
     }
 
-    public void setupAnimationStateMachine() {
-        animMachine.addTransition(
-                CapybaraEntityAnimationState.IDLING,
-                CapybaraEntityAnimationState.LAYING_DOWN,
-                (e, s, age) -> e.isSleeping() || e.isForceSleeping()
-        );
-
-        animMachine.addTransition(
-                CapybaraEntityAnimationState.LAYING_DOWN,
-                CapybaraEntityAnimationState.SLEEPING,
-                AnimationConditions.and(
-                        (e, s, age) -> e.isSleeping() || e.isForceSleeping(),
-                        AnimationConditions.timeAtLeast(10)
-                )
-        );
-
-        animMachine.addTransition(
-                CapybaraEntityAnimationState.SLEEPING,
-                CapybaraEntityAnimationState.STANDING_UP,
-                (e, s, age) -> !e.isSleeping() && !e.isForceSleeping()
-
-        );
-
-        animMachine.addTransition(
-                CapybaraEntityAnimationState.STANDING_UP,
-                CapybaraEntityAnimationState.IDLING,
-                AnimationConditions.and(
-                        (e, s, age) -> !e.isSleeping() && !e.isForceSleeping(),
-                        AnimationConditions.timeAtLeast(10)
-                )
-        );
+    private void setupAnimationController() {
+        animationController.addTransition(CapybaraEntityAnimationState.IDLING, CapybaraEntityAnimationState.LAYING_DOWN, (e, s, age) -> e.isSleeping() || e.isForceSleeping());
+        animationController.addTransition(CapybaraEntityAnimationState.LAYING_DOWN, CapybaraEntityAnimationState.STANDING_UP, (e, s, age) -> !e.isSleeping() && !e.isForceSleeping());
+        animationController.addCompletion(CapybaraEntityAnimationState.LAYING_DOWN, CapybaraEntityAnimationState.SLEEPING, LAY_DOWN_TICKS);
+        animationController.addTransition(CapybaraEntityAnimationState.SLEEPING, CapybaraEntityAnimationState.STANDING_UP, (e, s, age) -> !e.isSleeping() && !e.isForceSleeping());
+        animationController.addTransition(CapybaraEntityAnimationState.STANDING_UP, CapybaraEntityAnimationState.LAYING_DOWN, (e, s, age) -> e.isSleeping() || e.isForceSleeping());
+        animationController.addCompletion(CapybaraEntityAnimationState.STANDING_UP, CapybaraEntityAnimationState.IDLING, STAND_UP_TICKS);
     }
 
     public int sleeperType() {
         return this.dataTracker.get(SLEEPER);
     }
 
-    public void startState(CapybaraEntityAnimationState state) {
-        if (!this.getWorld().isClient) {
-            animMachine.forceState(state);
-            this.setState(state.getIndex());
-            lastSyncedAnimState = state;
-        }
-    }
-
-    public void stopAnimations() {
-        this.idlingAnimationState.stop();
-        this.layingDownAnimationState.stop();
-        this.sleepingAnimationState.stop();
-        this.standingUpAnimationState.stop();
+    @Override
+    public EntityAnimationController<CapybaraEntity, CapybaraEntityAnimationState> getAnimationController() {
+        return animationController;
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (this.getWorld().isClient) {
-            this.setupAnimationStates();
-            return;
-        }
-
-        if (!this.getWorld().isClient) {
-            boolean changed = animMachine.tick();
-            CapybaraEntityAnimationState current = animMachine.getCurrent();
-
-            if (!changed) {
-                CapybaraEntityAnimationState tracked = CapybaraEntityAnimationState.fromIndex(this.getState());
-                if (tracked != current) {
-                    animMachine.forceState(tracked);
-                    current = tracked;
-                }
-            }
-
-            if (current != lastSyncedAnimState) {
-                this.setState(current.getIndex());
-                lastSyncedAnimState = current;
-            }
-
-        }
+        this.animationController.tick();
+        this.idleAnimations.tick(this, this.isAlive());
+        AnimationPlayback.updateLoop(this, this.swimAnimationState, this.isAlive() && this.isTouchingWater());
     }
 
     @Override
@@ -367,14 +317,12 @@ public class CapybaraEntity extends ParentTameableEntity {
 
             if (shouldSleep && !this.isSleeping()) {
                 this.setIsSleeping(true);
-                this.startState(CapybaraEntityAnimationState.LAYING_DOWN);
             } else if (!shouldSleep && this.isSleeping()) {
                 this.setIsSleeping(false);
-                this.startState(CapybaraEntityAnimationState.STANDING_UP);
             }
         }
 
-        if (this.isSleeping()) {
+        if (!this.getWorld().isClient && this.isSleeping()) {
             this.healNearbyEntities(this, 4);
         }
     }
@@ -390,164 +338,4 @@ public class CapybaraEntity extends ParentTameableEntity {
         this.limbAnimator.updateLimbs(f * 2f, 0.3F);
     }
 
-    private int getState() {
-        return this.dataTracker.get(ANIMATION_STATE);
-    }
-
-    private void setState(int state) {
-        this.dataTracker.set(ANIMATION_STATE, state);
-    }
-
-    private void pickRandomIdleAnim(boolean bl) {
-        if (bl) {
-            this.earTwitchAnimationStateOne.start(this.age);
-        } else {
-            this.earTwitchAnimationStateTwo.start(this.age);
-        }
-    }
-
-    private void setupAnimationStates() {
-        if (this.earTwitchAnimationTimeout <= 0 && random.nextInt(100) == 0) {
-            this.earTwitchAnimationTimeout = 3;
-            this.pickRandomIdleAnim(random.nextBoolean());
-        } else {
-            --this.earTwitchAnimationTimeout;
-        }
-
-        if (this.swimAnimationTimeout <= 0 && this.isTouchingWater()) {
-            this.swimAnimationTimeout = 20;
-            this.swimAnimationState.start(this.age);
-        } else {
-            --this.swimAnimationTimeout;
-        }
-    }
-
-    private static class CapybaraSitGoal extends SitGoal {
-        private final CapybaraEntity capybara;
-
-        public CapybaraSitGoal(CapybaraEntity capybara) {
-            super(capybara);
-            this.capybara = capybara;
-            this.setControls(EnumSet.of(Control.JUMP, Control.MOVE, Control.LOOK));
-        }
-
-        @Override
-        public boolean canStart() {
-            super.canStart();
-            return capybara.isTamed() && capybara.isForceSleeping();
-        }
-
-        @Override
-        public boolean shouldContinue() {
-            return capybara.isTamed() && capybara.isForceSleeping();
-        }
-
-        @Override
-        public void start() {
-            capybara.getNavigation().stop();
-            capybara.setIsSleeping(true);
-            capybara.startState(CapybaraEntityAnimationState.LAYING_DOWN);
-        }
-
-        @Override
-        public void stop() {
-            capybara.setIsForceSleeping(false);
-            capybara.setInSittingPose(false);
-            capybara.setIsSleeping(false);
-            capybara.startState(CapybaraEntityAnimationState.STANDING_UP);
-        }
-    }
-
-    private class CapybaraWanderGoal extends WanderAroundFarGoal {
-
-        public CapybaraWanderGoal(PathAwareEntity mob, double speed, float probability) {
-            super(mob, speed, probability);
-        }
-
-        @Override
-        public boolean canStart() {
-            return super.canStart() && !isSleeping();
-        }
-
-        @Override
-        public void tick() {
-            if (isSleeping()) {
-                this.stop();
-                mob.getNavigation().stop();
-            }
-            super.tick();
-        }
-    }
-
-    private class CapybaraLookAtEntityGoal extends LookAtEntityGoal {
-
-        public CapybaraLookAtEntityGoal(MobEntity mob, Class<? extends LivingEntity> targetType, float range) {
-            super(mob, targetType, range);
-        }
-
-        @Override
-        public boolean canStart() {
-            return super.canStart() && !isSleeping();
-        }
-    }
-
-    private class CapybaraLookAroundGoal extends LookAroundGoal {
-
-        public CapybaraLookAroundGoal(MobEntity mob) {
-            super(mob);
-        }
-
-        @Override
-        public boolean canStart() {
-            return super.canStart() && !isSleeping();
-        }
-    }
-
-    private class CapybaraFollowOwnerGoal extends FollowOwnerGoal {
-
-        public CapybaraFollowOwnerGoal(ParentTameableEntity tameable, double speed, float minDistance, float maxDistance) {
-            super(tameable, speed, minDistance, maxDistance);
-        }
-
-        @Override
-        public boolean canStart() {
-            return super.canStart() && !isSleeping();
-        }
-    }
-
-    private class CapybaraTemptGoal extends TemptGoal {
-
-        public CapybaraTemptGoal(PathAwareEntity entity, double speed, Ingredient food, boolean canBeScared) {
-            super(entity, speed, food, canBeScared);
-        }
-
-        @Override
-        public boolean canStart() {
-            return super.canStart() && !isSleeping();
-        }
-    }
-
-    private class CapybaraEscapeDangerGoal extends EscapeDangerGoal {
-
-        public CapybaraEscapeDangerGoal(PathAwareEntity mob, double speed) {
-            super(mob, speed);
-        }
-
-        @Override
-        public boolean canStart() {
-            return super.canStart() && !isSleeping();
-        }
-    }
-
-    private class CapybaraMateGoal extends AnimalMateGoal {
-
-        public CapybaraMateGoal(AnimalEntity animal, double speed) {
-            super(animal, speed);
-        }
-
-        @Override
-        public boolean canStart() {
-            return super.canStart() && !isSleeping();
-        }
-    }
 }

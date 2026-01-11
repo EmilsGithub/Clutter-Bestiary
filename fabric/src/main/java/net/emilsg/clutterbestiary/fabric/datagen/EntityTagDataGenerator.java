@@ -18,18 +18,21 @@ public class EntityTagDataGenerator extends FabricTagProvider.EntityTypeTagProvi
     protected void configure(RegistryWrapper.WrapperLookup arg) {
 
         /** Vanilla **/
+        this.getOrCreateTagBuilder(EntityTypeTags.ARROWS).add(ModEntityTypes.ARROWFISH_PROJECTILE.get());
+
         this.getOrCreateTagBuilder(EntityTypeTags.POWDER_SNOW_WALKABLE_MOBS).add(
                 ModEntityTypes.EMPEROR_PENGUIN.get(),
                 ModEntityTypes.BOOPLET.get(),
-                ModEntityTypes.RED_PANDA.get()
+                ModEntityTypes.RED_PANDA.get(),
+                ModEntityTypes.CROCODILE.get()
         );
 
         this.getOrCreateTagBuilder(EntityTypeTags.AQUATIC)
                 .add(ModEntityTypes.JELLYFISH.get(),
-                ModEntityTypes.MANTA_RAY.get(),
-                ModEntityTypes.KOI.get(),
-                ModEntityTypes.SEAHORSE.get(),
-                ModEntityTypes.KOI_EGGS.get()
+                        ModEntityTypes.MANTA_RAY.get(),
+                        ModEntityTypes.KOI.get(),
+                        ModEntityTypes.SEAHORSE.get(),
+                        ModEntityTypes.KOI_EGGS.get()
                 );
 
         this.getOrCreateTagBuilder(EntityTypeTags.ARTHROPOD).add(

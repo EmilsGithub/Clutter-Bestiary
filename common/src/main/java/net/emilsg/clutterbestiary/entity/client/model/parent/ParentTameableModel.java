@@ -20,15 +20,6 @@ public abstract class ParentTameableModel<T extends ParentTameableEntity> extend
 
     protected abstract ModelPart getHeadPart();
 
-    protected void setHeadAngles(LivingEntity entity, float headYaw, float headPitch, float animationProgress) {
-        if (getHeadPart() == null) return;
-        headYaw = MathHelper.clamp(headYaw, -30.0F, 30.0F);
-        headPitch = MathHelper.clamp(headPitch, -25.0F, 45.0F);
-
-        getHeadPart().yaw = headYaw * 0.017453292F;
-        getHeadPart().pitch = headPitch * 0.017453292F;
-    }
-
     protected void setBabyHeadSizeAndRender(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
         matrices.push();
 
@@ -41,5 +32,14 @@ public abstract class ParentTameableModel<T extends ParentTameableEntity> extend
 
         this.getPart().render(matrices, vertices, light, overlay, color);
         matrices.pop();
+    }
+
+    protected void setHeadAngles(LivingEntity entity, float headYaw, float headPitch, float animationProgress) {
+        if (getHeadPart() == null) return;
+        headYaw = MathHelper.clamp(headYaw, -30.0F, 30.0F);
+        headPitch = MathHelper.clamp(headPitch, -25.0F, 45.0F);
+
+        getHeadPart().yaw = headYaw * 0.017453292F;
+        getHeadPart().pitch = headPitch * 0.017453292F;
     }
 }

@@ -53,6 +53,7 @@ public class MantaRayJumpGoal extends DiveJumpingGoal {
     }
 
     public void start() {
+        this.inWater = false;
         Direction direction = this.mantaRay.getMovementDirection();
         this.mantaRay.setVelocity(this.mantaRay.getVelocity().add((double) direction.getOffsetX() * 0.6, 0.7, (double) direction.getOffsetZ() * 0.6));
         this.mantaRay.getNavigation().stop();

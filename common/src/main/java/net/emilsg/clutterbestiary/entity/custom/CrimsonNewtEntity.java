@@ -19,6 +19,8 @@ import net.minecraft.world.WorldAccess;
 import org.jetbrains.annotations.Nullable;
 
 public class CrimsonNewtEntity extends AbstractNetherNewtEntity {
+    private static final Item BREEDING_ITEM = Items.CRIMSON_ROOTS;
+    private static final Item TAMING_ITEM = Items.WEEPING_VINES;
 
     public CrimsonNewtEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
         super(entityType, world);
@@ -35,7 +37,7 @@ public class CrimsonNewtEntity extends AbstractNetherNewtEntity {
 
     @Override
     public Item getBreedingItem() {
-        return Items.CRIMSON_ROOTS;
+        return BREEDING_ITEM;
     }
 
     @Override
@@ -45,12 +47,12 @@ public class CrimsonNewtEntity extends AbstractNetherNewtEntity {
     }
 
     @Override
-    protected Item getFungusItem() {
-        return Items.CRIMSON_FUNGUS;
+    public Item getTamingItem() {
+        return TAMING_ITEM;
     }
 
     @Override
-    protected Item getTamingItem() {
-        return Items.WEEPING_VINES;
+    protected Item getFungusItem() {
+        return Items.CRIMSON_FUNGUS;
     }
 }

@@ -1,12 +1,11 @@
 package net.emilsg.clutterbestiary.fabric;
 
-import dev.architectury.registry.menu.MenuRegistry;
 import net.emilsg.clutterbestiary.ClutterBestiaryClient;
+import net.emilsg.clutterbestiary.entity.client.ArrowfishCrossbowModel;
 import net.emilsg.clutterbestiary.fabric.entity.client.player.RendererRegistration;
 import net.emilsg.clutterbestiary.fabric.util.ModModelPredicateProvider;
-import net.emilsg.clutterbestiary.menu.ModMenuTypes;
-import net.emilsg.clutterbestiary.menu.screen.CoatiInventoryScreen;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 
 public final class ClutterBestiaryClientFabric implements ClientModInitializer {
 
@@ -15,11 +14,9 @@ public final class ClutterBestiaryClientFabric implements ClientModInitializer {
         ClutterBestiaryClient.init();
         RendererRegistration.register();
         ModModelPredicateProvider.register();
-        registerFabricMenus();
-    }
 
-    public static void registerFabricMenus() {
-        MenuRegistry.registerScreenFactory(ModMenuTypes.COATI.get(), CoatiInventoryScreen::new);
+        ModelLoadingPlugin.register(pluginContext -> pluginContext.addModels(ArrowfishCrossbowModel.MODEL_ID));
+        ArrowfishCrossbowModel.setModelLookup(manager -> manager.getModel(ArrowfishCrossbowModel.MODEL_ID));
     }
 
 }

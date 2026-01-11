@@ -1,68 +1,45 @@
 package net.emilsg.clutterbestiary.util;
 
-import dev.architectury.registry.level.biome.BiomeModifications;
 import dev.architectury.registry.level.entity.SpawnPlacementsRegistry;
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.*;
-import net.minecraft.advancement.AdvancementEntry;
-import net.minecraft.advancement.AdvancementProgress;
-import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.SpawnLocationTypes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.Ingredient;
 import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.Heightmap;
-import net.minecraft.world.biome.SpawnSettings;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class ModUtil {
 
     public static final Map<Item, Item> STRIPPED_ITEM_MAP = new HashMap<>();
-    public static final List<Item> SAPLING_ITEM_MAP = new ArrayList<>();
+    public static final Set<Item> SAPLING_ITEM_MAP = new HashSet<>();
 
     public static void buildItemMapsAndLists() {
-        buildStrippedItemMap();
-        buildSaplingList();
-    }
-
-    public static void buildStrippedItemMap() {
+        STRIPPED_ITEM_MAP.clear();
+        SAPLING_ITEM_MAP.clear();
         for (Item item : Registries.ITEM) {
-            if (STRIPPED_ITEM_MAP.containsKey(item)) continue;
             Identifier id = Registries.ITEM.getId(item);
             String path = id.getPath();
+
+            if (path.contains("sapling")) SAPLING_ITEM_MAP.add(item);
             if (path.startsWith("stripped_")) continue;
 
             Identifier strippedId = Identifier.of(id.getNamespace(), "stripped_" + path);
-            if (Registries.ITEM.containsId(strippedId)) {
-                STRIPPED_ITEM_MAP.put(item, Registries.ITEM.get(strippedId));
-            }
+            if (Registries.ITEM.containsId(strippedId)) STRIPPED_ITEM_MAP.put(item, Registries.ITEM.get(strippedId));
         }
-    }
-
-    private static void buildSaplingList() {
-        Registries.ITEM.forEach(item -> {
-            Identifier id = Registries.ITEM.getId(item);
-            if (id.getPath().contains("sapling") && !SAPLING_ITEM_MAP.contains(item)) {
-                SAPLING_ITEM_MAP.add(item);
-            }
-        });
     }
 
     public static float lerp(float a, float b, float alpha) {
@@ -102,21 +79,9 @@ public class ModUtil {
         return finalText;
     }
 
-    public static void grantImpossibleAdvancement(String path, ServerWorld world, PlayerEntity player) {
+    public static void grantImpossibleAdvancement(String path, PlayerEntity player) {
         if (player instanceof ServerPlayerEntity serverPlayer) {
-            MinecraftServer server = world.getServer();
-            AdvancementEntry advancement = server.getAdvancementLoader().get(Identifier.of(ClutterBestiary.MOD_ID, path));
-
-            if (serverPlayer.getAdvancementTracker().getProgress(advancement).isDone()) return;
-
-            if (advancement != null) {
-                AdvancementProgress progress = serverPlayer.getAdvancementTracker().getProgress(advancement);
-                if (!progress.isDone()) {
-                    for (String criterion : progress.getUnobtainedCriteria()) {
-                        serverPlayer.getAdvancementTracker().grantCriterion(advancement, criterion);
-                    }
-                }
-            }
+            ModAdvancements.grant(serverPlayer, path);
         }
     }
 
@@ -126,12 +91,6 @@ public class ModUtil {
 
     public static boolean inBothHands(PlayerEntity player, Item item) {
         return player.getStackInHand(Hand.MAIN_HAND).isOf(item) && player.getStackInHand(Hand.OFF_HAND).isOf(item);
-    }
-
-    //Only works on Fabric side, hopefully fixed in the future.
-    public static void registerSpawns() {
-        BiomeModifications.addProperties(ctx -> ctx.hasTag(ModBiomeTags.SPAWNS_CHAMELEONS), (ctx, props) ->
-                props.getSpawnProperties().addSpawn(SpawnGroup.CREATURE, new SpawnSettings.SpawnEntry(ModEntityTypes.CHAMELEON.get(), 100, 2, 4)));
     }
 
     public static void registerSpawnRestrictions() {
@@ -147,11 +106,16 @@ public class ModUtil {
         SpawnPlacementsRegistry.register(ModEntityTypes.COATI, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, CoatiEntity::isValidNaturalSpawn);
         SpawnPlacementsRegistry.register(ModEntityTypes.RIVER_TURTLE, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, RiverTurtleEntity::isValidNaturalSpawn);
         SpawnPlacementsRegistry.register(ModEntityTypes.RED_PANDA, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, RedPandaEntity::isValidNaturalSpawn);
+        SpawnPlacementsRegistry.register(ModEntityTypes.STOAT, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, StoatEntity::isValidNaturalSpawn);
+        SpawnPlacementsRegistry.register(ModEntityTypes.CROCODILE, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, CrocodileEntity::isValidNaturalSpawn);
+          SpawnPlacementsRegistry.register(ModEntityTypes.CHORUS_BEETLE, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, ChorusBeetleEntity::isValidNaturalSpawn);
+          SpawnPlacementsRegistry.register(ModEntityTypes.WOODPECKER, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, WoodpeckerEntity::isValidNaturalSpawn);
 
         SpawnPlacementsRegistry.register(ModEntityTypes.JELLYFISH, SpawnLocationTypes.IN_WATER, Heightmap.Type.OCEAN_FLOOR, JellyfishEntity::isValidNaturalSpawn);
         SpawnPlacementsRegistry.register(ModEntityTypes.SEAHORSE, SpawnLocationTypes.IN_WATER, Heightmap.Type.OCEAN_FLOOR, SeahorseEntity::isValidNaturalSpawn);
         SpawnPlacementsRegistry.register(ModEntityTypes.MANTA_RAY, SpawnLocationTypes.IN_WATER, Heightmap.Type.OCEAN_FLOOR, MantaRayEntity::isValidNaturalSpawn);
         SpawnPlacementsRegistry.register(ModEntityTypes.KOI, SpawnLocationTypes.IN_WATER, Heightmap.Type.OCEAN_FLOOR, KoiEntity::isValidNaturalSpawn);
+        SpawnPlacementsRegistry.register(ModEntityTypes.ARROWFISH, SpawnLocationTypes.IN_WATER, Heightmap.Type.OCEAN_FLOOR, ArrowfishEntity::isValidNaturalSpawn);
 
         SpawnPlacementsRegistry.register(ModEntityTypes.BUTTERFLY, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, ButterflyEntity::isValidNaturalSpawn);
         SpawnPlacementsRegistry.register(ModEntityTypes.CRIMSON_NEWT, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, CrimsonNewtEntity::isValidNaturalSpawn);

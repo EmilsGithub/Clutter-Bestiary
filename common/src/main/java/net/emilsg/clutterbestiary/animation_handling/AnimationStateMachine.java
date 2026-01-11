@@ -4,31 +4,46 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-public class AnimationStateMachine<E, S extends Enum<S> & IndexedAnimationState> {
+public class AnimationStateMachine<E, S extends Enum<S>> {
 
     private final E entity;
     private final Map<S, List<Transition<E, S>>> transitions;
+    private final Map<S, Completion<S>> completions;
     private S current;
     private int ticksInState = 0;
 
     public AnimationStateMachine(E entity, S initialState, Class<S> enumClass) {
         this.entity = entity;
-        this.current = initialState;
+        this.current = Objects.requireNonNull(initialState);
 
         this.transitions = new EnumMap<>(enumClass);
+        this.completions = new EnumMap<>(enumClass);
         for (S s : enumClass.getEnumConstants()) {
             this.transitions.put(s, new ArrayList<>());
         }
     }
 
     public void addTransition(S from, S to, Condition<E, S> condition) {
-        List<Transition<E, S>> list = transitions.computeIfAbsent(from, k -> new ArrayList<>());
-        list.add(new Transition<>(to, condition));
+        List<Transition<E, S>> list = transitions.get(Objects.requireNonNull(from));
+        list.add(new Transition<>(Objects.requireNonNull(to), Objects.requireNonNull(condition)));
+    }
+
+    public void addCompletion(S from, S to, int ticks) {
+        if (ticks <= 0) throw new IllegalArgumentException("Completion duration must be positive");
+        if (completions.containsKey(from)) throw new IllegalArgumentException("Duplicate completion for " + from);
+        completions.put(Objects.requireNonNull(from), new Completion<>(Objects.requireNonNull(to), ticks));
+    }
+
+    public boolean requestState(S newState) {
+        if (current == Objects.requireNonNull(newState)) return false;
+        this.forceState(newState);
+        return true;
     }
 
     public void forceState(S newState) {
-        this.current = newState;
+        this.current = Objects.requireNonNull(newState);
         this.ticksInState = 0;
     }
 
@@ -44,14 +59,17 @@ public class AnimationStateMachine<E, S extends Enum<S> & IndexedAnimationState>
         ticksInState++;
 
         List<Transition<E, S>> list = transitions.get(current);
-        if (list == null || list.isEmpty()) return false;
-
+        // Registered transitions take priority over timed completion, in registration order.
         for (Transition<E, S> t : list) {
             if (t.condition.test(entity, current, ticksInState)) {
-                current = t.target;
-                ticksInState = 0;
+                this.forceState(t.target);
                 return true;
             }
+        }
+        Completion<S> completion = completions.get(current);
+        if (completion != null && ticksInState >= completion.ticks) {
+            this.forceState(completion.target);
+            return true;
         }
         return false;
     }
@@ -69,5 +87,8 @@ public class AnimationStateMachine<E, S extends Enum<S> & IndexedAnimationState>
             this.target = target;
             this.condition = condition;
         }
+    }
+
+    private record Completion<S>(S target, int ticks) {
     }
 }

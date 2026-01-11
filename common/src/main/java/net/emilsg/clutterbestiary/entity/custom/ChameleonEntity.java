@@ -13,6 +13,7 @@ import net.minecraft.component.type.FoodComponent;
 import net.minecraft.entity.AnimationState;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.ai.goal.*;
 import net.minecraft.entity.ai.pathing.PathNodeType;
@@ -45,6 +46,7 @@ import java.util.UUID;
 public class ChameleonEntity extends ParentTameableEntity {
 
     private static final Ingredient BREEDING_INGREDIENT;
+    private static final Item TAMING_ITEM = Items.APPLE;
     private static final TrackedData<Boolean> SITTING = DataTracker.registerData(ChameleonEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> ATTACKING = DataTracker.registerData(ChameleonEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
@@ -61,6 +63,7 @@ public class ChameleonEntity extends ParentTameableEntity {
     private int targetColor = 0x90C47C;
     private int retainColorChangeTimer = 0;
     private int colorTicker = 0;
+    private boolean hasNearbyEntity;
 
     public ChameleonEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
         super(entityType, world);
@@ -161,6 +164,11 @@ public class ChameleonEntity extends ParentTameableEntity {
         return currentColor;
     }
 
+    @Override
+    public Item getTamingItem() {
+        return TAMING_ITEM;
+    }
+
     public int getTargetColor() {
         return targetColor;
     }
@@ -179,9 +187,10 @@ public class ChameleonEntity extends ParentTameableEntity {
         ItemStack stackInHand = player.getStackInHand(hand);
         Item item = stackInHand.getItem();
 
-        Item itemForTaming = Items.APPLE;
+        Item itemForTaming = this.getTamingItem();
 
         if (this.isBreedingItem(stackInHand) && this.getHealth() < this.getMaxHealth()) {
+            if (this.getWorld().isClient) return ActionResult.CONSUME;
             if (!player.getAbilities().creativeMode) {
                 stackInHand.decrement(1);
             }
@@ -238,7 +247,7 @@ public class ChameleonEntity extends ParentTameableEntity {
 
     @Override
     public boolean isBreedingItem(ItemStack stack) {
-        return stack.getItem() instanceof ButterflyBottleItem;
+        return BREEDING_INGREDIENT.test(stack);
     }
 
     public boolean isSitting() {
@@ -258,10 +267,15 @@ public class ChameleonEntity extends ParentTameableEntity {
         if (world.isClient) {
             this.setupAnimationStates();
 
-            boolean hasNearbyEntity = !world.getOtherEntities(this, this.getBoundingBox().expand(6.0), entity -> entity != null && entity != this && this.getOwner() != entity && !(entity instanceof ChameleonEntity) && !entity.isSneaking()).isEmpty();
-            this.setAttacking(hasNearbyEntity);
+            if (this.age % 10 == 0) {
+                this.hasNearbyEntity = !world.getEntitiesByClass(LivingEntity.class,
+                        this.getBoundingBox().expand(6.0),
+                        entity -> entity != this && entity != this.getOwner()
+                                && !(entity instanceof ChameleonEntity) && !entity.isSneaking()).isEmpty();
+                this.setAttacking(this.hasNearbyEntity);
+            }
 
-            this.updateColorTransition(hasNearbyEntity);
+            this.updateColorTransition(this.hasNearbyEntity);
         }
     }
 

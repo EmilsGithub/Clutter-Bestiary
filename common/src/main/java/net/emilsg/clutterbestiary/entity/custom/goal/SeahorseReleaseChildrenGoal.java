@@ -32,8 +32,9 @@ public class SeahorseReleaseChildrenGoal extends Goal {
         if (seahorse.getWorld() instanceof ServerWorld serverWorld) {
             Random random = serverWorld.getRandom();
             List<SeahorseEntity> children = new ArrayList<>();
+            int childCount = random.nextInt(seahorse.getMaxChildren()) + 1;
 
-            for (int i = 0; i < random.nextInt(seahorse.getMaxChildren()) + 1; i++) {
+            for (int i = 0; i < childCount; i++) {
                 SeahorseEntity child = seahorse.createChild(serverWorld, seahorse);
                 if (child == null) return;
                 child.setBaby(true);

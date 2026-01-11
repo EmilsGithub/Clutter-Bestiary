@@ -4,6 +4,7 @@ import net.emilsg.clutterbestiary.block.ModBlocks;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.goal.KiwiBirdLayEggGoal;
 import net.emilsg.clutterbestiary.entity.custom.goal.KiwiBirdMateGoal;
+import net.emilsg.clutterbestiary.entity.custom.parent.IEggLayingAnimal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.sound.ModSoundEvents;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
@@ -35,12 +36,15 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import org.jetbrains.annotations.Nullable;
 
-public class KiwiBirdEntity extends ParentAnimalEntity {
+public class KiwiBirdEntity extends ParentAnimalEntity implements IEggLayingAnimal {
+    private static final int EGG_LAYING_DELAY_TICKS = 400;
     private static final Ingredient BREEDING_INGREDIENT = Ingredient.fromTag(ModItemTags.C_SEEDS);
     private static final TrackedData<Boolean> HAS_EGG = DataTracker.registerData(KiwiBirdEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Integer> EGG_TIMER = DataTracker.registerData(KiwiBirdEntity.class, TrackedDataHandlerRegistry.INTEGER);
+
     public final AnimationState idleAnimationState = new AnimationState();
     public int idleAnimationTimeout = 0;
+
+    private int eggTimer;
 
     public KiwiBirdEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
         super(entityType, world);
@@ -53,7 +57,6 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
         builder.add(HAS_EGG, false);
-        builder.add(EGG_TIMER, 0);
     }
 
     @Override
@@ -106,20 +109,37 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
     }
 
     public int getEggTimer() {
-        return this.dataTracker.get(EGG_TIMER);
+        return this.eggTimer;
     }
 
     public void setEggTimer(int time) {
-        this.dataTracker.set(EGG_TIMER, time);
+        this.eggTimer = time;
     }
 
+    @Override
     public boolean hasEgg() {
         return this.dataTracker.get(HAS_EGG);
     }
 
     @Override
+    public boolean isReadyToLayEgg() {
+        return this.hasEgg() && this.eggTimer >= EGG_LAYING_DELAY_TICKS;
+    }
+
+    public void beginCarryingEgg() {
+        this.eggTimer = 0;
+        this.setHasEgg(true);
+    }
+
+    @Override
+    public void finishLayingEgg() {
+        this.setHasEgg(false);
+        this.eggTimer = 0;
+    }
+
+    @Override
     public boolean isBreedingItem(ItemStack stack) {
-        return stack.isIn(ModItemTags.C_SEEDS);
+        return BREEDING_INGREDIENT.test(stack);
     }
 
     public void setHasEgg(boolean hasEgg) {
@@ -136,12 +156,13 @@ public class KiwiBirdEntity extends ParentAnimalEntity {
         }
     }
 
+    @Override
     public void tickMovement() {
-        if (this.hasEgg()) {
-            this.setEggTimer(this.getEggTimer() + 1);
-        }
-
         super.tickMovement();
+
+        if (!this.getWorld().isClient && this.hasEgg() && this.eggTimer < EGG_LAYING_DELAY_TICKS) {
+            this.eggTimer++;
+        }
     }
 
     @Nullable

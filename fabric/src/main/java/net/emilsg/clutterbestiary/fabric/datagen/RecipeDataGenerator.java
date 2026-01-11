@@ -6,11 +6,16 @@ import net.emilsg.clutterbestiary.item.custom.BestiaryElytraItem;
 import net.emilsg.clutterbestiary.util.ModItemTags;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
-import net.minecraft.data.server.recipe.*;
+import net.minecraft.data.server.recipe.RecipeExporter;
+import net.minecraft.data.server.recipe.ShapelessRecipeJsonBuilder;
+import net.minecraft.data.server.recipe.SmithingTransformRecipeJsonBuilder;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemConvertible;
 import net.minecraft.item.Items;
-import net.minecraft.recipe.*;
+import net.minecraft.recipe.CampfireCookingRecipe;
+import net.minecraft.recipe.Ingredient;
+import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.recipe.SmokingRecipe;
 import net.minecraft.recipe.book.RecipeCategory;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryWrapper;
@@ -25,6 +30,22 @@ public class RecipeDataGenerator extends FabricRecipeProvider {
         super(output, registriesFuture);
     }
 
+    public static void offerOTORecipe(RecipeExporter exporter, RecipeCategory category, ItemConvertible output, ItemConvertible input) {
+        ShapelessRecipeJsonBuilder
+                .create(category, output)
+                .input(input, 1)
+                .criterion("from_item", conditionsFromItem(input))
+                .offerTo(exporter, Identifier.of(ClutterBestiary.MOD_ID, getRecipeName(output)));
+    }
+
+    public static void offerCampfireCooking(RecipeExporter exporter, List<ItemConvertible> inputs, RecipeCategory category, ItemConvertible output, float experience, int cookingTime, String group) {
+        offerMultipleOptions(exporter, RecipeSerializer.CAMPFIRE_COOKING, CampfireCookingRecipe::new, inputs, category, output, experience, cookingTime, group, "_from_campfire_cooking");
+    }
+
+    public static void offerSmoking(RecipeExporter exporter, List<ItemConvertible> inputs, RecipeCategory category, ItemConvertible output, float experience, int cookingTime, String group) {
+        offerMultipleOptions(exporter, RecipeSerializer.SMOKING, SmokingRecipe::new, inputs, category, output, experience, cookingTime, group, "_from_smoking");
+    }
+
     @Override
     public void generate(RecipeExporter exporter) {
 
@@ -37,27 +58,9 @@ public class RecipeDataGenerator extends FabricRecipeProvider {
         offerOTORecipe(exporter, RecipeCategory.MISC, Items.GLOWSTONE_DUST, ModItems.MOSSBLOOM_ANTLERS.get());
 
         for (Item elytra : Registries.ITEM) {
-            if (elytra instanceof BestiaryElytraItem bestiaryElytraItem) offerDecoratedElytraRecipes(exporter, elytra, bestiaryElytraItem.getComponent());
+            if (elytra instanceof BestiaryElytraItem bestiaryElytraItem)
+                offerDecoratedElytraRecipes(exporter, elytra, bestiaryElytraItem.getComponent());
         }
-    }
-
-    public static void offerOTORecipe(RecipeExporter exporter, RecipeCategory category, ItemConvertible output, ItemConvertible input) {
-        ShapelessRecipeJsonBuilder
-                .create(category, output)
-                .input(input, 1)
-                .criterion("from_item", conditionsFromItem(input))
-                .offerTo(exporter, Identifier.of(ClutterBestiary.MOD_ID, getRecipeName(output)));
-    }
-
-    public void offerDecoratedElytraRecipes(RecipeExporter exporter, Item result, Item addition) {
-        SmithingTransformRecipeJsonBuilder
-                .create(
-                        Ingredient.ofItems(ModItems.BUTTERFLY_ELYTRA_SMITHING_TEMPLATE.get()),
-                        Ingredient.fromTag(ModItemTags.C_ELYTRA), Ingredient.ofItems(addition),
-                        RecipeCategory.MISC, result)
-                .criterion("has_elytra_component", conditionsFromItem(addition))
-                .criterion("has_elytra", conditionsFromItem(Items.ELYTRA))
-                .offerTo(exporter, Identifier.of(ClutterBestiary.MOD_ID, getRecipeName(result)));
     }
 
     public void offerAllCookingRecipes(RecipeExporter exporter, Item component, Item result, float experience, String group) {
@@ -73,11 +76,14 @@ public class RecipeDataGenerator extends FabricRecipeProvider {
         offerSmelting(exporter, SMELTING_LIST, RecipeCategory.MISC, result, experience, 200, group);
     }
 
-    public static void offerCampfireCooking(RecipeExporter exporter, List<ItemConvertible> inputs, RecipeCategory category, ItemConvertible output, float experience, int cookingTime, String group) {
-        offerMultipleOptions(exporter, RecipeSerializer.CAMPFIRE_COOKING, CampfireCookingRecipe::new, inputs, category, output, experience, cookingTime, group, "_from_campfire_cooking");
-    }
-
-    public static void offerSmoking(RecipeExporter exporter, List<ItemConvertible> inputs, RecipeCategory category, ItemConvertible output, float experience, int cookingTime, String group) {
-        offerMultipleOptions(exporter, RecipeSerializer.SMOKING, SmokingRecipe::new, inputs, category, output, experience, cookingTime, group, "_from_smoking");
+    public void offerDecoratedElytraRecipes(RecipeExporter exporter, Item result, Item addition) {
+        SmithingTransformRecipeJsonBuilder
+                .create(
+                        Ingredient.ofItems(ModItems.BUTTERFLY_ELYTRA_SMITHING_TEMPLATE.get()),
+                        Ingredient.fromTag(ModItemTags.C_ELYTRA), Ingredient.ofItems(addition),
+                        RecipeCategory.MISC, result)
+                .criterion("has_elytra_component", conditionsFromItem(addition))
+                .criterion("has_elytra", conditionsFromItem(Items.ELYTRA))
+                .offerTo(exporter, Identifier.of(ClutterBestiary.MOD_ID, getRecipeName(result)));
     }
 }

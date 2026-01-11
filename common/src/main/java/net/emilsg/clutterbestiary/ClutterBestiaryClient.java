@@ -4,39 +4,44 @@ import dev.architectury.registry.client.level.entity.EntityModelLayerRegistry;
 import dev.architectury.registry.client.level.entity.EntityRendererRegistry;
 import dev.architectury.registry.client.rendering.BlockEntityRendererRegistry;
 import dev.architectury.registry.client.rendering.RenderTypeRegistry;
-import net.emilsg.clutterbestiary.block.ICutoutRenderable;
+import dev.architectury.registry.menu.MenuRegistry;
+import net.emilsg.clutterbestiary.block.ModBlocks;
 import net.emilsg.clutterbestiary.block.entity.ModBlockEntityTypes;
 import net.emilsg.clutterbestiary.block.entity.renderer.ButterflyBottleBlockEntityRenderer;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.client.layer.ModModelLayers;
 import net.emilsg.clutterbestiary.entity.client.model.*;
 import net.emilsg.clutterbestiary.entity.client.render.*;
-import net.minecraft.block.Block;
+import net.emilsg.clutterbestiary.menu.ModMenuTypes;
+import net.emilsg.clutterbestiary.menu.screen.CoatiInventoryScreen;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.registry.Registries;
 
 public final class ClutterBestiaryClient {
 
     public static void init() {
         registerEntityRenderers();
         registerEntityModelLayers();
+        registerScreens();
+        registerClientSetup();
+    }
+
+    public static void registerClientSetup() {
         registerBlockEntityRenderers();
         registerCutoutRenderable();
     }
 
     public static void registerCutoutRenderable() {
-        for (Block block : Registries.BLOCK) {
-            if (block instanceof ICutoutRenderable) RenderTypeRegistry.register(RenderLayer.getCutout(), block);
-        }
+        RenderTypeRegistry.register(RenderLayer.getCutout(), ModBlocks.BUTTERFLY_IN_A_BOTTLE.get());
     }
 
     public static void registerBlockEntityRenderers() {
         BlockEntityRendererRegistry.register(ModBlockEntityTypes.BUTTERFLY_IN_A_BOTTLE.get(), ButterflyBottleBlockEntityRenderer::new);
     }
 
-    private static void registerEntityRenderers() {
+    public static void registerEntityRenderers() {
         EntityRendererRegistry.register(ModEntityTypes.CHAMELEON, ChameleonRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.BUTTERFLY, ButterflyRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.BUTTERFLY_LARVA, ButterflyLarvaRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.CRIMSON_NEWT, CrimsonNewtRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.WARPED_NEWT, WarpedNewtRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.BEAVER, BeaverRenderer::new);
@@ -58,12 +63,19 @@ public final class ClutterBestiaryClient {
         EntityRendererRegistry.register(ModEntityTypes.RIVER_TURTLE, RiverTurtleRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.COATI, CoatiRenderer::new);
         EntityRendererRegistry.register(ModEntityTypes.RED_PANDA, RedPandaRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.STOAT, StoatRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.CROCODILE, CrocodileRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.CHORUS_BEETLE, ChorusBeetleRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.WOODPECKER, WoodpeckerRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.ARROWFISH, ArrowfishRenderer::new);
+        EntityRendererRegistry.register(ModEntityTypes.ARROWFISH_PROJECTILE, ArrowfishProjectileRenderer::new);
     }
 
-    private static void registerEntityModelLayers() {
+    public static void registerEntityModelLayers() {
         EntityModelLayerRegistry.register(ModModelLayers.NETHER_NEWT, NetherNewtModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.BEAVER, BeaverModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.BUTTERFLY, ButterflyModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BUTTERFLY_LARVA, ButterflyLarvaModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.EMBER_TORTOISE, EmberTortoiseModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.JELLYFISH, JellyfishModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.MANTA_RAY, MantaRayModel::getTexturedModelData);
@@ -86,6 +98,14 @@ public final class ClutterBestiaryClient {
         EntityModelLayerRegistry.register(ModModelLayers.RIVER_TURTLE, RiverTurtleModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.COATI, CoatiModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.RED_PANDA, RedPandaModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.STOAT, StoatModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.CROCODILE, CrocodileModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.CHORUS_BEETLE, ChorusBeetleModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.WOODPECKER, WoodpeckerModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.ARROWFISH, ArrowfishModel::getTexturedModelData);
+    }
 
+    public static void registerScreens() {
+        MenuRegistry.registerScreenFactory(ModMenuTypes.COATI.get(), CoatiInventoryScreen::new);
     }
 }

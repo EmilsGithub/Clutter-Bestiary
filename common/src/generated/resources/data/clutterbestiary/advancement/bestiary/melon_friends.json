@@ -1,0 +1,26 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "tame_capybara": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.melon_friends.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:capybara_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.bestiary.melon_friends.title"
+    }
+  },
+  "requirements": [
+    [
+      "tame_capybara"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

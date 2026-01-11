@@ -5,9 +5,14 @@
   "minVersion": "0.8",
   "client": [
     "ClientCommonNetworkHandlerAccessor",
-    "ClientPlayNetworkHandlerMixin"
+    "ClientPlayNetworkHandlerMixin",
+    "ItemRendererMixin"
   ],
   "mixins": [
+    "BlockMixin",
+    "BoatEntityMixin",
+    "ChorusFlowerBlockMixin",
+    "CrossbowItemMixin",
     "FarmlandBlockMixin",
     "ZombieEntityMixin"
   ],

@@ -1,7 +1,6 @@
 package net.emilsg.clutterbestiary.fabric.datagen;
 
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.emilsg.clutterbestiary.util.ModItemTags;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.minecraft.block.Blocks;
@@ -17,6 +16,19 @@ public class BlockTagDataGenerator extends FabricTagProvider.BlockTagProvider {
 
     @Override
     protected void configure(RegistryWrapper.WrapperLookup arg) {
+        getOrCreateTagBuilder(ModBlockTags.KIWI_EGG_HATCH_BOOST)
+                .add(Blocks.HAY_BLOCK)
+        ;
+
+        getOrCreateTagBuilder(ModBlockTags.EMPEROR_PENGUIN_EGG_HATCH_BOOST)
+                .add(Blocks.SNOW_BLOCK)
+        ;
+
+        getOrCreateTagBuilder(ModBlockTags.CROCODILE_EGG_HATCH_BOOST)
+                .add(Blocks.SAND)
+                .add(Blocks.RED_SAND)
+        ;
+
         getOrCreateTagBuilder(ModBlockTags.BEAVERS_SPAWN_ON)
                 .add(Blocks.GRASS_BLOCK)
                 .add(Blocks.SAND)
@@ -25,6 +37,7 @@ public class BlockTagDataGenerator extends FabricTagProvider.BlockTagProvider {
 
         getOrCreateTagBuilder(ModBlockTags.COATIS_SPAWN_ON)
                 .add(Blocks.GRASS_BLOCK)
+                .add(Blocks.PODZOL)
         ;
 
         getOrCreateTagBuilder(ModBlockTags.RED_PANDAS_SPAWN_ON)
@@ -126,6 +139,33 @@ public class BlockTagDataGenerator extends FabricTagProvider.BlockTagProvider {
         getOrCreateTagBuilder(ModBlockTags.WARPED_NEWTS_SPAWN_ON)
                 .add(Blocks.NETHERRACK)
                 .add(Blocks.WARPED_NYLIUM)
+        ;
+
+        getOrCreateTagBuilder(ModBlockTags.STOATS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK)
+                .add(Blocks.PODZOL)
+                .add(Blocks.SNOW_BLOCK)
+        ;
+
+        getOrCreateTagBuilder(ModBlockTags.CROCODILES_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK)
+                .add(Blocks.MUD)
+                .add(Blocks.SAND)
+        ;
+
+        getOrCreateTagBuilder(ModBlockTags.CHORUS_BEETLES_SPAWN_ON)
+                .add(Blocks.END_STONE)
+                .add(Blocks.CHORUS_PLANT)
+                .add(Blocks.CHORUS_FLOWER)
+        ;
+
+        getOrCreateTagBuilder(ModBlockTags.WOODPECKERS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK)
+                .add(Blocks.PODZOL);
+
+        getOrCreateTagBuilder(ModBlockTags.ARROWFISH_SPAWN_ON)
+                .add(Blocks.WATER)
+                .add(Blocks.SAND)
         ;
 
     }

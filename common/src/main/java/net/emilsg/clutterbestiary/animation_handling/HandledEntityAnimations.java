@@ -1,11 +1,15 @@
 package net.emilsg.clutterbestiary.animation_handling;
 
-public interface HandledEntityAnimations {
-    int getState();
+import net.minecraft.entity.Entity;
 
-    void setState(int state);
+public interface HandledEntityAnimations<E extends Entity, S extends Enum<S> & IndexedAnimationState> {
+    EntityAnimationController<E, S> getAnimationController();
 
-    void setupAnimationStateMachine();
+    default void startState(S state) {
+        this.getAnimationController().requestState(state);
+    }
 
-    void stopAnimations();
+    default void replayState(S state) {
+        this.getAnimationController().replayState(state);
+    }
 }

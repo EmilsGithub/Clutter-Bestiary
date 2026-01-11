@@ -3,6 +3,7 @@ package net.emilsg.clutterbestiary.entity.variants;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.emilsg.clutterbestiary.ClutterBestiary;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
 import java.util.Arrays;
@@ -10,11 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public enum SeahorseVariant {
-    YELLOW("yellow"),
-    LIGHT_BLUE("light_blue"),
-    RED("red"),
-    PURPLE("purple");
+public enum SeahorseVariant implements BestiaryBasicVariant {
+    YELLOW("yellow", Formatting.YELLOW),
+    LIGHT_BLUE("light_blue", Formatting.AQUA),
+    RED("red", Formatting.RED),
+    PURPLE("purple", Formatting.DARK_PURPLE);
 
     private static final Map<Identifier, SeahorseVariant> BY_ID =
             Arrays.stream(values()).collect(java.util.stream.Collectors.toMap(
@@ -32,13 +33,15 @@ public enum SeahorseVariant {
                     v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName())
             );
     private final String name;
+    private final Formatting formatting;
 
-    SeahorseVariant(String name) {
+    SeahorseVariant(String name, Formatting formatting) {
         this.name = name;
+        this.formatting = formatting;
     }
 
     public static SeahorseVariant fromId(String id) {
-        return Arrays.stream(values()).filter(v -> v.getId().equals(id)).findFirst().orElse(YELLOW);
+        return Arrays.stream(values()).filter(v -> v.getID().equals(id)).findFirst().orElse(YELLOW);
     }
 
     public static SeahorseVariant getRandom() {
@@ -46,8 +49,13 @@ public enum SeahorseVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
-    public String getId() {
+    public String getID() {
         return ClutterBestiary.MOD_ID + ":" + this.getName();
+    }
+
+    @Override
+    public Formatting getFormatting() {
+        return this.formatting;
     }
 
     public String getName() {

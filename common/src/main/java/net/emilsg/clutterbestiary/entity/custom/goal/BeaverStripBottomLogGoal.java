@@ -1,11 +1,11 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
+import net.emilsg.clutterbestiary.entity.custom.BeaverEntity;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.PillarBlock;
 import net.minecraft.entity.ai.goal.MoveToTargetPosGoal;
-import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
@@ -16,17 +16,19 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldView;
 
 public class BeaverStripBottomLogGoal extends MoveToTargetPosGoal {
+    private final BeaverEntity beaverEntity;
     private Block targetBlock;
     private Block strippedTargetBlock;
     private BlockState strippedTargetState;
 
-    public BeaverStripBottomLogGoal(PathAwareEntity mob, double speed) {
-        super(mob, speed, 8);
+    public BeaverStripBottomLogGoal(BeaverEntity beaverEntity, double speed) {
+        super(beaverEntity, speed, 8);
+        this.beaverEntity = beaverEntity;
     }
 
     @Override
     public boolean canStart() {
-        return super.canStart() && this.mob.getRandom().nextInt(100) == 0;
+        return this.mob.getRandom().nextInt(100) == 0 && super.canStart();
     }
 
     @Override
@@ -43,7 +45,9 @@ public class BeaverStripBottomLogGoal extends MoveToTargetPosGoal {
 
             if (targetBlock != null && strippedTargetBlock != null && strippedTargetState != null) {
                 this.mob.playSound(SoundEvents.BLOCK_WOOD_BREAK, 1.0f, this.mob.getSoundPitch());
-                if (world instanceof ServerWorld) world.setBlockState(targetPos, strippedTargetState, Block.NOTIFY_ALL);
+                if (world instanceof ServerWorld serverWorld && serverWorld.setBlockState(targetPos, strippedTargetState, Block.NOTIFY_ALL)) {
+                    this.beaverEntity.onWorldLogStripped();
+                }
                 this.stop();
             }
         }
@@ -61,19 +65,8 @@ public class BeaverStripBottomLogGoal extends MoveToTargetPosGoal {
         if (block == null) return false;
 
         targetBlock = state.getBlock();
-        String raw = String.valueOf(block)
-                .replace("Block{", "")
-                .replace("}", "");
-
-        Identifier blockID = Identifier.tryParse(raw);
-        if (blockID == null) return false;
-
-        String[] parts = raw.split(":", 2);
-        String namespace = parts[0];
-        String path = parts[1];
-
-        String strippedPath = "stripped_" + path;
-        Identifier strippedID = Identifier.of(namespace, strippedPath);
+        Identifier blockID = Registries.BLOCK.getId(block);
+        Identifier strippedID = Identifier.of(blockID.getNamespace(), "stripped_" + blockID.getPath());
         if (!Registries.BLOCK.containsId(strippedID)) return false;
 
         targetBlock = state.getBlock();

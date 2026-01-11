@@ -4,6 +4,7 @@ import net.emilsg.clutterbestiary.entity.custom.ButterflyEntity;
 import net.minecraft.entity.ai.AboveGroundTargeting;
 import net.minecraft.entity.ai.NoPenaltySolidTargeting;
 import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.entity.ai.pathing.Path;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.dimension.DimensionTypes;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 
 public class ButterflyWanderOverworldGoal extends Goal {
-    ButterflyEntity butterfly;
+    private final ButterflyEntity butterfly;
 
     public ButterflyWanderOverworldGoal(ButterflyEntity butterfly) {
         this.setControls(EnumSet.of(Control.MOVE));
@@ -21,31 +22,36 @@ public class ButterflyWanderOverworldGoal extends Goal {
 
     @Override
     public boolean canStart() {
-        return butterfly.getWorld().getDimensionEntry().matchesKey(DimensionTypes.OVERWORLD) && butterfly.getNavigation().isIdle() && butterfly.getRandom().nextInt(10) == 0;
+        return !this.butterfly.isInFluid()
+                && this.butterfly.getWorld().getDimensionEntry().matchesKey(DimensionTypes.OVERWORLD)
+                && this.butterfly.getNavigation().isIdle() && this.butterfly.getRandom().nextInt(10) == 0;
     }
 
     @Override
     public boolean shouldContinue() {
-        return butterfly.getNavigation().isFollowingPath();
+        return !this.butterfly.isInFluid() && this.butterfly.getNavigation().isFollowingPath();
     }
 
     @Override
     public void start() {
         Vec3d vec3d = this.getRandomLocation();
-        if (vec3d != null) {
-            butterfly.getNavigation().startMovingAlong(butterfly.getNavigation().findPathTo(BlockPos.ofFloored(vec3d), 1), 1.0);
-        }
+        if (vec3d == null) return;
+
+        BlockPos targetPos = BlockPos.ofFloored(vec3d);
+        if (!this.butterfly.isSafeFlightTarget(targetPos)) return;
+
+        Path path = this.butterfly.getNavigation().findPathTo(targetPos, 1);
+        if (path != null) this.butterfly.getNavigation().startMovingAlong(path, 1.0);
     }
 
     @Nullable
     private Vec3d getRandomLocation() {
-        Vec3d vec3d2 = butterfly.getRotationVec(0.0f);
+        Vec3d vec3d2 = this.butterfly.getRotationVec(0.0f);
 
-        int i = 8;
-        Vec3d vec3d3 = AboveGroundTargeting.find(butterfly, 8, 7, vec3d2.x, vec3d2.z, 1.5707964f, 4, 2);
+        Vec3d vec3d3 = AboveGroundTargeting.find(this.butterfly, 8, 7, vec3d2.x, vec3d2.z, 1.5707964f, 4, 2);
         if (vec3d3 != null) {
             return vec3d3;
         }
-        return NoPenaltySolidTargeting.find(butterfly, 8, 4, -2, vec3d2.x, vec3d2.z, 1.5707963705062866);
+        return NoPenaltySolidTargeting.find(this.butterfly, 8, 4, -2, vec3d2.x, vec3d2.z, 1.5707963705062866);
     }
 }

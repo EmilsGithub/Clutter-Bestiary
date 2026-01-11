@@ -32,7 +32,16 @@ public class CoatiDigGoal extends Goal {
     public void start() {
         this.coati.getNavigation().stop();
         this.coati.startState(CoatiEntityAnimationState.DIGGING);
-        diggingTimer = 80;
+        diggingTimer = this.getTickCount(CoatiEntity.DIG_DURATION_TICKS);
+    }
+
+    @Override
+    public void stop() {
+        this.coati.setDigging(false);
+        this.coati.setDigSessionActive(false);
+        if (this.coati.getAnimationController().getState() == CoatiEntityAnimationState.DIGGING) {
+            this.coati.startState(CoatiEntityAnimationState.IDLING);
+        }
     }
 
     @Override

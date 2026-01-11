@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2024 EmilSG
  *
@@ -28,31 +27,46 @@ package net.emilsg.clutterbestiary.config;
  */
 public class Configs {
 
-    public static final String spawnButterflies = ModConfigManager.register("spawn_butterflies", true, "Spawn Butterflies.").getKey();
-    public static final String spawnChameleons = ModConfigManager.register("spawn_chameleons", true, "Spawn Chameleons.").getKey();
-    public static final String spawnEchofins = ModConfigManager.register("spawn_echofins", true, "Spawn Echofins.").getKey();
-    public static final String spawnMossblooms = ModConfigManager.register("spawn_mossblooms", true, "Spawn Mossblooms.").getKey();
-    public static final String spawnKiwis = ModConfigManager.register("spawn_kiwis", true, "Spawn Kiwis.").getKey();
-    public static final String spawnEmperorPenguins = ModConfigManager.register("spawn_emperor_penguins", true, "Spawn Emperor Penguins.").getKey();
-    public static final String spawnBeavers = ModConfigManager.register("spawn_beavers", true, "Spawn Beavers.").getKey();
-    public static final String spawnCapybaras = ModConfigManager.register("spawn_capybaras", true, "Spawn Capybaras.").getKey();
-    public static final String spawnCrimsonNewts = ModConfigManager.register("spawn_crimson_newts", true, "Spawn Crimson Newts.").getKey();
-    public static final String spawnWarpedNewts = ModConfigManager.register("spawn_warped_newts", true, "Spawn Warped Newts.").getKey();
-    public static final String spawnEmberTortoises = ModConfigManager.register("spawn_ember_tortoises", true, "Spawn Ember Tortoises.").getKey();
-    public static final String spawnJellyfishes = ModConfigManager.register("spawn_jellyfishes", true, "Spawn Jellyfishes.").getKey();
-    public static final String spawnSeahorses = ModConfigManager.register("spawn_seahorses", true, "Spawn Seahorses.").getKey();
-    public static final String spawnMantaRays = ModConfigManager.register("spawn_manta_rays", true, "Spawn Manta Rays.").getKey();
-    public static final String spawnKoi = ModConfigManager.register("spawn_koi", true, "Spawn Koi.").getKey();
-    public static final String spawnDragonflies = ModConfigManager.register("spawn_dragonflies", true, "Spawn Dragonflies.").getKey();
-    public static final String spawnBooplets = ModConfigManager.register("spawn_booplets", true, "Spawn Booplets.").getKey();
-    public static final String spawnPotionWasps = ModConfigManager.register("spawn_potion_wasps", true, "Spawn Potion Wasps.").getKey();
-    public static final String spawnRiverTurtles = ModConfigManager.register("spawn_river_turtles", true, "Spawn River Turtles.").getKey();
-    public static final String spawnCoatis = ModConfigManager.register("spawn_coatis", true, "Spawn Coatis.").getKey();
-    public static final String spawnRedPandas = ModConfigManager.register("spawn_red_pandas", true, "Spawn Red Pandas.").getKey();
+    // Non-spawn configs remain as before.
+    public static final String doTrinketsElytraFlight = ModConfigManager.register(
+            "do_trinkets_elytra_flight", true,
+            "Will the Elytra and its variants work while worn in the cape slot provided by Trinkets?"
+    ).getKey();
 
-    public static final String doTrinketsElytraFlight = ModConfigManager.register("do_trinkets_elytra_flight", true, "Will the Elytra and it´s variants work while worn in the cape slot provided by Trinkets?").getKey();
+    public static final String doCuriosElytraFlight = ModConfigManager.register(
+            "do_curios_elytra_flight", true,
+            "Will the Elytra and its variants work while worn in the back slot provided by Curios?"
+    ).getKey();
+
+    static {
+        ModConfigManager.registerSpawnConfig("butterfly", true, 20, 3, 6);
+        ModConfigManager.registerSpawnConfig("chameleon", true, 15, 1, 2);
+        ModConfigManager.registerSpawnConfig("echofin", true, 30, 1, 3);
+        ModConfigManager.registerSpawnConfig("mossbloom", true, 30, 1, 2);
+        ModConfigManager.registerSpawnConfig("kiwi", true, 30, 2, 3);
+        ModConfigManager.registerSpawnConfig("emperor_penguin", true, 10, 2, 4);
+        ModConfigManager.registerSpawnConfig("beaver", true, 10, 2, 3);
+        ModConfigManager.registerSpawnConfig("capybara", true, 10, 3, 5);
+        ModConfigManager.registerSpawnConfig("crimson_newt", true, 60, 2, 3);
+        ModConfigManager.registerSpawnConfig("warped_newt", true, 60, 2, 3);
+        ModConfigManager.registerSpawnConfig("ember_tortoise", true, 60, 1, 2);
+        ModConfigManager.registerSpawnConfig("jellyfish", true, 6, 5, 9);
+        ModConfigManager.registerSpawnConfig("seahorse", true, 20, 4, 7);
+        ModConfigManager.registerSpawnConfig("manta_ray", true, 20, 1, 3);
+        ModConfigManager.registerSpawnConfig("koi", true, 20, 4, 7);
+        ModConfigManager.registerSpawnConfig("dragonfly", true, 20, 2, 4);
+        ModConfigManager.registerSpawnConfig("booplet", true, 20, 4, 7);
+        ModConfigManager.registerSpawnConfig("potion_wasp", true, 20, 1, 2);
+        ModConfigManager.registerSpawnConfig("river_turtle", true, 20, 2, 3);
+        ModConfigManager.registerSpawnConfig("coati", true, 20, 2, 4);
+        ModConfigManager.registerSpawnConfig("red_panda", true, 20, 2, 3);
+        ModConfigManager.registerSpawnConfig("stoat", true, 25, 2, 3);
+        ModConfigManager.registerSpawnConfig("crocodile", true, 10, 1, 2);
+        ModConfigManager.registerSpawnConfig("chorus_beetle", false, 10, 1, 2);
+        ModConfigManager.registerSpawnConfig("woodpecker", false, 10, 1, 2);
+        ModConfigManager.registerSpawnConfig("arrowfish", true, 1, 1, 2);
+    }
 
     public static void initConfigs() {
     }
-
 }

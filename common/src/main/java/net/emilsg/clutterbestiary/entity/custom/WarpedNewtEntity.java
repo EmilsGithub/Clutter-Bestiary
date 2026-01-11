@@ -20,6 +20,8 @@ import net.minecraft.world.WorldAccess;
 import org.jetbrains.annotations.Nullable;
 
 public class WarpedNewtEntity extends AbstractNetherNewtEntity {
+    private static final Item BREEDING_ITEM = Items.WARPED_ROOTS;
+    private static final Item TAMING_ITEM = Items.TWISTING_VINES;
 
     public WarpedNewtEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
         super(entityType, world);
@@ -36,7 +38,7 @@ public class WarpedNewtEntity extends AbstractNetherNewtEntity {
 
     @Override
     public Item getBreedingItem() {
-        return Items.WARPED_ROOTS;
+        return BREEDING_ITEM;
     }
 
     @Override
@@ -45,12 +47,12 @@ public class WarpedNewtEntity extends AbstractNetherNewtEntity {
     }
 
     @Override
-    protected Item getFungusItem() {
-        return Items.WARPED_FUNGUS;
+    public Item getTamingItem() {
+        return TAMING_ITEM;
     }
 
     @Override
-    protected Item getTamingItem() {
-        return Items.TWISTING_VINES;
+    protected Item getFungusItem() {
+        return Items.WARPED_FUNGUS;
     }
 }

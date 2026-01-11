@@ -1,21 +1,43 @@
 package net.emilsg.clutterbestiary.entity.variants;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import net.emilsg.clutterbestiary.ClutterBestiary;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public enum JellyfishVariant {
-    GREEN("green"),
-    BLUE("blue"),
-    PURPLE("purple");
+    GREEN("green", Formatting.GREEN),
+    BLUE("blue", Formatting.BLUE),
+    PURPLE("purple", Formatting.DARK_PURPLE);
 
+    private static final Map<Identifier, JellyfishVariant> BY_ID =
+            Arrays.stream(values()).collect(Collectors.toMap(
+                    variant -> Identifier.of(ClutterBestiary.MOD_ID, variant.getName()),
+                    variant -> variant
+            ));
+    public static final Codec<JellyfishVariant> CODEC =
+            Identifier.CODEC.comapFlatMap(
+                    id -> {
+                        JellyfishVariant variant = BY_ID.get(id);
+                        return variant != null
+                                ? DataResult.success(variant)
+                                : DataResult.error(() -> "Unknown jellyfish variant: " + id);
+                    },
+                    variant -> Identifier.of(ClutterBestiary.MOD_ID, variant.getName())
+            );
     private final String name;
+    private final Formatting colorFormatting;
 
-    JellyfishVariant(String name) {
+    JellyfishVariant(String name, Formatting colorFormatting) {
         this.name = name;
+        this.colorFormatting = colorFormatting;
     }
 
     public static JellyfishVariant fromId(String id) {
@@ -25,6 +47,10 @@ public enum JellyfishVariant {
     public static JellyfishVariant getRandom() {
         List<JellyfishVariant> variants = Arrays.stream(values()).toList();
         return variants.get(new Random().nextInt(variants.size()));
+    }
+
+    public Formatting getColorFormatting() {
+        return this.colorFormatting;
     }
 
     public String getId() {

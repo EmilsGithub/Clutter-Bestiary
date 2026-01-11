@@ -19,6 +19,13 @@ public enum PotionWaspVariant {
     SWIFTNESS("swiftness", Potions.SWIFTNESS),
     WEAKNESS("weakness", Potions.WEAKNESS);
 
+    private static final List<RegistryEntry<StatusEffect>> ALL_STATUS_EFFECTS = Arrays.stream(values())
+            .map(PotionWaspVariant::getPotionEffect)
+            .map(RegistryEntry::value)
+            .flatMap(potion -> potion.getEffects().stream())
+            .map(StatusEffectInstance::getEffectType)
+            .distinct()
+            .toList();
 
     private final String name;
     private final RegistryEntry<Potion> effect;
@@ -38,13 +45,7 @@ public enum PotionWaspVariant {
     }
 
     public static List<RegistryEntry<StatusEffect>> getAllStatusEffects() {
-        return Arrays.stream(values())
-                .map(PotionWaspVariant::getPotionEffect)
-                .map(RegistryEntry::value)
-                .flatMap(potion -> potion.getEffects().stream())
-                .map(StatusEffectInstance::getEffectType)
-                .distinct()
-                .toList();
+        return ALL_STATUS_EFFECTS;
     }
 
 

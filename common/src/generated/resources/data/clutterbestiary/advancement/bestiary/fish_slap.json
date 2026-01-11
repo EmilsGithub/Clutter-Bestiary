@@ -1,0 +1,26 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "hit_with_arrowfish": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.fish_slap.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:arrowfish"
+    },
+    "title": {
+      "translate": "advancements.bestiary.fish_slap.title"
+    }
+  },
+  "requirements": [
+    [
+      "hit_with_arrowfish"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

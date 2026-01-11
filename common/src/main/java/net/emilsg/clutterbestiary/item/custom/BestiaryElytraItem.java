@@ -1,11 +1,10 @@
 package net.emilsg.clutterbestiary.item.custom;
 
 import net.minecraft.item.ElytraItem;
-import net.minecraft.item.Equipment;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
-public class BestiaryElytraItem extends ElytraItem implements Equipment {
+public class BestiaryElytraItem extends ElytraItem {
     private final Item component;
 
     public BestiaryElytraItem(Settings settings, Item component) {

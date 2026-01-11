@@ -8,6 +8,7 @@ public class ModModelLayers {
     public static final EntityModelLayer NETHER_NEWT = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "crimson_newt"), "main");
     public static final EntityModelLayer BEAVER = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "beaver"), "main");
     public static final EntityModelLayer BUTTERFLY = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "butterfly"), "main");
+    public static final EntityModelLayer BUTTERFLY_LARVA = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "butterfly_larva"), "main");
     public static final EntityModelLayer EMBER_TORTOISE = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "ember_tortoise"), "main");
     public static final EntityModelLayer JELLYFISH = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "jellyfish"), "main");
     public static final EntityModelLayer MANTA_RAY = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "manta_ray"), "main");
@@ -27,6 +28,11 @@ public class ModModelLayers {
     public static final EntityModelLayer RIVER_TURTLE = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "river_turtle"), "main");
     public static final EntityModelLayer COATI = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "coati"), "main");
     public static final EntityModelLayer RED_PANDA = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "red_panda"), "main");
+    public static final EntityModelLayer STOAT = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "stoat"), "main");
+    public static final EntityModelLayer CROCODILE = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "crocodile"), "main");
+    public static final EntityModelLayer CHORUS_BEETLE = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "chorus_beetle"), "main");
+    public static final EntityModelLayer WOODPECKER = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "woodpecker"), "main");
+    public static final EntityModelLayer ARROWFISH = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "arrowfish"), "main");
 
     public static final EntityModelLayer KOI_BASE = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "koi"), "main");
     public static final EntityModelLayer KOI_PRIMARY_COLOR = new EntityModelLayer(Identifier.of(ClutterBestiary.MOD_ID, "koi"), "primary");

@@ -84,17 +84,21 @@ public class HatchingEggBlock extends Block {
         if (!this.isReadyToHatch(state)) {
             world.playSound(null, pos, SoundEvents.BLOCK_SNIFFER_EGG_CRACK, SoundCategory.BLOCKS, 0.7F, 0.9F + random.nextFloat() * 0.2F);
             world.setBlockState(pos, state.with(HATCH, this.getHatchStage(state) + 1), 2);
+            boolean aboveHatchBooster = this.isAboveHatchBooster(world, pos);
+            float hatchTime = aboveHatchBooster ? this.averageHatchTimeInMinutes * 600 : this.averageHatchTimeInMinutes * 1200;
+            world.scheduleBlockTick(pos, this, (int) hatchTime / 3 + random.nextInt(300));
         } else {
             world.playSound(null, pos, SoundEvents.BLOCK_SNIFFER_EGG_HATCH, SoundCategory.BLOCKS, 0.7F, 0.9F + random.nextFloat() * 0.2F);
             world.breakBlock(pos, false);
-            AnimalEntity animalEntity = (AnimalEntity) type.get().create(world);
-            if (animalEntity != null) {
-                Vec3d vec3d = pos.toCenterPos();
-                animalEntity.setBaby(true);
-                animalEntity.refreshPositionAndAngles(vec3d.getX(), vec3d.getY(), vec3d.getZ(), MathHelper.wrapDegrees(world.random.nextFloat() * 360.0F), 0.0F);
-                world.spawnEntity(animalEntity);
+            for (int i = 0; i < this.getHatchlingCount(state); i++) {
+                AnimalEntity animalEntity = (AnimalEntity) type.get().create(world);
+                if (animalEntity != null) {
+                    Vec3d vec3d = pos.toCenterPos();
+                    animalEntity.setBaby(true);
+                    animalEntity.refreshPositionAndAngles(vec3d.getX(), vec3d.getY(), vec3d.getZ(), MathHelper.wrapDegrees(world.random.nextFloat() * 360.0F), 0.0F);
+                    world.spawnEntity(animalEntity);
+                }
             }
-
         }
     }
 
@@ -105,5 +109,9 @@ public class HatchingEggBlock extends Block {
 
     private boolean isReadyToHatch(BlockState state) {
         return this.getHatchStage(state) == 2;
+    }
+
+    protected int getHatchlingCount(BlockState state) {
+        return 1;
     }
 }

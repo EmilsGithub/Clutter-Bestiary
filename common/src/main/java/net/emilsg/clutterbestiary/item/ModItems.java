@@ -18,6 +18,7 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 public class ModItems {
@@ -32,16 +33,20 @@ public class ModItems {
     public static final RegistrySupplier<Item> RAW_VENISON_RIBS = registerItem("raw_venison_ribs", () -> new Item(new Item.Settings().food(new FoodComponent.Builder().nutrition(5).saturationModifier(0.2f).build()).arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
     public static final RegistrySupplier<Item> COOKED_VENISON_RIBS = registerItem("cooked_venison_ribs", () -> new Item(new Item.Settings().food(new FoodComponent.Builder().nutrition(10).saturationModifier(0.4f).build()).arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
     public static final RegistrySupplier<Item> KOI = registerItem("koi", () -> new Item(new Item.Settings().food(new FoodComponent.Builder().nutrition(1).saturationModifier(0.1F).build()).arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
+    public static final RegistrySupplier<Item> ARROWFISH = registerItem("arrowfish", () -> new ArrowfishItem(new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
 
     public static final RegistrySupplier<Item> LEVITATING_ECHOFIN_BUCKET = registerItem("levitating_echofin_bucket", () -> new EchofinBucketItem(new Item.Settings().recipeRemainder(Items.BUCKET).maxCount(1).arch$tab(ModItemGroups.CLUTTER_BESTIARY), EchofinVariant.LEVITATING));
     public static final RegistrySupplier<Item> CHORUS_ECHOFIN_BUCKET = registerItem("chorus_echofin_bucket", () -> new EchofinBucketItem(new Item.Settings().recipeRemainder(Items.BUCKET).maxCount(1).arch$tab(ModItemGroups.CLUTTER_BESTIARY), EchofinVariant.CHORUS));
     public static final RegistrySupplier<Item> SEAHORSE_BUCKET = registerItem("seahorse_bucket", () -> new SeahorseBucketItem(ModEntityTypes.SEAHORSE, Fluids.WATER, SoundEvents.ITEM_BUCKET_EMPTY_FISH, new Item.Settings().maxCount(1).arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
     public static final RegistrySupplier<Item> RIVER_TURTLE_BUCKET = registerItem("river_turtle_bucket", () -> new RiverTurtleBucketItem(ModEntityTypes.RIVER_TURTLE, Fluids.WATER, SoundEvents.ITEM_BUCKET_EMPTY_FISH, new Item.Settings().maxCount(1).arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
     public static final RegistrySupplier<Item> KOI_BUCKET = registerItem("koi_bucket", () -> new KoiBucketItem(ModEntityTypes.KOI, Fluids.WATER, SoundEvents.ITEM_BUCKET_EMPTY_FISH, new Item.Settings().maxCount(1).arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
+    public static final RegistrySupplier<Item> JELLYFISH_BUCKET = registerItem("jellyfish_bucket", () -> new JellyfishBucketItem(ModEntityTypes.JELLYFISH, Fluids.WATER, SoundEvents.ITEM_BUCKET_EMPTY_FISH, new Item.Settings().maxCount(1).arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
+    public static final RegistrySupplier<Item> ARROWFISH_BUCKET = registerItem("arrowfish_bucket", () -> new ArrowfishBucketItem(ModEntityTypes.ARROWFISH, Fluids.WATER, SoundEvents.ITEM_BUCKET_EMPTY_FISH, new Item.Settings().maxCount(1).arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
 
     public static final RegistrySupplier<Item> BUTTERFLY_COCOON = registerItem("butterfly_cocoon", () -> new ModAliasedBlockItem(ModBlocks.BUTTERFLY_COCOON, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
     public static final RegistrySupplier<Item> KIWI_BIRD_EGG = registerItem("kiwi_bird_egg", () -> new ModAliasedBlockItem(ModBlocks.KIWI_BIRD_EGG, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
     public static final RegistrySupplier<Item> EMPEROR_PENGUIN_EGG = registerItem("emperor_penguin_egg", () -> new ModAliasedBlockItem(ModBlocks.EMPEROR_PENGUIN_EGG, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
+    public static final RegistrySupplier<Item> CROCODILE_EGG = registerItem("crocodile_egg", () -> new ModAliasedBlockItem(ModBlocks.CROCODILE_EGG, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
 
     public static final RegistrySupplier<Item> MOSSBLOOM_ANTLERS = registerItem("mossbloom_antlers", () -> new Item(new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
 
@@ -69,6 +74,28 @@ public class ModItems {
     public static final RegistrySupplier<Item> WARPED_BUTTERFLY_ELYTRA = registerItem("warped_butterfly_elytra", () -> new ButterflyElytraItem(new Item.Settings().maxDamage(432).arch$tab(ModItemGroups.CLUTTER_BESTIARY), Items.WARPED_ROOTS, "warped"));
     public static final RegistrySupplier<Item> SOUL_BUTTERFLY_ELYTRA = registerItem("soul_butterfly_elytra", () -> new ButterflyElytraItem(new Item.Settings().maxDamage(432).arch$tab(ModItemGroups.CLUTTER_BESTIARY), Items.BONE, "soul"));
 
+    public static final List<RegistrySupplier<Item>> BUTTERFLY_ELYTRAS = List.of(
+            WHITE_BUTTERFLY_ELYTRA,
+            LIGHT_GRAY_BUTTERFLY_ELYTRA,
+            GRAY_BUTTERFLY_ELYTRA,
+            BLACK_BUTTERFLY_ELYTRA,
+            BROWN_BUTTERFLY_ELYTRA,
+            RED_BUTTERFLY_ELYTRA,
+            ORANGE_BUTTERFLY_ELYTRA,
+            YELLOW_BUTTERFLY_ELYTRA,
+            LIME_BUTTERFLY_ELYTRA,
+            GREEN_BUTTERFLY_ELYTRA,
+            CYAN_BUTTERFLY_ELYTRA,
+            LIGHT_BLUE_BUTTERFLY_ELYTRA,
+            BLUE_BUTTERFLY_ELYTRA,
+            PURPLE_BUTTERFLY_ELYTRA,
+            MAGENTA_BUTTERFLY_ELYTRA,
+            PINK_BUTTERFLY_ELYTRA,
+            CRIMSON_BUTTERFLY_ELYTRA,
+            WARPED_BUTTERFLY_ELYTRA,
+            SOUL_BUTTERFLY_ELYTRA
+    );
+
     public static final RegistrySupplier<Item> MOSSBLOOM_SPAWN_EGG = registerItem("mossbloom_spawn_egg", () -> new BestiarySpawnEggItem(ModEntityTypes.MOSSBLOOM, 16053485, 7377453, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
     public static final RegistrySupplier<Item> BUTTERFLY_SPAWN_EGG = registerItem("butterfly_spawn_egg", () -> new BestiarySpawnEggItem(ModEntityTypes.BUTTERFLY, 757231, 12, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
     public static final RegistrySupplier<Item> CHAMELEON_SPAWN_EGG = registerItem("chameleon_spawn_egg", () -> new BestiarySpawnEggItem(ModEntityTypes.CHAMELEON, 1744148, 16228345, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
@@ -90,6 +117,11 @@ public class ModItems {
     public static final RegistrySupplier<Item> RIVER_TURTLE_SPAWN_EGG = registerItem("river_turtle_spawn_egg", () -> new BestiarySpawnEggItem(ModEntityTypes.RIVER_TURTLE, 0x4D2F2E, 0x385E3E, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
     public static final RegistrySupplier<Item> COATI_SPAWN_EGG = registerItem("coati_spawn_egg", () -> new BestiarySpawnEggItem(ModEntityTypes.COATI, 0x734D39, 0x949AA3, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
     public static final RegistrySupplier<Item> RED_PANDA_SPAWN_EGG = registerItem("red_panda_spawn_egg", () -> new BestiarySpawnEggItem(ModEntityTypes.RED_PANDA, 0x81321E, 0x292223, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
+    public static final RegistrySupplier<Item> STOAT_SPAWN_EGG = registerItem("stoat_spawn_egg", () -> new BestiarySpawnEggItem(ModEntityTypes.STOAT, 0xa57445, 0xe3e0d0, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
+    public static final RegistrySupplier<Item> CROCODILE_SPAWN_EGG = registerItem("crocodile_spawn_egg", () -> new BestiarySpawnEggItem(ModEntityTypes.CROCODILE, 0x35553a, 0x8c9a45, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
+    public static final RegistrySupplier<Item> CHORUS_BEETLE_SPAWN_EGG = registerItem("chorus_beetle_spawn_egg", () -> new BestiarySpawnEggItem(ModEntityTypes.CHORUS_BEETLE, 0x4a3159, 0xd8b8db, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
+    public static final RegistrySupplier<Item> WOODPECKER_SPAWN_EGG = registerItem("woodpecker_spawn_egg", () -> new BestiarySpawnEggItem(ModEntityTypes.WOODPECKER, 0x252525, 0xb31414, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
+    public static final RegistrySupplier<Item> ARROWFISH_SPAWN_EGG = registerItem("arrowfish_spawn_egg", () -> new BestiarySpawnEggItem(ModEntityTypes.ARROWFISH, 0xc3c7b7, 0xd0b510, new Item.Settings().arch$tab(ModItemGroups.CLUTTER_BESTIARY)));
 
     public static RegistrySupplier<Item> registerItem(String name, Supplier<Item> item) {
         return ITEMS.register(Identifier.of(ClutterBestiary.MOD_ID, name), item);

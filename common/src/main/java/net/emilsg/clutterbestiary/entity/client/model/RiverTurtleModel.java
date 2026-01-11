@@ -1,5 +1,7 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import net.emilsg.clutterbestiary.animation_handling.animation_states.RiverTurtleAnimationState;
+import net.emilsg.clutterbestiary.entity.client.animation.AnimationBindings;
 import net.emilsg.clutterbestiary.entity.client.animation.RiverTurtleAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutterbestiary.entity.custom.RiverTurtleEntity;
@@ -8,6 +10,11 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 
 public class RiverTurtleModel<T extends RiverTurtleEntity> extends BestiaryModel<T> {
+    private static final AnimationBindings<RiverTurtleEntity, RiverTurtleAnimationState> ANIMATIONS = new AnimationBindings<RiverTurtleEntity, RiverTurtleAnimationState>()
+            .bind(RiverTurtleAnimationState.HIDING, RiverTurtleAnimations.RIVER_TURTLE_HIDE)
+            .bind(RiverTurtleAnimationState.UNHIDING, RiverTurtleAnimations.RIVER_TURTLE_UNHIDE)
+            .bind(RiverTurtleAnimationState.SIT_START, RiverTurtleAnimations.RIVER_TURTLE_SIT_START)
+            .bind(RiverTurtleAnimationState.SIT_END, RiverTurtleAnimations.RIVER_TURTLE_SIT_END);
     private final ModelPart root;
     private final ModelPart all;
     private final ModelPart body;
@@ -94,10 +101,7 @@ public class RiverTurtleModel<T extends RiverTurtleEntity> extends BestiaryModel
             this.animateMovement(RiverTurtleAnimations.RIVER_TURTLE_SWIM, limbAngle, limbDistance, 3f, 2f);
         }
 
-        this.updateAnimation(entity.hidingAnimationState, RiverTurtleAnimations.RIVER_TURTLE_HIDE, animationProgress, 1.0f);
-        this.updateAnimation(entity.unhidingAnimationState, RiverTurtleAnimations.RIVER_TURTLE_UNHIDE, animationProgress, 1.0f);
-        this.updateAnimation(entity.sitStartAnimationState, RiverTurtleAnimations.RIVER_TURTLE_SIT_START, animationProgress, 1.0f);
-        this.updateAnimation(entity.sitEndAnimationState, RiverTurtleAnimations.RIVER_TURTLE_SIT_END, animationProgress, 1.0f);
+        ANIMATIONS.apply(entity, entity.getAnimationController(), animationProgress, this::updateAnimation);
     }
 
     @Override

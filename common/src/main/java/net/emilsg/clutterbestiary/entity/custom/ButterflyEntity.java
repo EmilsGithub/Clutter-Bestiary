@@ -1,10 +1,14 @@
 package net.emilsg.clutterbestiary.entity.custom;
 
+import net.emilsg.clutterbestiary.animation_handling.AnimationPlayback;
 import net.emilsg.clutterbestiary.entity.custom.goal.ButterflyDupeSporeBlossomGoal;
+import net.emilsg.clutterbestiary.entity.custom.goal.ButterflyEscapeFluidGoal;
+import net.emilsg.clutterbestiary.entity.custom.goal.ButterflyMateGoal;
 import net.emilsg.clutterbestiary.entity.custom.goal.ButterflyPlaceCocoonGoal;
 import net.emilsg.clutterbestiary.entity.custom.goal.ButterflyWanderNetherGoal;
 import net.emilsg.clutterbestiary.entity.custom.goal.ButterflyWanderOverworldGoal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
+import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.variants.ButterflyVariant;
 import net.emilsg.clutterbestiary.item.ModItems;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
@@ -15,7 +19,6 @@ import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.control.FlightMoveControl;
 import net.minecraft.entity.ai.control.LookControl;
-import net.minecraft.entity.ai.goal.AnimalMateGoal;
 import net.minecraft.entity.ai.goal.TemptGoal;
 import net.minecraft.entity.ai.pathing.BirdNavigation;
 import net.minecraft.entity.ai.pathing.EntityNavigation;
@@ -37,7 +40,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.BiomeTags;
-import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
@@ -47,6 +49,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.*;
 import net.minecraft.world.biome.Biome;
@@ -56,21 +59,24 @@ import org.jetbrains.annotations.Nullable;
 import java.time.LocalDate;
 
 public class ButterflyEntity extends ParentAnimalEntity {
+    private static final int SPORE_BLOSSOM_DUPE_COOLDOWN_TICKS = 20 * 60 * 10;
+    private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.SUGAR);
     private static final TrackedData<Boolean> HAS_COCOON = DataTracker.registerData(ButterflyEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Integer> DUPE_TIMER = DataTracker.registerData(ButterflyEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<String> VARIANT = DataTracker.registerData(ButterflyEntity.class, TrackedDataHandlerRegistry.STRING);
     private static final TrackedData<Integer> FLYING_TYPE_VARIANT = DataTracker.registerData(ButterflyEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
     public final AnimationState flyingAnimState = new AnimationState();
-    private int animationTimeout = 0;
+    private int dupeTimer;
 
     public ButterflyEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
         super(entityType, world);
         this.moveControl = new FlightMoveControl(this, 20, true);
         this.lookControl = new ButterflyLookControl(this);
         this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
+        this.setPathfindingPenalty(PathNodeType.DAMAGE_FIRE, -1.0F);
+        this.setPathfindingPenalty(PathNodeType.LAVA, -1.0F);
         this.setPathfindingPenalty(PathNodeType.WATER, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.WATER_BORDER, 16.0F);
+        this.setPathfindingPenalty(PathNodeType.WATER_BORDER, 32.0F);
         this.setPathfindingPenalty(PathNodeType.COCOA, -1.0F);
         this.setPathfindingPenalty(PathNodeType.FENCE, -1.0F);
     }
@@ -113,54 +119,38 @@ public class ButterflyEntity extends ParentAnimalEntity {
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
         builder.add(HAS_COCOON, false);
-        builder.add(DUPE_TIMER, 0);
         builder.add(VARIANT, ButterflyVariant.WHITE.getId());
         builder.add(FLYING_TYPE_VARIANT, 0);
     }
 
     @Override
     protected void initGoals() {
-        this.goalSelector.add(0, new AnimalMateGoal(this, 1.0));
-        this.goalSelector.add(1, new ButterflyPlaceCocoonGoal(this, 1.0));
-        this.goalSelector.add(2, new TemptGoal(this, 1.25, Ingredient.ofItems(Items.SUGAR), false));
-        this.goalSelector.add(3, new ButterflyDupeSporeBlossomGoal(this, 1, 1200));
-        this.goalSelector.add(4, new ButterflyWanderNetherGoal(this));
-        this.goalSelector.add(4, new ButterflyWanderOverworldGoal(this));
+        this.goalSelector.add(0, new ButterflyEscapeFluidGoal(this));
+        this.goalSelector.add(1, new ButterflyMateGoal(this, 1.0));
+        this.goalSelector.add(2, new ButterflyPlaceCocoonGoal(this, 1.0));
+        this.goalSelector.add(3, new TemptGoal(this, 1.25, BREEDING_INGREDIENT, false));
+        this.goalSelector.add(4, new ButterflyDupeSporeBlossomGoal(this, 1, SPORE_BLOSSOM_DUPE_COOLDOWN_TICKS));
+        this.goalSelector.add(5, new ButterflyWanderNetherGoal(this));
+        this.goalSelector.add(5, new ButterflyWanderOverworldGoal(this));
     }
 
-    public void copyDataFromNbt(ButterflyEntity entity, NbtCompound nbt) {
-        if (nbt.contains("NoAI")) {
-            entity.setAiDisabled(nbt.getBoolean("NoAI"));
-        }
-
-        if (nbt.contains("Silent")) {
-            entity.setSilent(nbt.getBoolean("Silent"));
-        }
-
-        if (nbt.contains("NoGravity")) {
-            entity.setNoGravity(nbt.getBoolean("NoGravity"));
-        }
-
-        if (nbt.contains("Glowing")) {
-            entity.setGlowing(nbt.getBoolean("Glowing"));
-        }
-
-        if (nbt.contains("Invulnerable")) {
-            entity.setInvulnerable(nbt.getBoolean("Invulnerable"));
-        }
-
+    public void copyDataFromNbt(NbtCompound nbt) {
+        Bucketable.copyDataFromNbt(this, nbt);
         if (nbt.contains("FlyingVariant")) {
-            entity.setFlyingVariant(nbt.getInt("FlyingVariant"));
+            this.setFlyingVariant(nbt.getInt("FlyingVariant"));
+        }
+
+        if (nbt.contains("DupeTimer")) {
+            this.setDupeTimer(nbt.getInt("DupeTimer"));
+        }
+
+        if (nbt.contains("HasCocoon")) {
+            this.setHasCocoon(nbt.getBoolean("HasCocoon"));
         }
 
         if (nbt.contains("Variant")) {
-            entity.setVariant(ButterflyVariant.fromId(nbt.getString("Variant")));
+            this.setVariant(ButterflyVariant.fromId(nbt.getString("Variant")));
         }
-
-        if (nbt.contains("Health", 99)) {
-            entity.setHealth(nbt.getFloat("Health"));
-        }
-
     }
 
     @Override
@@ -202,6 +192,16 @@ public class ButterflyEntity extends ParentAnimalEntity {
     @Override
     public void breed(ServerWorld world, AnimalEntity other) {
         super.breed(world, other);
+        ButterflyLarvaEntity larva = ModEntityTypes.BUTTERFLY_LARVA.get().create(world);
+        if (larva != null) {
+            BlockPos spawnPos = this.findLarvaSpawnPos(world);
+            larva.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, this.getYaw(), 0.0F);
+            larva.setHomePos(spawnPos);
+            larva.setVariant(other instanceof ButterflyEntity mate && this.random.nextBoolean() ? mate.getVariant() : this.getVariant());
+            larva.setPersistent();
+            world.spawnEntity(larva);
+        }
+
         ServerPlayerEntity serverPlayerEntity = this.getLovingPlayer();
         if (serverPlayerEntity == null && other.getLovingPlayer() != null) {
             serverPlayerEntity = other.getLovingPlayer();
@@ -212,7 +212,6 @@ public class ButterflyEntity extends ParentAnimalEntity {
             Criteria.BRED_ANIMALS.trigger(serverPlayerEntity, this, other, null);
         }
 
-        this.setHasCocoon(true);
         this.setBreedingAge(6000);
         other.setBreedingAge(6000);
         this.resetLoveTicks();
@@ -224,37 +223,41 @@ public class ButterflyEntity extends ParentAnimalEntity {
         return world.doesNotIntersectEntities(this);
     }
 
+    private BlockPos findLarvaSpawnPos(ServerWorld world) {
+        BlockPos origin = this.getBlockPos();
+        for (int radius = 0; radius <= 2; radius++) {
+            for (int x = -radius; x <= radius; x++) {
+                for (int z = -radius; z <= radius; z++) {
+                    for (int y = 0; y <= 8; y++) {
+                        BlockPos pos = origin.add(x, -y, z);
+                        if (world.getBlockState(pos).isAir() && world.getBlockState(pos.up()).isAir()
+                                && world.getFluidState(pos).isEmpty() && world.getBlockState(pos.down()).isSolidBlock(world, pos.down())) {
+                            return pos;
+                        }
+                    }
+                }
+            }
+        }
+        return origin;
+    }
+
+    @Override
+    public boolean canEat() {
+        return super.canEat() && !this.hasCocoon();
+    }
+
     @Override
     public boolean canSpawn(WorldAccess world, SpawnReason spawnReason) {
         return true;
     }
 
-    public void copyDataToStack(ButterflyEntity entity, ItemStack stack) {
-        stack.set(DataComponentTypes.CUSTOM_NAME, entity.getCustomName());
-        NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, (nbtCompound) -> {
-            if (entity.isAiDisabled()) {
-                nbtCompound.putBoolean("NoAI", entity.isAiDisabled());
-            }
-
-            if (entity.isSilent()) {
-                nbtCompound.putBoolean("Silent", entity.isSilent());
-            }
-
-            if (entity.hasNoGravity()) {
-                nbtCompound.putBoolean("NoGravity", entity.hasNoGravity());
-            }
-
-            if (entity.isGlowing()) {
-                nbtCompound.putBoolean("Glowing", entity.isGlowing());
-            }
-
-            if (entity.isInvulnerable()) {
-                nbtCompound.putBoolean("Invulnerable", entity.isInvulnerable());
-            }
-
-            nbtCompound.putFloat("Health", entity.getHealth());
-            nbtCompound.putString("Variant", entity.getTypeVariant());
-            nbtCompound.putInt("FlyingVariant", entity.getFlyingTypeVariant());
+    public void copyDataToStack(ItemStack stack) {
+        Bucketable.copyDataToStack(this, stack);
+        NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, nbtCompound -> {
+            nbtCompound.putString("Variant", this.getTypeVariant());
+            nbtCompound.putInt("FlyingVariant", this.getFlyingTypeVariant());
+            nbtCompound.putInt("DupeTimer", this.getDupeTimer());
+            nbtCompound.putBoolean("HasCocoon", this.hasCocoon());
         });
     }
 
@@ -264,11 +267,11 @@ public class ButterflyEntity extends ParentAnimalEntity {
     }
 
     public int getDupeTimer() {
-        return this.dataTracker.get(DUPE_TIMER);
+        return this.dupeTimer;
     }
 
     public void setDupeTimer(int time) {
-        this.dataTracker.set(DUPE_TIMER, time);
+        this.dupeTimer = time;
     }
 
     public int getFlyingTypeVariant() {
@@ -276,7 +279,18 @@ public class ButterflyEntity extends ParentAnimalEntity {
     }
 
     public float getPathfindingFavor(BlockPos pos, WorldView world) {
-        return world.getBlockState(pos).isAir() ? 10.0F : 0.0F;
+        return this.isSafeFlightTarget(pos) ? 10.0F : 0.0F;
+    }
+
+    public boolean isSafeFlightTarget(BlockPos pos) {
+        World world = this.getWorld();
+        if (!world.getBlockState(pos).isAir() || !world.getFluidState(pos).isEmpty()) return false;
+
+        for (Direction direction : Direction.values()) {
+            if (!world.getFluidState(pos.offset(direction)).isEmpty()) return false;
+        }
+
+        return true;
     }
 
     public String getTypeVariant() {
@@ -310,7 +324,7 @@ public class ButterflyEntity extends ParentAnimalEntity {
 
     @Override
     public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(Items.SUGAR);
+        return BREEDING_INGREDIENT.test(stack);
     }
 
     @Override
@@ -321,6 +335,10 @@ public class ButterflyEntity extends ParentAnimalEntity {
     @Override
     public boolean isFireImmune() {
         return this.getVariant().isFireImmune();
+    }
+
+    @Override
+    public void setOnFireFromLava() {
     }
 
     public void setFlyingVariant(int flyingVariant) {
@@ -342,7 +360,7 @@ public class ButterflyEntity extends ParentAnimalEntity {
         World world = this.getWorld();
 
         if (world.isClient) {
-            this.setupAnimationStates();
+            AnimationPlayback.updateLoop(this, this.flyingAnimState, this.isAlive());
         }
     }
 
@@ -350,12 +368,8 @@ public class ButterflyEntity extends ParentAnimalEntity {
     public void tickMovement() {
         super.tickMovement();
 
-        if (this.getDupeTimer() < 8000) {
+        if (!this.getWorld().isClient && this.getDupeTimer() < SPORE_BLOSSOM_DUPE_COOLDOWN_TICKS) {
             this.setDupeTimer(this.getDupeTimer() + 1);
-        }
-
-        if (this.isAlive() && (this.isSubmergedIn(FluidTags.LAVA) || this.isSubmergedIn(FluidTags.WATER))) {
-            this.kill();
         }
     }
 
@@ -399,21 +413,13 @@ public class ButterflyEntity extends ParentAnimalEntity {
     protected void playStepSound(BlockPos pos, BlockState state) {
     }
 
-    private void setupAnimationStates() {
-        if (this.animationTimeout <= 0) {
-            this.animationTimeout = 10;
-            this.flyingAnimState.start(this.age);
-        } else {
-            --this.animationTimeout;
-        }
-    }
-
     private boolean tryBottle(PlayerEntity player, Hand hand, ButterflyEntity entity) {
         ItemStack itemStack = player.getStackInHand(hand);
         if (itemStack.getItem() == Items.GLASS_BOTTLE && entity.isAlive()) {
+            if (entity.getWorld().isClient) return true;
             entity.playSound(SoundEvents.ITEM_BOTTLE_FILL_DRAGONBREATH, 1.0F, 0.75F);
             ItemStack bottleStack = new ItemStack(ModItems.BUTTERFLY_IN_A_BOTTLE.get());
-            copyDataToStack(entity, bottleStack);
+            entity.copyDataToStack(bottleStack);
             ItemStack butterflyBottleStack = ItemUsage.exchangeStack(itemStack, player, bottleStack, false);
             player.swingHand(hand);
             player.setStackInHand(hand, butterflyBottleStack);

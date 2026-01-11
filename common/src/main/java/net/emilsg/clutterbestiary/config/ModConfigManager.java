@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2024 EmilSG
  *
@@ -18,6 +17,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
+ *
+ * Edited 2026 for startup-loaded configs.
  */
 
 package net.emilsg.clutterbestiary.config;
@@ -30,10 +31,11 @@ import dev.architectury.platform.Platform;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -48,16 +50,12 @@ public class ModConfigManager {
     private static final String CONFIG_FILE_NAME = "clutterbestiary_config.json";
     private static final String CONFIG_FILE_FOLDER = "clutter";
 
+    private static final Map<String, SpawnConfig> SPAWN_CONFIGS = new HashMap<>();
+
     // Stores registered configuration entries by their key.
     private static final Map<String, ModConfigEntry<?>> CONFIG_ENTRIES = new HashMap<>();
     // Maps class types to their corresponding JSON parsing functions.
     private static final Map<Class<?>, Function<JsonElement, ?>> PARSERS = new HashMap<>();
-
-    // Configuration directory and file.
-    private static File configDir;
-    private static File configFile;
-    // Flag to track whether the configuration files have been initialized.
-    private static boolean isInitialized = false;
 
     static {
         // Initialize JSON parsers for various data types.
@@ -66,18 +64,6 @@ public class ModConfigManager {
         PARSERS.put(Float.class, JsonElement::getAsFloat);
         PARSERS.put(Double.class, JsonElement::getAsDouble);
         PARSERS.put(String.class, JsonElement::getAsString);
-    }
-
-    // Initializes the configuration files and directories if they haven't been initialized yet.
-    private static void initConfigFiles() {
-        if (!isInitialized) {
-            configDir = new File(Platform.getConfigFolder().toFile(), CONFIG_FILE_FOLDER);
-            if (!configDir.exists()) {
-                configDir.mkdirs();
-            }
-            configFile = new File(configDir, CONFIG_FILE_NAME);
-            isInitialized = true;
-        }
     }
 
     /**
@@ -113,33 +99,70 @@ public class ModConfigManager {
     }
 
     /**
-     * Loads the configuration from the JSON file, updating registered entries with the loaded values.
-     * If the configuration file is missing or corrupted, it creates a new one with default values.
+     * Sets the value of a registered configuration entry and immediately saves the updated configuration.
+     *
+     * @param key    The key of the configuration entry to update.
+     * @param value  The new value to assign to the entry.
+     */
+    public static void set(String key, Object value) {
+        ModConfigEntry<?> entry = CONFIG_ENTRIES.get(key);
+        if (entry == null) {
+            LOGGER.error("Tried to set unknown config key: {}", key);
+            return;
+        }
+
+        try {
+            setEntryValueUnchecked(entry, value);
+            saveConfig();
+        } catch (Exception e) {
+            LOGGER.error("Failed to set config key {}", key, e);
+        }
+    }
+
+    /**
+     * Loads the configuration from the global JSON file, updating registered entries
+     * with the loaded values. If the configuration file is missing, empty, or corrupted, a new
+     * one is created with default values in the config folder.
      */
     public static void loadConfig() {
         Configs.initConfigs();
-        initConfigFiles();
 
+        Path configFile = getConfigFile();
         boolean needsSave = false;
 
-        if (configFile.exists()) {
-            try (FileReader reader = new FileReader(configFile)) {
+        if (Files.exists(configFile)) {
+            try (BufferedReader reader = Files.newBufferedReader(configFile)) {
                 JsonObject jsonObject = GSON.fromJson(reader, JsonObject.class);
+
+                // If the file exists but cannot be parsed into a valid JSON object,
+                // reset all values to defaults and recreate the file.
+                if (jsonObject == null) {
+                    LOGGER.error("Config file was empty or invalid, recreating defaults.");
+                    resetConfigsInternal();
+                    saveConfig();
+                    return;
+                }
+
                 for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
                     ModConfigEntry<?> configEntry = CONFIG_ENTRIES.get(entry.getKey());
                     if (configEntry != null) {
                         try {
                             JsonObject entryObject = entry.getValue().getAsJsonObject();
                             JsonElement valueElement = entryObject.get("value");
-                            setConfigEntryValue(configEntry, valueElement, entry.getKey());
 
+                            // Each entry is expected to contain a "value" field.
+                            if (valueElement == null) {
+                                throw new IllegalStateException("Missing value element");
+                            }
+
+                            setConfigEntryValue(configEntry, valueElement, entry.getKey());
                         } catch (Exception e) {
                             LOGGER.error("Invalid value for key: {}. Using default value.", entry.getKey());
                             configEntry.resetToDefault();
                             needsSave = true;
                         }
                     } else {
-                        LOGGER.error("Unknown config entry: {}", entry.getKey());
+                        LOGGER.warn("Unknown config entry in file: {}", entry.getKey());
                         needsSave = true;
                     }
                 }
@@ -147,13 +170,13 @@ public class ModConfigManager {
                 // Ensure all registered entries are present in the config file.
                 for (Map.Entry<String, ModConfigEntry<?>> registeredEntry : CONFIG_ENTRIES.entrySet()) {
                     if (!jsonObject.has(registeredEntry.getKey())) {
-                        LOGGER.error("Adding missing config entry: {}", registeredEntry.getKey());
+                        LOGGER.warn("Adding missing config entry: {}", registeredEntry.getKey());
                         needsSave = true;
                     }
                 }
             } catch (IOException e) {
-                LOGGER.error("Failed to load config file: {}", CONFIG_FILE_NAME);
-                e.printStackTrace();
+                LOGGER.error("Failed to load config file: {}", configFile, e);
+                needsSave = true;
             }
         } else {
             needsSave = true;
@@ -163,6 +186,118 @@ public class ModConfigManager {
         if (needsSave) {
             saveConfig();
         }
+        rebuildSpawnSnapshots();
+    }
+
+    /**
+     * Saves the current configuration entries to the current world's JSON file.
+     * The file is stored in the game's config/clutter folder.
+     * If the directory does not exist, it is created.
+     *
+     */
+    public static void saveConfig() {
+        Path configDir = getConfigDir();
+        Path configFile = getConfigFile();
+
+        try {
+            Files.createDirectories(configDir);
+        } catch (IOException e) {
+            LOGGER.error("Failed to create config directory: {}", configDir, e);
+            return;
+        }
+
+        JsonObject jsonObject = new JsonObject();
+
+        // Serialize each configuration entry to JSON format.
+        CONFIG_ENTRIES.forEach((key, entry) -> {
+            JsonObject entryObject = new JsonObject();
+            entryObject.addProperty("comment", entry.getComment());
+            entryObject.add("value", GSON.toJsonTree(entry.getValue()));
+            jsonObject.add(key, entryObject);
+        });
+
+        // Write the serialized JSON to the configuration file.
+        try (BufferedWriter writer = Files.newBufferedWriter(configFile)) {
+            GSON.toJson(jsonObject, writer);
+        } catch (IOException e) {
+            LOGGER.error("Error when saving config file: {}", configFile, e);
+        }
+    }
+
+    /**
+     * Resets all configuration entries to their default values and saves the updated configuration.
+     */
+    public static void resetConfigs() {
+        resetConfigsInternal();
+        saveConfig();
+    }
+
+    /**
+     * Resets all registered configuration entries to their default values without saving.
+     * This is used internally before a full save operation.
+     */
+    private static void resetConfigsInternal() {
+        CONFIG_ENTRIES.forEach((key, entry) -> entry.resetToDefault());
+    }
+
+    /**
+     * Resolves the configuration directory.
+     */
+    private static Path getConfigDir() {
+        return Platform.getConfigFolder().resolve(CONFIG_FILE_FOLDER);
+    }
+
+    /**
+     * Registers four config entries for a creature's spawn behaviour and records
+     * the creature name so snapshots can be built at load time.
+     * Keys registered: <name>_spawn_enabled, <name>_spawn_weight,
+     * <name>_min_group_size, <name>_max_group_size.
+     *
+     * @param name          The creature name used as the key prefix (e.g. "butterfly").
+     * @param defaultEnable Whether spawning is enabled by default.
+     * @param defaultWeight The default spawn weight.
+     * @param defaultMin    The default minimum group size.
+     * @param defaultMax    The default maximum group size.
+     */
+    public static void registerSpawnConfig(String name, boolean defaultEnable,
+                                           int defaultWeight, int defaultMin, int defaultMax) {
+        register(name + "_spawn_enabled", defaultEnable, "Enable " + name + " spawning?");
+        register(name + "_spawn_weight", defaultWeight, "Spawn weight for " + name + ".");
+        register(name + "_min_group_size", defaultMin, "Minimum group size for " + name + ".");
+        register(name + "_max_group_size", defaultMax, "Maximum group size for " + name + ".");
+        SPAWN_CONFIGS.put(name, new SpawnConfig(defaultEnable, defaultWeight, defaultMin, defaultMax));
+    }
+
+    /**
+     * Returns the current spawn config snapshot for the given creature name.
+     * The snapshot is updated every time loadConfig() is called.
+     *
+     * @param name The creature name (e.g. "butterfly").
+     * @return The SpawnConfig snapshot, or null if the name was never registered.
+     */
+    public static SpawnConfig getSpawnConfig(String name) {
+        return SPAWN_CONFIGS.get(name);
+    }
+
+    /**
+     * Rebuilds all SpawnConfig snapshots from the currently loaded ModConfigEntry values.
+     * Called internally at the end of loadConfig().
+     */
+    private static void rebuildSpawnSnapshots() {
+        for (String name : SPAWN_CONFIGS.keySet()) {
+            boolean enabled = get(name + "_spawn_enabled", true);
+            int weight = get(name + "_spawn_weight", 10);
+            int min = get(name + "_min_group_size", 1);
+            int max = get(name + "_max_group_size", 4);
+            SPAWN_CONFIGS.put(name, new SpawnConfig(enabled, weight, min, max));
+        }
+    }
+
+    /**
+     * Resolves the full path to the configuration file.
+     */
+    private static Path getConfigFile() {
+        return getConfigDir().resolve(CONFIG_FILE_NAME);
     }
 
     /**
@@ -185,39 +320,14 @@ public class ModConfigManager {
     }
 
     /**
-     * Saves the current configuration entries to the JSON file.
-     * If the file doesn't exist, it is created.
+     * Sets a configuration entry value without generic type checking.
+     * Used internally by the public setter when the value type is already known by the caller.
+     *
+     * @param entry The configuration entry to update.
+     * @param value The value to assign.
      */
-    private static void saveConfig() {
-        initConfigFiles();
-
-        JsonObject jsonObject = new JsonObject();
-
-        // Serialize each configuration entry to JSON format.
-        CONFIG_ENTRIES.forEach((key, entry) -> {
-            JsonObject entryObject = new JsonObject();
-            entryObject.addProperty("comment", entry.getComment());
-            entryObject.add("value", GSON.toJsonTree(entry.getValue()));
-            jsonObject.add(key, entryObject);
-        });
-
-        // Write the serialized JSON to the configuration file.
-        try (FileWriter writer = new FileWriter(configFile)) {
-            GSON.toJson(jsonObject, writer);
-        } catch (IOException e) {
-            LOGGER.error("Error when saving config file: {}", CONFIG_FILE_NAME);
-            e.printStackTrace();
-        }
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void setEntryValueUnchecked(ModConfigEntry entry, Object value) {
+        entry.setValue(value);
     }
-
-    /**
-     * Resets all configuration entries to their default values and saves the updated configuration to the file.
-     */
-    public static void resetConfigs() {
-        CONFIG_ENTRIES.forEach((key, entry) -> {
-            entry.resetToDefault();
-        });
-        saveConfig();
-    }
-
 }

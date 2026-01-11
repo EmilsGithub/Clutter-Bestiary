@@ -1,0 +1,45 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "view_penguin": {
+      "conditions": {
+        "item": {
+          "items": "minecraft:spyglass"
+        },
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type_specific": {
+                "type": "minecraft:player",
+                "looking_at": {
+                  "type": "clutterbestiary:emperor_penguin"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:using_item"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.happy_feet.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:emperor_penguin_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.bestiary.happy_feet.title"
+    }
+  },
+  "requirements": [
+    [
+      "view_penguin"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

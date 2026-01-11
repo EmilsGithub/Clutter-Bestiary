@@ -35,11 +35,11 @@ public enum RedPandaVariant {
         return name;
     }
 
-    public Identifier getTextureLocation() {
-        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/red_panda/" + getName() + "_red_panda.png");
-    }
-
     public Identifier getSleepingTextureLocation() {
         return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/red_panda/" + getName() + "_red_panda_sleeping.png");
+    }
+
+    public Identifier getTextureLocation() {
+        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/red_panda/" + getName() + "_red_panda.png");
     }
 }

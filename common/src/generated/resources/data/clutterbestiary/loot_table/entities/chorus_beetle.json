@@ -1,0 +1,101 @@
+{
+  "type": "minecraft:entity",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "chance": 0.5,
+          "condition": "minecraft:random_chance"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:chorus_flower"
+        }
+      ],
+      "rolls": 1.0
+    },
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "conditions": [
+            {
+              "condition": "minecraft:inverted",
+              "term": {
+                "condition": "minecraft:any_of",
+                "terms": [
+                  {
+                    "condition": "minecraft:damage_source_properties",
+                    "predicate": {
+                      "tags": [
+                        {
+                          "expected": true,
+                          "id": "minecraft:is_fire"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "condition": "minecraft:damage_source_properties",
+                    "predicate": {
+                      "tags": [
+                        {
+                          "expected": true,
+                          "id": "minecraft:is_explosion"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "name": "minecraft:chorus_fruit"
+        },
+        {
+          "type": "minecraft:item",
+          "conditions": [
+            {
+              "condition": "minecraft:any_of",
+              "terms": [
+                {
+                  "condition": "minecraft:damage_source_properties",
+                  "predicate": {
+                    "tags": [
+                      {
+                        "expected": true,
+                        "id": "minecraft:is_fire"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "condition": "minecraft:damage_source_properties",
+                  "predicate": {
+                    "tags": [
+                      {
+                        "expected": true,
+                        "id": "minecraft:is_explosion"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "name": "minecraft:popped_chorus_fruit"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 3.0,
+        "min": 1.0
+      }
+    }
+  ],
+  "random_sequence": "clutterbestiary:chorus_beetle"
+}

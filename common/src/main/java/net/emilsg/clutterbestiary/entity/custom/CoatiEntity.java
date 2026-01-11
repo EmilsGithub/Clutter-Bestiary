@@ -2,9 +2,9 @@ package net.emilsg.clutterbestiary.entity.custom;
 
 import dev.architectury.registry.menu.ExtendedMenuProvider;
 import dev.architectury.registry.menu.MenuRegistry;
-import net.emilsg.clutterbestiary.animation_handling.AnimationConditions;
-import net.emilsg.clutterbestiary.animation_handling.AnimationStateMachine;
+import net.emilsg.clutterbestiary.animation_handling.EntityAnimationController;
 import net.emilsg.clutterbestiary.animation_handling.HandledEntityAnimations;
+import net.emilsg.clutterbestiary.animation_handling.IdleAnimationGroup;
 import net.emilsg.clutterbestiary.animation_handling.animation_states.CoatiEntityAnimationState;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.goal.*;
@@ -12,6 +12,7 @@ import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
 import net.emilsg.clutterbestiary.entity.variants.CoatiVariant;
 import net.emilsg.clutterbestiary.menu.handler.CoatiScreenHandler;
 import net.emilsg.clutterbestiary.sound.ModSoundEvents;
+import net.emilsg.clutterbestiary.util.ModAdvancements;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
 import net.emilsg.clutterbestiary.util.ModUtil;
 import net.minecraft.block.BlockRenderType;
@@ -33,6 +34,7 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.InventoryChangedListener;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.inventory.StackReference;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
@@ -62,10 +64,19 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 import org.jetbrains.annotations.Nullable;
 
-public class CoatiEntity extends ParentTameableEntity implements InventoryChangedListener, HandledEntityAnimations {
+public class CoatiEntity extends ParentTameableEntity implements InventoryChangedListener, HandledEntityAnimations<CoatiEntity, CoatiEntityAnimationState> {
+    private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.GLISTERING_MELON_SLICE);
+    private static final Item TAMING_ITEM = Items.MELON_SLICE;
+    public static final int DIG_DURATION_TICKS = 160;
+    public static final int UNBURROW_DURATION_TICKS = 180;
+    public static final float DIG_ANIMATION_SPEED = 2.0f;
+    private static final int STAND_UP_TICKS = 5;
+    private static final int PICK_UP_TICKS = 10;
     private static final TrackedData<String> VARIANT = DataTracker.registerData(CoatiEntity.class, TrackedDataHandlerRegistry.STRING);
 
     private static final TrackedData<Integer> ANIMATION_STATE = DataTracker.registerData(CoatiEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Integer> ANIMATION_REVISION = DataTracker.registerData(CoatiEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Long> ANIMATION_START = DataTracker.registerData(CoatiEntity.class, TrackedDataHandlerRegistry.LONG);
 
     private static final TrackedData<Boolean> DIGGING = DataTracker.registerData(CoatiEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Boolean> UNBURROWING = DataTracker.registerData(CoatiEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
@@ -74,22 +85,17 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
     private static final TrackedData<Integer> DAYS_FED_HONEY = DataTracker.registerData(CoatiEntity.class, TrackedDataHandlerRegistry.INTEGER);
     private static final TrackedData<Long> LAST_DAY_FED_HONEY = DataTracker.registerData(CoatiEntity.class, TrackedDataHandlerRegistry.LONG);
     private static final TrackedData<BlockPos> BURROW_POS = DataTracker.registerData(CoatiEntity.class, TrackedDataHandlerRegistry.BLOCK_POS);
-    public final AnimationState diggingAnimationState = new AnimationState();
-    public final AnimationState sittingAnimationState = new AnimationState();
-    public final AnimationState standingUpAnimationState = new AnimationState();
-    public final AnimationState sniffingAnimationState = new AnimationState();
-    public final AnimationState unBurrowingAnimationState = new AnimationState();
-    public final AnimationState pickUpItemAnimationState = new AnimationState();
-    public final AnimationState idlingAnimationState = new AnimationState();
     public final AnimationState leftEarTwitchAnimationState = new AnimationState();
     public final AnimationState rightEarTwitchAnimationState = new AnimationState();
-    private final AnimationStateMachine<CoatiEntity, CoatiEntityAnimationState> animMachine = new AnimationStateMachine<>(this, CoatiEntityAnimationState.IDLING, CoatiEntityAnimationState.class);
+    private final EntityAnimationController<CoatiEntity, CoatiEntityAnimationState> animationController = new EntityAnimationController<>(this, CoatiEntityAnimationState.IDLING, CoatiEntityAnimationState.class, ANIMATION_STATE, ANIMATION_REVISION, ANIMATION_START);
+    private final IdleAnimationGroup idleAnimations = new IdleAnimationGroup(3, 3, 100)
+            .add(1, leftEarTwitchAnimationState)
+            .add(1, rightEarTwitchAnimationState)
+            .add(1, leftEarTwitchAnimationState, rightEarTwitchAnimationState);
     private final Goal wanderOftenGoal = new WanderAroundFarOftenGoal(this, 1.0f);
     private final Goal wanderFarGoal = new WanderAroundFarGoal(this, 1.0f);
-    public int earTwitchAnimationTimeout = 0;
     protected SimpleInventory coatiInventory;
     protected SimpleInventory wildInventory;
-    private CoatiEntityAnimationState lastSyncedAnimState = CoatiEntityAnimationState.IDLING;
     private int postDigCooldown;
     private boolean digSessionActive = false;
     private int forageGrace = 0;
@@ -101,7 +107,7 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
         this.coatiInventory.addListener(this);
         this.wildInventory.addListener(this);
         this.updateWanderingGoal();
-        this.setupAnimationStateMachine();
+        this.setupAnimationController();
     }
 
     @Override
@@ -111,7 +117,7 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
         this.goalSelector.add(1, new SitGoal(this));
         this.goalSelector.add(2, new FollowOwnerGoal(this, 1.25D, 10.0f, 2.0f));
         this.goalSelector.add(2, new AnimalMateGoal(this, 1.0));
-        this.goalSelector.add(3, new TamedTemptGoal(this, 1.0f, Ingredient.ofItems(Items.GLISTERING_MELON_SLICE), false));
+        this.goalSelector.add(3, new TamedTemptGoal(this, 1.0f, BREEDING_INGREDIENT, false));
         this.goalSelector.add(3, new CoatiUnburrowingGoal(this));
         this.goalSelector.add(4, new CoatiDigGoal(this));
         this.goalSelector.add(5, new CoatiFindBurrowGoal(this, this.getDaysFedHoneyNeeded()));
@@ -145,6 +151,8 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
         builder.add(ANIMATION_STATE, CoatiEntityAnimationState.IDLING.getIndex());
+        builder.add(ANIMATION_REVISION, 0);
+        builder.add(ANIMATION_START, -1L);
         builder.add(VARIANT, CoatiVariant.JUNGLE.getId());
         builder.add(DAYS_FED_HONEY, 0);
         builder.add(LAST_DAY_FED_HONEY, -1L);
@@ -344,6 +352,11 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
         this.dataTracker.set(LAST_DAY_FED_HONEY, lastDayFedHoney);
     }
 
+    @Override
+    public int getMinAmbientSoundDelay() {
+        return 240;
+    }
+
     public int getPostDigCooldown() {
         return this.postDigCooldown;
     }
@@ -383,12 +396,9 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
         } : super.getStackReference(mappedIndex);
     }
 
-    public int getState() {
-        return this.dataTracker.get(ANIMATION_STATE);
-    }
-
-    public void setState(int state) {
-        this.dataTracker.set(ANIMATION_STATE, state);
+    @Override
+    public Item getTamingItem() {
+        return TAMING_ITEM;
     }
 
     public String getTypeVariant() {
@@ -445,15 +455,14 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
             return ActionResult.SUCCESS;
         }
 
-        if (!this.isTamed() && stack.isOf(Items.MELON_SLICE) && this.isBaby() && !player.shouldCancelInteraction()) {
+        if (!this.isTamed() && stack.getItem() == this.getTamingItem() && this.isBaby() && !player.shouldCancelInteraction()) {
             stack.decrementUnlessCreative(1, player);
             this.tryTame(player);
             return ActionResult.SUCCESS;
         }
 
         if (this.isTamed() && this.isOwner(player) && player.shouldCancelInteraction() && !this.isBaby() && this.hasChest()) {
-            this.openInventory(player);
-            return ActionResult.SUCCESS;
+            return this.openInventory(player);
         }
 
         if (stack.isOf(Items.CHEST) && !this.isBaby() && !this.hasChest() && this.isTamed() && this.isOwner(player) && !player.shouldCancelInteraction()) {
@@ -499,9 +508,10 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
             }
 
             if (this.isBaby()) {
+                if (this.getWorld().isClient) return ActionResult.CONSUME;
                 this.eat(player, hand, stack);
                 this.growUp(toGrowUpAge(-i), true);
-                return ActionResult.success(this.getWorld().isClient);
+                return ActionResult.SUCCESS;
             }
 
             if (this.getWorld().isClient) {
@@ -513,13 +523,8 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
     }
 
     @Override
-    public int getMinAmbientSoundDelay() {
-        return 240;
-    }
-
-    @Override
     public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(Items.GLISTERING_MELON_SLICE);
+        return BREEDING_INGREDIENT.test(stack);
     }
 
     public boolean isDigSessionActive() {
@@ -539,7 +544,7 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
     }
 
     public boolean isSniffing() {
-        return this.dataTracker.get(ANIMATION_STATE) == CoatiEntityAnimationState.SNIFFING.getIndex();
+        return this.animationController.getState() == CoatiEntityAnimationState.SNIFFING;
     }
 
     public boolean isUnBurrowing() {
@@ -570,24 +575,6 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
     public void onInventoryChanged(Inventory sender) {
     }
 
-    @Override
-    public void onTrackedDataSet(TrackedData<?> data) {
-        if (ANIMATION_STATE.equals(data)) {
-            int state = this.getState();
-            this.stopAnimations();
-            switch (state) {
-                case 1 -> this.sittingAnimationState.startIfNotRunning(this.age);
-                case 2 -> this.standingUpAnimationState.startIfNotRunning(this.age);
-                case 3 -> this.sniffingAnimationState.startIfNotRunning(this.age);
-                case 4 -> this.diggingAnimationState.startIfNotRunning(this.age);
-                case 5 -> this.unBurrowingAnimationState.startIfNotRunning(this.age);
-                case 6 -> this.pickUpItemAnimationState.startIfNotRunning(this.age);
-                default -> this.idlingAnimationState.startIfNotRunning(this.age);
-            }
-        }
-        super.onTrackedDataSet(data);
-    }
-
     public void openCoatiMenu(ServerPlayerEntity player) {
         CoatiEntity self = this;
         MenuRegistry.openExtendedMenu(player, new ExtendedMenuProvider() {
@@ -612,6 +599,7 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
         } else {
             if (player instanceof ServerPlayerEntity serverPlayerEntity) {
                 this.openCoatiMenu(serverPlayerEntity);
+                ModAdvancements.grant(serverPlayerEntity, ModAdvancements.PACK_RAT);
             }
             return ActionResult.CONSUME;
         }
@@ -633,72 +621,29 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
         }
     }
 
-    public void setupAnimationStateMachine() {
-        animMachine.addTransition(
-                CoatiEntityAnimationState.IDLING,
-                CoatiEntityAnimationState.SITTING,
-                (e, s, age) -> e.isTamed() && e.isSitting()
-        );
-
-        animMachine.addTransition(
-                CoatiEntityAnimationState.SITTING,
-                CoatiEntityAnimationState.STANDING_UP,
-                (e, s, age) -> !e.isSitting()
-        );
-
-        animMachine.addTransition(
-                CoatiEntityAnimationState.STANDING_UP,
-                CoatiEntityAnimationState.IDLING,
-                AnimationConditions.and(
-                        AnimationConditions.timeAtLeast(5),
-                        (e, s, age) -> !e.isSitting()
-                )
-        );
+    private void setupAnimationController() {
+        animationController.addTransition(CoatiEntityAnimationState.IDLING, CoatiEntityAnimationState.SITTING, (e, s, age) -> e.isTamed() && e.isSitting());
+        animationController.addTransition(CoatiEntityAnimationState.SITTING, CoatiEntityAnimationState.STANDING_UP, (e, s, age) -> !e.isSitting());
+        animationController.addTransition(CoatiEntityAnimationState.STANDING_UP, CoatiEntityAnimationState.SITTING, (e, s, age) -> e.isSitting());
+        animationController.addCompletion(CoatiEntityAnimationState.STANDING_UP, CoatiEntityAnimationState.IDLING, STAND_UP_TICKS);
+        animationController.addCompletion(CoatiEntityAnimationState.PICKING_UP_ITEM, CoatiEntityAnimationState.IDLING, PICK_UP_TICKS);
     }
 
-    public void startState(CoatiEntityAnimationState state) {
-        if (!this.getWorld().isClient) {
-            animMachine.forceState(state);
-            this.setState(state.getIndex());
-            lastSyncedAnimState = state;
-        }
-    }
-
-    public void stopAnimations() {
-        this.sittingAnimationState.stop();
-        this.standingUpAnimationState.stop();
-        this.sniffingAnimationState.stop();
-        this.diggingAnimationState.stop();
-        this.unBurrowingAnimationState.stop();
-        this.pickUpItemAnimationState.stop();
-        this.idlingAnimationState.stop();
+    @Override
+    public EntityAnimationController<CoatiEntity, CoatiEntityAnimationState> getAnimationController() {
+        return animationController;
     }
 
     @Override
     public void tick() {
         super.tick();
+        this.animationController.tick();
 
         if (this.getWorld().isClient) {
-            this.setupAnimationStates();
+            this.idleAnimations.tick(this, this.isAlive());
         }
 
         if (!this.getWorld().isClient) {
-            boolean changed = animMachine.tick();
-            CoatiEntityAnimationState current = animMachine.getCurrent();
-
-            if (!changed) {
-                CoatiEntityAnimationState tracked = CoatiEntityAnimationState.fromIndex(this.getState());
-                if (tracked != current) {
-                    animMachine.forceState(tracked);
-                    current = tracked;
-                }
-            }
-
-            if (current != lastSyncedAnimState) {
-                this.setState(current.getIndex());
-                lastSyncedAnimState = current;
-            }
-
             if (this.getForageGrace() > 0) this.forageGrace--;
             if (postDigCooldown > 0) postDigCooldown--;
 
@@ -710,7 +655,7 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
 
         if (blockState.getRenderType() != BlockRenderType.INVISIBLE
                 && this.isDigging()
-                && this.diggingAnimationState.isRunning()) {
+                && this.animationController.getAnimationState(CoatiEntityAnimationState.DIGGING).isRunning()) {
 
             Vec3d particlePos = this.getPos();
             if (this.age % 10 == 0) {
@@ -786,27 +731,10 @@ public class CoatiEntity extends ParentTameableEntity implements InventoryChange
         this.setHasChest(true);
         this.playAddChestSound();
         chest.decrementUnlessCreative(1, player);
+        if (player instanceof ServerPlayerEntity serverPlayer) {
+            ModAdvancements.grant(serverPlayer, ModAdvancements.PACK_RAT);
+        }
         this.onChestedStatusChanged();
-    }
-
-    private void pickRandomIdleAnim(int chance) {
-        if (chance < 10) {
-            this.leftEarTwitchAnimationState.start(this.age);
-        } else if (chance < 20) {
-            this.rightEarTwitchAnimationState.start(this.age);
-        } else {
-            this.leftEarTwitchAnimationState.start(this.age);
-            this.rightEarTwitchAnimationState.start(this.age);
-        }
-    }
-
-    private void setupAnimationStates() {
-        if (this.earTwitchAnimationTimeout <= 0 && random.nextInt(100) == 0) {
-            this.earTwitchAnimationTimeout = 3;
-            this.pickRandomIdleAnim(random.nextInt(30));
-        } else if (earTwitchAnimationTimeout > 0) {
-            --this.earTwitchAnimationTimeout;
-        }
     }
 
     private void tryTame(PlayerEntity player) {

@@ -1,7 +1,6 @@
 package net.emilsg.clutterbestiary.block.custom;
 
 import com.mojang.serialization.MapCodec;
-import net.emilsg.clutterbestiary.block.ICutoutRenderable;
 import net.emilsg.clutterbestiary.block.entity.ButterflyBottleBlockEntity;
 import net.emilsg.clutterbestiary.item.ModItems;
 import net.minecraft.block.*;
@@ -23,7 +22,7 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-public class ButterflyBottleBlock extends HorizontalFacingBlock implements BlockEntityProvider, ICutoutRenderable {
+public class ButterflyBottleBlock extends HorizontalFacingBlock implements BlockEntityProvider {
     public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
 
     public final VoxelShape SHAPE = VoxelShapes.union(
@@ -49,6 +48,7 @@ public class ButterflyBottleBlock extends HorizontalFacingBlock implements Block
             if (data != null) {
                 NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, data);
             }
+            stack.applyComponentsFrom(bottleBe.createComponentMap());
 
             dropStack(world, pos, stack);
         }

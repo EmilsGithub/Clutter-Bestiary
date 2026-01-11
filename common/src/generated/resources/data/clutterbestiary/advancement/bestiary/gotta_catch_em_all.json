@@ -1,0 +1,114 @@
+{
+  "parent": "clutterbestiary:bestiary/makes_sense",
+  "criteria": {
+    "arrowfish": {
+      "conditions": {
+        "items": [
+          {
+            "items": "clutterbestiary:arrowfish_bucket"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "butterfly": {
+      "conditions": {
+        "items": [
+          {
+            "items": "clutterbestiary:butterfly_in_a_bottle"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "echofin": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "clutterbestiary:chorus_echofin_bucket",
+              "clutterbestiary:levitating_echofin_bucket"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "jellyfish": {
+      "conditions": {
+        "items": [
+          {
+            "items": "clutterbestiary:jellyfish_bucket"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "koi": {
+      "conditions": {
+        "items": [
+          {
+            "items": "clutterbestiary:koi_bucket"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "river_turtle": {
+      "conditions": {
+        "items": [
+          {
+            "items": "clutterbestiary:river_turtle_bucket"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "seahorse": {
+      "conditions": {
+        "items": [
+          {
+            "items": "clutterbestiary:seahorse_bucket"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.gotta_catch_em_all.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:jellyfish_bucket"
+    },
+    "title": {
+      "translate": "advancements.bestiary.gotta_catch_em_all.title"
+    }
+  },
+  "requirements": [
+    [
+      "butterfly"
+    ],
+    [
+      "koi"
+    ],
+    [
+      "echofin"
+    ],
+    [
+      "seahorse"
+    ],
+    [
+      "river_turtle"
+    ],
+    [
+      "jellyfish"
+    ],
+    [
+      "arrowfish"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

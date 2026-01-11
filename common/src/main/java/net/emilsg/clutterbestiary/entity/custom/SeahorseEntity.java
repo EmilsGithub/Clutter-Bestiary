@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.UUID;
 
 public class SeahorseEntity extends ParentFishEntity implements Bucketable {
+    private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.SEA_PICKLE);
     private static final TrackedData<String> VARIANT = DataTracker.registerData(SeahorseEntity.class, TrackedDataHandlerRegistry.STRING);
     private static final TrackedData<Boolean> HAS_CHILDREN = DataTracker.registerData(SeahorseEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Float> HAS_CHILDREN_TIMER = DataTracker.registerData(SeahorseEntity.class, TrackedDataHandlerRegistry.FLOAT);
@@ -84,7 +85,7 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
     @Override
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
-        builder.add(VARIANT, SeahorseVariant.YELLOW.getId());
+        builder.add(VARIANT, SeahorseVariant.YELLOW.getID());
         builder.add(HAS_CHILDREN, false);
         builder.add(HAS_CHILDREN_TIMER, 0.0f);
         builder.add(CHILD, false);
@@ -96,7 +97,7 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
         this.goalSelector.add(1, new SeahorseFollowParentGoal(this, 1.25D));
         this.goalSelector.add(2, new SeahorseMateGoal(this, 1D, SeahorseEntity.class));
         this.goalSelector.add(3, new SeahorseReleaseChildrenGoal(this));
-        this.goalSelector.add(4, new TemptGoal(this, 1.25D, Ingredient.ofItems(Items.SEA_PICKLE), false));
+        this.goalSelector.add(4, new TemptGoal(this, 1.25D, BREEDING_INGREDIENT, false));
         this.goalSelector.add(5, new SwimToRandomPlaceGoal(this, 0.5D));
         this.goalSelector.add(6, new SeahorseMoveToCoralGoal(this, 0.5D, 8));
     }
@@ -269,7 +270,7 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
     }
 
     public void setVariant(SeahorseVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId());
+        this.dataTracker.set(VARIANT, variant.getID());
     }
 
     public void growUp(int age, boolean overGrow) {
@@ -328,9 +329,10 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
             }
 
             if (this.isBaby()) {
+                if (this.getWorld().isClient) return ActionResult.CONSUME;
                 this.eat(player, hand, itemStack);
                 this.growUp(toGrowUpAge(-i), true);
-                return ActionResult.success(this.getWorld().isClient);
+                return ActionResult.SUCCESS;
             }
 
             if (this.getWorld().isClient) {
@@ -350,7 +352,7 @@ public class SeahorseEntity extends ParentFishEntity implements Bucketable {
     }
 
     public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(Items.SEA_PICKLE);
+        return BREEDING_INGREDIENT.test(stack);
     }
 
     public boolean isInLove() {

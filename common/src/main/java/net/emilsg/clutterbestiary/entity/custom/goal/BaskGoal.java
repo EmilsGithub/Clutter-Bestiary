@@ -1,7 +1,5 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
-import net.emilsg.clutterbestiary.animation_handling.animation_states.RedPandaEntityAnimationState;
-import net.emilsg.clutterbestiary.animation_handling.animation_states.RiverTurtleAnimationState;
 import net.emilsg.clutterbestiary.entity.custom.RiverTurtleEntity;
 import net.minecraft.entity.ai.goal.Goal;
 
@@ -27,13 +25,6 @@ public class BaskGoal extends Goal {
     }
 
     @Override
-    public void start() {
-        this.riverTurtleEntity.setBaskingDuration((this.riverTurtleEntity.getRandom().nextInt(3) + 1) * 200);
-        this.riverTurtleEntity.setSit(true);
-        this.riverTurtleEntity.startState(RiverTurtleAnimationState.SIT_START);
-    }
-
-    @Override
     public boolean shouldContinue() {
         if (riverTurtleEntity.isTouchingWater() || riverTurtleEntity.isInsideWaterOrBubbleColumn()) return false;
         if (riverTurtleEntity.isHiding()) return false;
@@ -41,8 +32,13 @@ public class BaskGoal extends Goal {
     }
 
     @Override
+    public void start() {
+        this.riverTurtleEntity.setBaskingDuration((this.riverTurtleEntity.getRandom().nextInt(3) + 1) * 200);
+        this.riverTurtleEntity.setSit(true);
+    }
+
+    @Override
     public void stop() {
-        this.riverTurtleEntity.startState(RiverTurtleAnimationState.SIT_END);
         this.riverTurtleEntity.setSit(false);
     }
 }

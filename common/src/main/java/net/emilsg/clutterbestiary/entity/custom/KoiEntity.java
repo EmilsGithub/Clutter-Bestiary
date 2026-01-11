@@ -5,8 +5,8 @@ import net.emilsg.clutterbestiary.entity.custom.goal.KoiMateGoal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentFishEntity;
 import net.emilsg.clutterbestiary.entity.variants.koi.*;
 import net.emilsg.clutterbestiary.item.ModItems;
+import net.emilsg.clutterbestiary.util.ModAdvancements;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.*;
@@ -24,7 +24,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.vehicle.BoatEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsage;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
@@ -46,6 +45,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class KoiEntity extends ParentFishEntity {
+    private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.KELP);
 
     private static final TrackedData<String> BASE_COLOR = DataTracker.registerData(KoiEntity.class, TrackedDataHandlerRegistry.STRING);
     private static final TrackedData<String> PRIMARY_PATTERN_COLOR = DataTracker.registerData(KoiEntity.class, TrackedDataHandlerRegistry.STRING);
@@ -54,7 +54,6 @@ public class KoiEntity extends ParentFishEntity {
     private static final TrackedData<String> SECONDARY_PATTERN_TYPE = DataTracker.registerData(KoiEntity.class, TrackedDataHandlerRegistry.STRING);
     private static final TrackedData<Boolean> CHILD = DataTracker.registerData(KoiEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     public final AnimationState swimmingAnimationState = new AnimationState();
-    private final Item breedingItem = Items.KELP;
     protected int breedingAge;
     protected int forcedAge;
     protected int happyTicksRemaining;
@@ -70,7 +69,7 @@ public class KoiEntity extends ParentFishEntity {
     protected void initGoals() {
         super.initGoals();
         this.goalSelector.add(1, new KoiMateGoal(this, 1D, KoiEntity.class));
-        this.goalSelector.add(2, new TemptGoal(this, 1.25D, Ingredient.ofItems(Items.KELP), false));
+        this.goalSelector.add(2, new TemptGoal(this, 1.25D, BREEDING_INGREDIENT, false));
     }
 
     @Override
@@ -186,7 +185,7 @@ public class KoiEntity extends ParentFishEntity {
     }
 
     public static boolean isValidNaturalSpawn(EntityType<? extends WaterCreatureEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos).isIn(ModBlockTags.KOI_SPAWN_ON);
+        return world.getBlockState(pos.up()).isIn(ModBlockTags.KOI_SPAWN_ON);
     }
 
     public static int toGrowUpAge(int breedingAge) {
@@ -417,7 +416,7 @@ public class KoiEntity extends ParentFishEntity {
     }
 
     public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(this.breedingItem);
+        return BREEDING_INGREDIENT.test(stack);
     }
 
     public boolean isInLove() {
@@ -539,19 +538,26 @@ public class KoiEntity extends ParentFishEntity {
             }
 
             if (this.isBaby()) {
+                if (this.getWorld().isClient) return ActionResult.CONSUME;
                 this.eat(player, hand, itemStack);
                 this.growUp(toGrowUpAge(-i), true);
-                return ActionResult.success(this.getWorld().isClient);
+                return ActionResult.SUCCESS;
             }
 
             if (this.getWorld().isClient) {
                 return ActionResult.CONSUME;
             }
-        } else if (itemStack.isOf(Items.BUCKET)) {
-            return tryBucket(player, hand, this);
         }
 
-        return super.interactMob(player, hand);
+        boolean isCapturingIridescentWhite = itemStack.isOf(Items.WATER_BUCKET)
+                && this.getBaseColorVariant() == KoiBaseColorVariant.IRIDESCENT_WHITE;
+        ActionResult result = super.interactMob(player, hand);
+
+        if (isCapturingIridescentWhite && result.isAccepted() && player instanceof ServerPlayerEntity serverPlayer) {
+            ModAdvancements.grant(serverPlayer, ModAdvancements.PEARL_OF_THE_POND);
+        }
+
+        return result;
     }
 
     @Override
@@ -583,26 +589,5 @@ public class KoiEntity extends ParentFishEntity {
             --this.swimmingAnimationTimeout;
         }
     }
-
-    private ActionResult tryBucket(PlayerEntity player, Hand hand, KoiEntity koiEntity) {
-        ItemStack itemStack = player.getStackInHand(hand);
-        if (itemStack.getItem() == Items.WATER_BUCKET && koiEntity.isAlive()) {
-            koiEntity.playSound(koiEntity.getBucketFillSound(), 1.0F, 1.0F);
-            ItemStack filledBucketItem = koiEntity.getBucketItem();
-            koiEntity.copyDataToStack(filledBucketItem);
-            ItemStack itemStack3 = ItemUsage.exchangeStack(itemStack, player, filledBucketItem, false);
-            player.setStackInHand(hand, itemStack3);
-            World world = koiEntity.getWorld();
-            if (!world.isClient) {
-                Criteria.FILLED_BUCKET.trigger((ServerPlayerEntity) player, filledBucketItem);
-            }
-
-            koiEntity.discard();
-            return ActionResult.success(world.isClient);
-        } else {
-            return ActionResult.PASS;
-        }
-    }
-
 
 }

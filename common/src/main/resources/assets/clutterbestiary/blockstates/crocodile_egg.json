@@ -1,0 +1,31 @@
+{
+  "variants": {
+    "eggs=1,hatch=0": {
+      "model": "clutterbestiary:block/crocodile_egg_one"
+    },
+    "eggs=1,hatch=1": {
+      "model": "clutterbestiary:block/crocodile_egg_one1"
+    },
+    "eggs=1,hatch=2": {
+      "model": "clutterbestiary:block/crocodile_egg_one2"
+    },
+    "eggs=2,hatch=0": {
+      "model": "clutterbestiary:block/crocodile_egg_two"
+    },
+    "eggs=2,hatch=1": {
+      "model": "clutterbestiary:block/crocodile_egg_two1"
+    },
+    "eggs=2,hatch=2": {
+      "model": "clutterbestiary:block/crocodile_egg_two2"
+    },
+    "eggs=3,hatch=0": {
+      "model": "clutterbestiary:block/crocodile_egg_three"
+    },
+    "eggs=3,hatch=1": {
+      "model": "clutterbestiary:block/crocodile_egg_three1"
+    },
+    "eggs=3,hatch=2": {
+      "model": "clutterbestiary:block/crocodile_egg_three2"
+    }
+  }
+}

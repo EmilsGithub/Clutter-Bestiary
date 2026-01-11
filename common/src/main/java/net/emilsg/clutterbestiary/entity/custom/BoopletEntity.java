@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     private static final TrackedData<Boolean> IS_FLUFFY = DataTracker.registerData(BoopletEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Integer> FLUFF_TIMER = DataTracker.registerData(BoopletEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final TrackedData<Integer> BOOP_ACTION = DataTracker.registerData(BoopletEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
     public final AnimationState happyAnimationState = new AnimationState();
     public final AnimationState boopAnimationState = new AnimationState();
@@ -47,7 +47,7 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     private int happyAnimationTimer = 0;
     private int swimAnimationTimeout = 0;
     private boolean isHappy = false;
-    private PlayerEntity lastPetPlayer = null;
+    private int fluffTimer;
 
     public BoopletEntity(EntityType<? extends AnimalEntity> entityType, World world) {
         super(entityType, world);
@@ -62,7 +62,7 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
         builder.add(IS_FLUFFY, true);
-        builder.add(FLUFF_TIMER, 0);
+        builder.add(BOOP_ACTION, 0);
     }
 
     @Override
@@ -109,11 +109,11 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     }
 
     public int getFluffTimer() {
-        return this.dataTracker.get(FLUFF_TIMER);
+        return this.fluffTimer;
     }
 
     public void setFluffTimer(int fluffTimer) {
-        this.dataTracker.set(FLUFF_TIMER, fluffTimer);
+        this.fluffTimer = fluffTimer;
     }
 
     public int getTimeSinceBoop() {
@@ -138,20 +138,19 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
             if (!player.getWorld().isClient) {
                 this.playSound(ModSoundEvents.ENTITY_BOOPLET_SQUEAK.get(), this.getSoundVolume() / 2, this.getSoundPitch());
 
-                if (this.getWorld() instanceof ServerWorld serverWorld) {
-                    ModUtil.grantImpossibleAdvancement("bestiary/boop", serverWorld, player);
+                if (this.getWorld() instanceof ServerWorld) {
+                    ModUtil.grantImpossibleAdvancement("bestiary/boop", player);
                 }
-            }
-
-            if (this.canBeHappy()) {
-                this.lastPetPlayer = player;
-                this.isHappy = true;
-                this.getLookControl().lookAt(player);
-            } else {
-                this.isBooped = true;
+                boolean happy = this.canBeHappy();
+                if (happy) {
+                    this.happyDanceTimer = 600;
+                    this.getLookControl().lookAt(player);
+                }
+                int nextAction = (this.dataTracker.get(BOOP_ACTION) / 2 + 1) * 2;
+                this.dataTracker.set(BOOP_ACTION, nextAction + (happy ? 1 : 0));
                 this.timeSinceBoop = 0;
+                this.getNavigation().stop();
             }
-            this.getNavigation().stop();
             return ActionResult.SUCCESS;
         }
         return super.interactMob(player, hand);
@@ -173,6 +172,16 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
 
     public void setIsFluffy(boolean fluffy) {
         this.dataTracker.set(IS_FLUFFY, fluffy);
+    }
+
+    @Override
+    public void onTrackedDataSet(TrackedData<?> data) {
+        super.onTrackedDataSet(data);
+        if (BOOP_ACTION.equals(data) && this.getWorld().isClient) {
+            this.isHappy = (this.dataTracker.get(BOOP_ACTION) & 1) != 0;
+            this.isBooped = !this.isHappy;
+            this.timeSinceBoop = 0;
+        }
     }
 
     public void sheared(SoundCategory shearedSoundCategory) {
@@ -211,8 +220,8 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
                 this.isHappy = false;
             }
         } else if (!this.isFluffy()) {
-            int fluffTimer = this.getFluffTimer();
-            if (fluffTimer < 5000) this.setFluffTimer(fluffTimer++);
+            int fluffTimer = Math.min(5000, this.getFluffTimer() + 1);
+            this.setFluffTimer(fluffTimer);
             this.setIsFluffy(fluffTimer >= 5000);
         }
     }

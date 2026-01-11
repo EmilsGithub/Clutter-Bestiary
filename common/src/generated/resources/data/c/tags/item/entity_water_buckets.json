@@ -1,6 +1,9 @@
 {
   "values": [
     "clutterbestiary:seahorse_bucket",
-    "clutterbestiary:koi_bucket"
+    "clutterbestiary:koi_bucket",
+    "clutterbestiary:river_turtle_bucket",
+    "clutterbestiary:jellyfish_bucket",
+    "clutterbestiary:arrowfish_bucket"
   ]
 }

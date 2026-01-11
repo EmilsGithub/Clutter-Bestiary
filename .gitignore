@@ -2,10 +2,28 @@
 .gradle/
 build/
 out/
+bin/
 **/classes/
+/local.properties
 # IntelliJ
 .idea/
 *.iml
+.mcp.json
+# Visual Studio Code
+.vscode/
+# AI assistants
+.aiassistant/
+.agents/
+.codex/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+# Tests
+**/src/test/
+**/src/testFixtures/
+**/test-results/
+# Datagen metadata
+/common/src/generated/resources/.cache/
 # Logs
 logs/
 *.log

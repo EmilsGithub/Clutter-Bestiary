@@ -4,6 +4,7 @@ import net.emilsg.clutterbestiary.block.ModBlocks;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.goal.EmperorPenguinLayEggGoal;
 import net.emilsg.clutterbestiary.entity.custom.goal.EmperorPenguinMateGoal;
+import net.emilsg.clutterbestiary.entity.custom.parent.IEggLayingAnimal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.sound.ModSoundEvents;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
@@ -33,16 +34,18 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import org.jetbrains.annotations.Nullable;
 
-public class EmperorPenguinEntity extends ParentAnimalEntity {
+public class EmperorPenguinEntity extends ParentAnimalEntity implements IEggLayingAnimal {
+    private static final int EGG_LAYING_DELAY_TICKS = 400;
     private static final Ingredient BREEDING_INGREDIENT = Ingredient.fromTag(ItemTags.FISHES);
     private static final TrackedData<Boolean> HAS_EGG = DataTracker.registerData(EmperorPenguinEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Integer> EGG_TIMER = DataTracker.registerData(EmperorPenguinEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
     public final AnimationState flapAnimationStateOne = new AnimationState();
     public final AnimationState flapAnimationStateTwo = new AnimationState();
     public final AnimationState preenAnimationState = new AnimationState();
 
     public int randomAnimationTimeout = 0;
+
+    private int eggTimer;
 
     public EmperorPenguinEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
         super(entityType, world);
@@ -56,7 +59,6 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
         builder.add(HAS_EGG, false);
-        builder.add(EGG_TIMER, 0);
     }
 
     @Override
@@ -109,11 +111,11 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
     }
 
     public int getEggTimer() {
-        return this.dataTracker.get(EGG_TIMER);
+        return this.eggTimer;
     }
 
     public void setEggTimer(int time) {
-        this.dataTracker.set(EGG_TIMER, time);
+        this.eggTimer = time;
     }
 
     @Override
@@ -121,13 +123,30 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
         return 240;
     }
 
+    @Override
     public boolean hasEgg() {
         return this.dataTracker.get(HAS_EGG);
     }
 
     @Override
+    public boolean isReadyToLayEgg() {
+        return this.hasEgg() && this.eggTimer >= EGG_LAYING_DELAY_TICKS;
+    }
+
+    public void beginCarryingEgg() {
+        this.eggTimer = 0;
+        this.setHasEgg(true);
+    }
+
+    @Override
+    public void finishLayingEgg() {
+        this.setHasEgg(false);
+        this.eggTimer = 0;
+    }
+
+    @Override
     public boolean isBreedingItem(ItemStack stack) {
-        return stack.isIn(ItemTags.FISHES);
+        return BREEDING_INGREDIENT.test(stack);
     }
 
     @Override
@@ -157,8 +176,8 @@ public class EmperorPenguinEntity extends ParentAnimalEntity {
     public void tickMovement() {
         super.tickMovement();
 
-        if (!this.getWorld().isClient) {
-            if (this.hasEgg()) this.setEggTimer(this.getEggTimer() + 1);
+        if (!this.getWorld().isClient && this.hasEgg() && this.eggTimer < EGG_LAYING_DELAY_TICKS) {
+            this.eggTimer++;
         }
     }
 

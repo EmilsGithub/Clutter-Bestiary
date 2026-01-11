@@ -34,6 +34,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.RecipeType;
+import net.minecraft.recipe.input.SingleStackRecipeInput;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
@@ -43,6 +44,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.WorldView;
@@ -52,7 +54,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class EmberTortoiseEntity extends ParentAnimalEntity {
     private static final TrackedData<Boolean> MOVING = DataTracker.registerData(EmberTortoiseEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
@@ -139,7 +140,7 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
                 .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 8.0f);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, net.minecraft.util.math.random.Random random) {
+    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
         return world.getBlockState(pos.down()).isIn(ModBlockTags.EMBER_TORTOISES_SPAWN_ON);
     }
 
@@ -229,7 +230,7 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
 
     @Override
     public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(Items.FIRE_CHARGE);
+        return BREEDING_INGREDIENT.test(stack);
     }
 
     @Override
@@ -281,28 +282,27 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
 
         if (this.isShielding() && world.isClient && !this.isDead()) {
             Vec3d entityPos = this.getPos();
-            Random random = new Random();
             int numberOfParticles = 10;
 
             fireSoundTicker++;
             fireChargeSoundTicker++;
 
             if (fireSoundTicker >= 20) {
-                world.playSound(entityPos.getX() + 0.5F, entityPos.getY() + 0.5F, entityPos.getZ() + 0.5F, SoundEvents.BLOCK_FIRE_AMBIENT, SoundCategory.NEUTRAL, 0.5F + random.nextFloat(), 0.0125F, false);
+                world.playSound(entityPos.getX() + 0.5F, entityPos.getY() + 0.5F, entityPos.getZ() + 0.5F, SoundEvents.BLOCK_FIRE_AMBIENT, SoundCategory.NEUTRAL, 0.5F + this.random.nextFloat(), 0.0125F, false);
                 fireSoundTicker = 0;
             }
 
             if (fireChargeSoundTicker >= 20) {
-                world.playSound(entityPos.getX() + 0.5F, entityPos.getY() + 0.5F, entityPos.getZ() + 0.5F, SoundEvents.ITEM_FIRECHARGE_USE, SoundCategory.NEUTRAL, 0.5F + random.nextFloat(), 0.25F, false);
+                world.playSound(entityPos.getX() + 0.5F, entityPos.getY() + 0.5F, entityPos.getZ() + 0.5F, SoundEvents.ITEM_FIRECHARGE_USE, SoundCategory.NEUTRAL, 0.5F + this.random.nextFloat(), 0.25F, false);
                 fireChargeSoundTicker = 0;
             }
 
             for (int i = 0; i < numberOfParticles; i++) {
-                double velocityX = (random.nextDouble() - 0.5) * 0.4;
-                double velocityY = (random.nextDouble() - 0.5) * 0.4;
-                double velocityZ = (random.nextDouble() - 0.5) * 0.4;
+                double velocityX = (this.random.nextDouble() - 0.5) * 0.4;
+                double velocityY = (this.random.nextDouble() - 0.5) * 0.4;
+                double velocityZ = (this.random.nextDouble() - 0.5) * 0.4;
 
-                world.addParticle(random.nextBoolean() ? ParticleTypes.FLAME : ParticleTypes.SMALL_FLAME,
+                world.addParticle(this.random.nextBoolean() ? ParticleTypes.FLAME : ParticleTypes.SMALL_FLAME,
                         entityPos.x, entityPos.y + 1, entityPos.z,
                         velocityX, velocityY, velocityZ);
             }
@@ -313,21 +313,18 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
 
             this.setShieldingDuration(this.getShieldingDuration() - 1);
 
-            Box area = new Box(this.getBlockPos()).expand(3, 1, 3);
-
-            List<LivingEntity> nearbyEntities = world.getEntitiesByClass(LivingEntity.class, area, e -> true);
-
-            if (nearbyEntities != null) {
+            if (this.age % 5 == 0) {
+                Box area = new Box(this.getBlockPos()).expand(3, 1, 3);
+                List<LivingEntity> nearbyEntities = world.getEntitiesByClass(LivingEntity.class, area, e -> true);
                 for (LivingEntity entity : nearbyEntities) {
                     entity.setOnFire(true);
                     entity.setFireTicks(100);
-                    if (entity instanceof PlayerEntity player && world instanceof ServerWorld serverWorld) {
-                        ModUtil.grantImpossibleAdvancement("bestiary/hot_hot_hot", serverWorld, player);
+                    if (entity instanceof PlayerEntity player && world instanceof ServerWorld) {
+                        ModUtil.grantImpossibleAdvancement("bestiary/hot_hot_hot", player);
                     }
                 }
+                this.meltNearbyBlocks(world);
             }
-
-            this.meltNearbyBlocks(world);
         }
 
         if (!world.isClient() && this.getHealth() < this.getMaxHealth() && random.nextInt(200) == 0 && this.getWorld().getDimensionEntry().matchesKey(DimensionTypes.THE_NETHER) && this.isAlive()) {
@@ -336,16 +333,6 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
 
         if (world.isClient) {
             this.setupAnimationStates();
-        }
-    }
-
-    @Override
-    public void tickMovement() {
-        super.tickMovement();
-        if (!this.getWorld().isClient) {
-            BlockPos oldPos = this.getBlockPos();
-            BlockPos newPos = this.getBlockPos();
-            this.setMoving(oldPos != newPos);
         }
     }
 
@@ -368,32 +355,33 @@ public class EmberTortoiseEntity extends ParentAnimalEntity {
     private void meltNearbyBlocks(World world) {
         BlockPos center = this.getBlockPos();
         int radius = 3;
+        Map<Block, Block> smeltResults = new HashMap<>();
 
         BlockPos.stream(center.add(-radius, -radius, -radius), center.add(radius + 1, radius, radius + 1))
                 .filter(pos -> pos.isWithinDistance(center, radius + 0.5))
                 .forEach(pos -> {
                     BlockState state = world.getBlockState(pos);
+                    if (state.isAir()) return;
                     Block inputBlock = state.getBlock();
-                    ItemStack inputStack = new ItemStack(inputBlock.asItem());
-
-                    var match = world.getRecipeManager().getFirstMatch(
-                            RecipeType.SMELTING,
-                            new net.minecraft.recipe.input.SingleStackRecipeInput(inputStack),
-                            world
-                    );
-
-                    if (match.isPresent()) {
-                        ItemStack result = match.get().value().getResult(world.getRegistryManager());
-                        if (Block.getBlockFromItem(result.getItem()) != Blocks.AIR) {
-                            Block resultBlock = Block.getBlockFromItem(result.getItem());
-                            if (random.nextInt(750) == 0) world.setBlockState(pos, resultBlock.getDefaultState());
+                    Block resultBlock = smeltResults.computeIfAbsent(inputBlock, block -> {
+                        ItemStack inputStack = new ItemStack(block.asItem());
+                        var match = world.getRecipeManager().getFirstMatch(
+                                RecipeType.SMELTING,
+                                new SingleStackRecipeInput(inputStack),
+                                world
+                        );
+                        if (match.isPresent()) {
+                            ItemStack result = match.get().value().getResult(world.getRegistryManager());
+                            return Block.getBlockFromItem(result.getItem());
                         }
-                    } else if (smeltableBlocksConversionMap.containsKey(inputBlock)) {
-                        if (random.nextInt(750) == 0)
-                            world.setBlockState(pos, smeltableBlocksConversionMap.get(inputBlock).getDefaultState());
+                        return smeltableBlocksConversionMap.getOrDefault(block, Blocks.AIR);
+                    });
+
+                    if (resultBlock != Blocks.AIR && random.nextInt(150) == 0) {
+                        world.setBlockState(pos, resultBlock.getDefaultState());
                     }
 
-                    if (random.nextInt(2000) == 0 && world.getBlockState(pos.up()).isAir() && state.isSolidBlock(world, pos)) {
+                    if (random.nextInt(400) == 0 && world.getBlockState(pos.up()).isAir() && state.isSolidBlock(world, pos)) {
                         world.setBlockState(pos.up(), Blocks.FIRE.getDefaultState());
                     }
                 });

@@ -38,6 +38,9 @@ public class CoatiFindBurrowGoal extends Goal {
     @Override
     public void stop() {
         handedOff = true;
+        if (this.coati.isSniffing() && !this.coati.isDigging()) {
+            this.coati.startState(CoatiEntityAnimationState.IDLING);
+        }
     }
 
     @Override

@@ -1,0 +1,26 @@
+{
+  "parent": "clutterbestiary:bestiary/root",
+  "criteria": {
+    "tame_crocodile": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.a_croc_of_trust.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:crocodile_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.bestiary.a_croc_of_trust.title"
+    }
+  },
+  "requirements": [
+    [
+      "tame_crocodile"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

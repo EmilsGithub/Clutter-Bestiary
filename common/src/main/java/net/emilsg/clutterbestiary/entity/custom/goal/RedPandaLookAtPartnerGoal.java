@@ -18,12 +18,22 @@ public class RedPandaLookAtPartnerGoal extends Goal {
 
     @Override
     public boolean canStart() {
+        if (this.goalOwner.getPartnerID() == -1) return false;
         World world = this.goalOwner.getWorld();
-        partner = (RedPandaEntity) world.getEntityById(this.goalOwner.getPartnerID());
+        if (!(world.getEntityById(this.goalOwner.getPartnerID()) instanceof RedPandaEntity redPandaEntity)
+                || !redPandaEntity.isAlive() || redPandaEntity.getPartnerID() != this.goalOwner.getId()) {
+            this.goalOwner.setPartnerID(-1);
+            return false;
+        }
+        this.partner = redPandaEntity;
+        return true;
+    }
 
-        if (partner == null) return false;
-
-        return this.goalOwner.getPartnerID() == partner.getId() && partner.getPartnerID() == this.goalOwner.getId();
+    @Override
+    public boolean shouldContinue() {
+        return this.partner != null && this.partner.isAlive()
+                && this.goalOwner.getPartnerID() == this.partner.getId()
+                && this.partner.getPartnerID() == this.goalOwner.getId();
     }
 
     @Override
@@ -34,7 +44,17 @@ public class RedPandaLookAtPartnerGoal extends Goal {
 
     @Override
     public void stop() {
+        this.goalOwner.setIsYPosing(false);
         this.goalOwner.startState(RedPandaEntityAnimationState.ENDING_Y_POSE);
+        if (this.partner != null && this.partner.getPartnerID() == this.goalOwner.getId()) {
+            this.partner.setPartnerID(-1);
+            this.partner.setYPoseDuration(0);
+            this.partner.setYPoseTicker(0);
+        }
+        this.goalOwner.setPartnerID(-1);
+        this.goalOwner.setYPoseDuration(0);
+        this.goalOwner.setYPoseTicker(0);
+        this.partner = null;
     }
 
     @Override

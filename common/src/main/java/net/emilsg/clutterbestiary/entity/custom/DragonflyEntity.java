@@ -1,5 +1,6 @@
 package net.emilsg.clutterbestiary.entity.custom;
 
+import net.emilsg.clutterbestiary.animation_handling.AnimationPlayback;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.goal.DragonflyFastWanderGoal;
 import net.emilsg.clutterbestiary.entity.custom.goal.DragonflyHoverLilypadGoal;
@@ -43,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 public class DragonflyEntity extends ParentAnimalEntity {
     private static final TrackedData<String> VARIANT = DataTracker.registerData(DragonflyEntity.class, TrackedDataHandlerRegistry.STRING);
     public final AnimationState flyingAnimState = new AnimationState();
-    private int animationTimeout = 0;
 
     public DragonflyEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
         super(entityType, world);
@@ -67,7 +67,7 @@ public class DragonflyEntity extends ParentAnimalEntity {
     @Override
     protected void initDataTracker(DataTracker.Builder builder) {
         super.initDataTracker(builder);
-        builder.add(VARIANT, SeahorseVariant.YELLOW.getId());
+        builder.add(VARIANT, SeahorseVariant.YELLOW.getID());
     }
 
     @Override
@@ -140,7 +140,7 @@ public class DragonflyEntity extends ParentAnimalEntity {
         World world = this.getWorld();
 
         if (world.isClient) {
-            this.setupAnimationStates();
+            AnimationPlayback.updateLoop(this, this.flyingAnimState, this.isAlive());
         }
     }
 
@@ -167,15 +167,6 @@ public class DragonflyEntity extends ParentAnimalEntity {
 
     private String getTypeVariant() {
         return this.dataTracker.get(VARIANT);
-    }
-
-    private void setupAnimationStates() {
-        if (this.animationTimeout <= 0) {
-            this.animationTimeout = 20;
-            this.flyingAnimState.start(this.age);
-        } else {
-            --this.animationTimeout;
-        }
     }
 
     private static class DragonflyLookControl extends LookControl {

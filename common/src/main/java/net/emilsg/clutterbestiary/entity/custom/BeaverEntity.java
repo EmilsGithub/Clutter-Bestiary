@@ -7,8 +7,8 @@ import net.emilsg.clutterbestiary.entity.custom.goal.HighWanderAroundFarGoal;
 import net.emilsg.clutterbestiary.entity.custom.goal.LeaveWaterGoal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.sound.ModSoundEvents;
+import net.emilsg.clutterbestiary.util.ModAdvancements;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.emilsg.clutterbestiary.util.ModItemTags;
 import net.emilsg.clutterbestiary.util.ModUtil;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.*;
@@ -28,15 +28,13 @@ import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.ItemTags;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -45,15 +43,18 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
+import java.util.function.Predicate;
 
 public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
+    private static final Predicate<ItemStack> BREEDING_INGREDIENT = stack -> ModUtil.SAPLING_ITEM_MAP.contains(stack.getItem()) || stack.isIn(ItemTags.SAPLINGS);
     private static final TrackedData<Boolean> IS_STRIPPING_ITEMS = DataTracker.registerData(BeaverEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final TrackedData<Integer> ANIMATION_STATE = DataTracker.registerData(BeaverEntity.class, TrackedDataHandlerRegistry.INTEGER);
 
     private static final String NBT_STRIPPING = "StrippingItems";
     private static final String NBT_STRIP_TIMER = "StripTimer";
+    private static final String NBT_LOGS_STRIPPED = "LogsStripped";
+    private static final String NBT_STRIPPING_PLAYER = "StrippingPlayer";
 
     public final AnimationState waterAnimationState = new AnimationState();
     public final AnimationState idleAnimationState = new AnimationState();
@@ -65,6 +66,9 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
     private int waterAnimationTimeout = 0;
     private int idleAnimationTimeout = 0;
     private int strippingAnimationTimer = 0;
+    private int logsStripped = 0;
+    @Nullable
+    private UUID strippingPlayerUuid;
     private boolean shouldSpawnStrippingParticles = false;
 
     public BeaverEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
@@ -82,7 +86,7 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
     protected void initGoals() {
         this.goalSelector.add(0, new AnimalMateGoal(this, 1.0f));
         this.goalSelector.add(1, new BeaverStripItemsGoal(this));
-        this.goalSelector.add(2, new TemptGoal(this, 1.1f, stack -> ModUtil.SAPLING_ITEM_MAP.contains(stack.getItem()) || stack.isIn(ItemTags.SAPLINGS), false));
+        this.goalSelector.add(2, new TemptGoal(this, 1.1f, BREEDING_INGREDIENT, false));
         this.goalSelector.add(3, new FollowParentGoal(this, 1.0f));
         this.goalSelector.add(4, new MeleeAttackGoal(this, 1.2f, true));
         this.goalSelector.add(5, new BeaverStripBottomLogGoal(this, 1.0f));
@@ -107,6 +111,8 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
         this.readInventory(nbt, this.getRegistryManager());
         boolean restoreStripping = nbt.getBoolean(NBT_STRIPPING);
         this.strippingAnimationTimer = nbt.getInt(NBT_STRIP_TIMER);
+        this.logsStripped = nbt.getInt(NBT_LOGS_STRIPPED);
+        this.strippingPlayerUuid = nbt.containsUuid(NBT_STRIPPING_PLAYER) ? nbt.getUuid(NBT_STRIPPING_PLAYER) : null;
 
         this.setStrippingItems(restoreStripping);
 
@@ -126,6 +132,10 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
         this.writeInventory(nbt, this.getRegistryManager());
         nbt.putBoolean(NBT_STRIPPING, this.isStrippingItems());
         nbt.putInt(NBT_STRIP_TIMER, this.strippingAnimationTimer);
+        nbt.putInt(NBT_LOGS_STRIPPED, this.logsStripped);
+        if (this.strippingPlayerUuid != null) {
+            nbt.putUuid(NBT_STRIPPING_PLAYER, this.strippingPlayerUuid);
+        }
     }
 
     public static DefaultAttributeContainer.Builder setAttributes() {
@@ -177,6 +187,9 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
             }
 
             this.strippingAnimationTimer = 0;
+            if (!this.getWorld().isClient) {
+                this.strippingPlayerUuid = player.getUuid();
+            }
             this.setStrippingItems(true);
             if (!this.getWorld().isClient) {
                 this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.NEUTRAL);
@@ -192,7 +205,7 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
 
     @Override
     public boolean isBreedingItem(ItemStack stack) {
-        return ModUtil.SAPLING_ITEM_MAP.contains(stack.getItem()) || stack.isIn(ItemTags.SAPLINGS);
+        return BREEDING_INGREDIENT.test(stack);
     }
 
     @Override
@@ -277,7 +290,7 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
             }
         }
 
-        if (strippingAnimationTimer >= 160 && this.isAlive()) {
+        if (!world.isClient && strippingAnimationTimer >= 160 && this.isAlive()) {
             this.setStrippingItems(false);
             this.startState(BeaverEntityAnimationState.IDLING);
             ItemStack inventoryStack = this.inventory.getStack(0);
@@ -288,8 +301,11 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
                 this.dropStack(inventoryStack);
                 this.inventory.setStack(0, ItemStack.EMPTY);
                 this.strippingAnimationTimer = 0;
+                this.strippingPlayerUuid = null;
                 return;
             }
+
+            this.finishStrippingHandedLogs(inventoryStack.getCount());
 
             ItemStack strippedStack = new ItemStack(strippedItem, inventoryStack.getCount());
             this.inventory.setStack(0, strippedStack);
@@ -308,8 +324,11 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
 
             this.startState(BeaverEntityAnimationState.IDLING);
             this.strippingAnimationTimer = 0;
+            this.strippingPlayerUuid = null;
             this.inventory.setStack(0, ItemStack.EMPTY);
         }
+
+        if (!this.isStrippingItems()) this.strippingAnimationTimer = 0;
 
         if (this.isStrippingItems()) {
             if (this.getMainHandStack().isEmpty() && !this.inventory.isEmpty()) {
@@ -319,6 +338,25 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
 
         this.setupAnimationStates();
 
+    }
+
+    public void onWorldLogStripped() {
+        if (!(this.getWorld() instanceof ServerWorld serverWorld)) return;
+
+        serverWorld.getPlayers(player -> player.squaredDistanceTo(this) <= 256.0)
+                .forEach(player -> ModAdvancements.grant(player, ModAdvancements.DAM_GOOD_WORK));
+    }
+
+    private void finishStrippingHandedLogs(int amount) {
+        if (!(this.getWorld() instanceof ServerWorld serverWorld)) return;
+
+        this.logsStripped = Math.min(25, this.logsStripped + amount);
+        if (this.logsStripped < 25 || this.strippingPlayerUuid == null) return;
+
+        ServerPlayerEntity player = serverWorld.getServer().getPlayerManager().getPlayer(this.strippingPlayerUuid);
+        if (player != null) {
+            ModAdvancements.grant(player, ModAdvancements.BUSY_BEAVER);
+        }
     }
 
     public void travel(Vec3d movementInput) {

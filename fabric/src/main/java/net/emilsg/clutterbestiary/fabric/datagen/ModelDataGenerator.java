@@ -18,9 +18,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class ModelDataGenerator extends FabricModelProvider {
-    record VariantsRecord(float v, String name, boolean isCustomModel) {}
-
-
     public ModelDataGenerator(FabricDataOutput output) {
         super(output);
     }
@@ -41,13 +38,16 @@ public class ModelDataGenerator extends FabricModelProvider {
         generator.register(ModItems.RAW_VENISON_RIBS.get(), Models.GENERATED);
         generator.register(ModItems.COOKED_VENISON_RIBS.get(), Models.GENERATED);
         generator.register(ModItems.KOI.get(), Models.GENERATED);
+        generator.register(ModItems.ARROWFISH.get(), Models.GENERATED);
 
         generator.register(ModItems.LEVITATING_ECHOFIN_BUCKET.get(), Models.GENERATED);
         generator.register(ModItems.CHORUS_ECHOFIN_BUCKET.get(), Models.GENERATED);
+        generator.register(ModItems.ARROWFISH_BUCKET.get(), Models.GENERATED);
 
         generator.register(ModItems.BUTTERFLY_COCOON.get(), Models.GENERATED);
         generator.register(ModItems.KIWI_BIRD_EGG.get(), Models.GENERATED);
         generator.register(ModItems.EMPEROR_PENGUIN_EGG.get(), Models.GENERATED);
+        generator.register(ModItems.CROCODILE_EGG.get(), Models.GENERATED);
 
         generator.register(ModItems.MOSSBLOOM_ANTLERS.get(), Models.GENERATED);
 
@@ -57,6 +57,7 @@ public class ModelDataGenerator extends FabricModelProvider {
         this.registerKoiBucket(generator, ModItems.KOI_BUCKET.get());
         this.registerSeahorseBucket(generator, ModItems.SEAHORSE_BUCKET.get());
         this.registerRiverTurtleBucket(generator, ModItems.RIVER_TURTLE_BUCKET.get());
+        this.registerJellyfishBucket(generator, ModItems.JELLYFISH_BUCKET.get());
         this.registerButterflyInABottle(generator, ModItems.BUTTERFLY_IN_A_BOTTLE.get());
 
         for (Item item : Registries.ITEM) {
@@ -65,8 +66,29 @@ public class ModelDataGenerator extends FabricModelProvider {
         }
     }
 
-    private void registerSpawnEggItem(ItemModelGenerator itemModelGenerator, Item egg) {
-        itemModelGenerator.register(egg, new Model(Optional.of(Identifier.of("item/template_spawn_egg")), Optional.empty()));
+    private void registerButterflyInABottle(ItemModelGenerator gen, Item bottle) {
+        List<@NotNull VariantsRecord> variants = List.of(
+                new VariantsRecord(0.0f, "white_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.01f, "light_gray_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.02f, "gray_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.03f, "black_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.04f, "brown_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.05f, "red_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.06f, "orange_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.07f, "yellow_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.08f, "lime_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.09f, "green_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.10f, "light_blue_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.11f, "cyan_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.12f, "blue_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.13f, "purple_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.14f, "magenta_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.15f, "pink_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.16f, "warped_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.17f, "crimson_butterfly_in_a_bottle", false),
+                new VariantsRecord(0.18f, "soul_butterfly_in_a_bottle", false)
+        );
+        registerItemWithPredicate(gen, bottle, "type", "default_butterfly_in_a_bottle", variants);
     }
 
     private void registerElytra(ItemModelGenerator itemGen, Item elytra) {
@@ -95,7 +117,7 @@ public class ModelDataGenerator extends FabricModelProvider {
         for (var x : variants) {
             if (!x.isCustomModel()) {
                 var modelId = Identifier.of(ClutterBestiary.MOD_ID, "item/" + x.name());
-                var texId   = Identifier.of(ClutterBestiary.MOD_ID, "item/" + x.name());
+                var texId = Identifier.of(ClutterBestiary.MOD_ID, "item/" + x.name());
                 Models.GENERATED.upload(modelId, new TextureMap().put(TextureKey.LAYER0, texId), gen.writer);
             }
         }
@@ -136,6 +158,14 @@ public class ModelDataGenerator extends FabricModelProvider {
         registerItemWithPredicate(gen, koiBucket, "type", "white_koi_bucket", variants);
     }
 
+    private void registerRiverTurtleBucket(ItemModelGenerator gen, Item riverTurtleBucket) {
+        List<@NotNull VariantsRecord> variants = List.of(
+                new VariantsRecord(0.0f, "sandy_river_turtle_bucket", false),
+                new VariantsRecord(0.1f, "coconut_river_turtle_bucket", false)
+        );
+        registerItemWithPredicate(gen, riverTurtleBucket, "type", "sandy_river_turtle_bucket", variants);
+    }
+
     private void registerSeahorseBucket(ItemModelGenerator gen, Item seahorseBucket) {
         List<@NotNull VariantsRecord> variants = List.of(
                 new VariantsRecord(0.0f, "yellow_seahorse_bucket", false),
@@ -146,36 +176,19 @@ public class ModelDataGenerator extends FabricModelProvider {
         registerItemWithPredicate(gen, seahorseBucket, "type", "yellow_seahorse_bucket", variants);
     }
 
-    private void registerButterflyInABottle(ItemModelGenerator gen, Item bottle) {
+    private void registerJellyfishBucket(ItemModelGenerator gen, Item jellyfishBucket) {
         List<@NotNull VariantsRecord> variants = List.of(
-                new VariantsRecord(0.0f, "white_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.01f, "light_gray_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.02f, "gray_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.03f, "black_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.04f, "brown_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.05f, "red_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.06f, "orange_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.07f, "yellow_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.08f, "lime_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.09f, "green_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.10f, "light_blue_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.11f, "cyan_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.12f, "blue_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.13f, "purple_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.14f, "magenta_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.15f, "pink_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.16f, "warped_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.17f, "crimson_butterfly_in_a_bottle", false),
-                new VariantsRecord(0.18f, "soul_butterfly_in_a_bottle", false)
+                new VariantsRecord(0.0f, "green_jellyfish_bucket", false),
+                new VariantsRecord(0.1f, "blue_jellyfish_bucket", false),
+                new VariantsRecord(0.2f, "purple_jellyfish_bucket", false)
         );
-        registerItemWithPredicate(gen, bottle, "type", "default_butterfly_in_a_bottle", variants);
+        registerItemWithPredicate(gen, jellyfishBucket, "type", "green_jellyfish_bucket", variants);
     }
 
-    private void registerRiverTurtleBucket(ItemModelGenerator gen, Item riverTurtleBucket) {
-        List<@NotNull VariantsRecord> variants = List.of(
-                new VariantsRecord(0.0f, "sandy_river_turtle_bucket", false),
-                new VariantsRecord(0.1f, "coconut_river_turtle_bucket", false)
-        );
-        registerItemWithPredicate(gen, riverTurtleBucket, "type", "sandy_river_turtle_bucket", variants);
+    private void registerSpawnEggItem(ItemModelGenerator itemModelGenerator, Item egg) {
+        itemModelGenerator.register(egg, new Model(Optional.of(Identifier.of("item/template_spawn_egg")), Optional.empty()));
+    }
+
+    record VariantsRecord(float v, String name, boolean isCustomModel) {
     }
 }

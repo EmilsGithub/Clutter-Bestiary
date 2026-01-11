@@ -32,7 +32,7 @@ public class EmperorPenguinMateGoal extends AnimalMateGoal {
             Criteria.BRED_ANIMALS.trigger(serverPlayerEntity, this.animal, this.mate, null);
         }
 
-        this.emperorPenguin.setHasEgg(true);
+        this.emperorPenguin.beginCarryingEgg();
         this.animal.setBreedingAge(6000);
         this.mate.setBreedingAge(6000);
         this.animal.resetLoveTicks();

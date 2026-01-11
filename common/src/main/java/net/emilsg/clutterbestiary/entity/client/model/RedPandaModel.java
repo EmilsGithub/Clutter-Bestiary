@@ -1,5 +1,7 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import net.emilsg.clutterbestiary.animation_handling.animation_states.RedPandaEntityAnimationState;
+import net.emilsg.clutterbestiary.entity.client.animation.AnimationBindings;
 import net.emilsg.clutterbestiary.entity.client.animation.RedPandaAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.ParentTameableModel;
 import net.emilsg.clutterbestiary.entity.custom.RedPandaEntity;
@@ -8,6 +10,15 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 
 public class RedPandaModel<T extends RedPandaEntity> extends ParentTameableModel<T> {
+    private static final AnimationBindings<RedPandaEntity, RedPandaEntityAnimationState> ANIMATIONS = new AnimationBindings<RedPandaEntity, RedPandaEntityAnimationState>()
+            .bind(RedPandaEntityAnimationState.LAYING_DOWN, RedPandaAnimations.RED_PANDA_LAY_DOWN)
+            .bind(RedPandaEntityAnimationState.SLEEPING, RedPandaAnimations.RED_PANDA_SLEEP)
+            .bind(RedPandaEntityAnimationState.STANDING_UP, RedPandaAnimations.RED_PANDA_STAND_UP)
+            .bind(RedPandaEntityAnimationState.STARTING_Y_POSE, RedPandaAnimations.RED_PANDA_Y_POSE_START)
+            .bind(RedPandaEntityAnimationState.Y_POSING, RedPandaAnimations.RED_PANDA_Y_POSING)
+            .bind(RedPandaEntityAnimationState.ENDING_Y_POSE, RedPandaAnimations.RED_PANDA_Y_POSE_END)
+            .bind(RedPandaEntityAnimationState.SIT_START, RedPandaAnimations.RED_PANDA_SIT_START)
+            .bind(RedPandaEntityAnimationState.SIT_END, RedPandaAnimations.RED_PANDA_SIT_END);
     private final ModelPart root;
     private final ModelPart all;
     private final ModelPart body;
@@ -69,17 +80,10 @@ public class RedPandaModel<T extends RedPandaEntity> extends ParentTameableModel
 
         this.animateMovement(RedPandaAnimations.RED_PANDA_WALK, limbAngle, limbDistance, 3f, 2f);
 
-        this.updateAnimation(entity.layingDownAnimationState, RedPandaAnimations.RED_PANDA_LAY_DOWN, animationProgress, 1f);
-        this.updateAnimation(entity.sleepingAnimationState, RedPandaAnimations.RED_PANDA_SLEEP, animationProgress, 1f);
-        this.updateAnimation(entity.standingUpAnimationState, RedPandaAnimations.RED_PANDA_STAND_UP, animationProgress, 1f);
-        this.updateAnimation(entity.startingYPoseAnimationState, RedPandaAnimations.RED_PANDA_Y_POSE_START, animationProgress, 1f);
-        this.updateAnimation(entity.yPosingAnimationState, RedPandaAnimations.RED_PANDA_Y_POSING, animationProgress, 1f);
-        this.updateAnimation(entity.endingYPoseAnimationState, RedPandaAnimations.RED_PANDA_Y_POSE_END, animationProgress, 1f);
+        ANIMATIONS.apply(entity, entity.getAnimationController(), animationProgress, this::updateAnimation);
         this.updateAnimation(entity.rightEarTwitchAnimationState, RedPandaAnimations.RED_PANDA_RIGHT_EAR_TWITCH, animationProgress, 1f);
         this.updateAnimation(entity.leftEarTwitchAnimationState, RedPandaAnimations.RED_PANDA_LEFT_EAR_TWITCH, animationProgress, 1f);
         this.updateAnimation(entity.sniffAnimationState, RedPandaAnimations.RED_PANDA_SNIFF, animationProgress, 1f);
-        this.updateAnimation(entity.sitStartAnimationState, RedPandaAnimations.RED_PANDA_SIT_START, animationProgress, 1f);
-        this.updateAnimation(entity.sitEndAnimationState, RedPandaAnimations.RED_PANDA_SIT_END, animationProgress, 1f);
     }
 
     @Override

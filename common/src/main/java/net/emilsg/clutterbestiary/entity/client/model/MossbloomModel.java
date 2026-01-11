@@ -1,14 +1,18 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import net.emilsg.clutterbestiary.animation_handling.animation_states.MossbloomAnimationState;
+import net.emilsg.clutterbestiary.entity.client.animation.AnimationBindings;
 import net.emilsg.clutterbestiary.entity.client.animation.MossbloomEntityAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.ParentTameableModel;
 import net.emilsg.clutterbestiary.entity.custom.MossbloomEntity;
-import net.emilsg.clutterbestiary.entity.variants.MossbloomVariant;
 import net.minecraft.client.model.*;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 
 public class MossbloomModel<T extends MossbloomEntity> extends ParentTameableModel<T> {
+    private static final AnimationBindings<MossbloomEntity, MossbloomAnimationState> ANIMATIONS = new AnimationBindings<MossbloomEntity, MossbloomAnimationState>()
+            .bind(MossbloomAnimationState.SHAKING, MossbloomEntityAnimations.MOSSBLOOM_SHAKE_HEAD);
+
     private final ModelPart root;
     private final ModelPart all;
     private final ModelPart neck;
@@ -98,11 +102,11 @@ public class MossbloomModel<T extends MossbloomEntity> extends ParentTameableMod
         this.setHeadAngles(mossbloom, netHeadYaw, headPitch, animationProgress);
         this.updateVisibleParts(mossbloom);
 
-        this.animateMovement(mossbloom.isFleeing() || mossbloom.getSprinting() ? MossbloomEntityAnimations.MOSSBLOOM_RUN : MossbloomEntityAnimations.MOSSBLOOM_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
+        if (!mossbloom.getIsShaking()) {
+            this.animateMovement(mossbloom.isFleeing() || mossbloom.getSprinting() ? MossbloomEntityAnimations.MOSSBLOOM_RUN : MossbloomEntityAnimations.MOSSBLOOM_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
+        }
 
-        if (mossbloom.isVariantOf(MossbloomVariant.HORNED))
-            this.updateAnimation(mossbloom.shakingAnimationState, MossbloomEntityAnimations.MOSSBLOOM_SHAKE_HEAD, animationProgress, 1f);
-        this.updateAnimation(mossbloom.idleAnimationState, MossbloomEntityAnimations.MOSSBLOOM_IDLE, animationProgress, 1f);
+        ANIMATIONS.apply(mossbloom, mossbloom.getAnimationController(), animationProgress, this::updateAnimation);
 
         this.updateAnimation(mossbloom.earTwitchAnimationStateLE, MossbloomEntityAnimations.MOSSBLOOM_LE_DROP, animationProgress, 2f);
         this.updateAnimation(mossbloom.earTwitchAnimationStateRE, MossbloomEntityAnimations.MOSSBLOOM_RE_DROP, animationProgress, 2f);

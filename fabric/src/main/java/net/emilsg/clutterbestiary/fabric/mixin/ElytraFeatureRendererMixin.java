@@ -25,18 +25,24 @@ import java.util.List;
 @Mixin(value = ElytraFeatureRenderer.class, priority = 1500)
 public abstract class ElytraFeatureRendererMixin {
 
-    @ModifyExpressionValue(method = "render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;ILnet/minecraft/entity/LivingEntity;FFFFFF)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;isOf(Lnet/minecraft/item/Item;)Z"))
-    private boolean canRenderElytra(boolean orgBool, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, LivingEntity livingEntity) {
-        return orgBool || getEquippedElytra(livingEntity).getItem() instanceof ElytraItem;
+    @ModifyExpressionValue(
+            method = "render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;ILnet/minecraft/entity/LivingEntity;FFFFFF)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;isOf(Lnet/minecraft/item/Item;)Z")
+    )
+    private boolean clutterbestiary$canRenderElytra(boolean original, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, LivingEntity livingEntity) {
+        return original || this.clutterbestiary$getEquippedElytra(livingEntity).getItem() instanceof ElytraItem;
     }
 
-    @ModifyVariable(method = "render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;ILnet/minecraft/entity/LivingEntity;FFFFFF)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;push()V"))
-    private Identifier getButterflyElytraTexture(Identifier value, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, LivingEntity livingEntity) {
-        ItemStack itemStack = getEquippedElytra(livingEntity);
+    @ModifyVariable(
+            method = "render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;ILnet/minecraft/entity/LivingEntity;FFFFFF)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;push()V")
+    )
+    private Identifier clutterbestiary$getButterflyElytraTexture(Identifier original, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, LivingEntity livingEntity) {
+        ItemStack itemStack = this.clutterbestiary$getEquippedElytra(livingEntity);
         Item elytraItem = itemStack.getItem();
 
         if (elytraItem == Items.ELYTRA || !(elytraItem instanceof BestiaryElytraItem)) {
-            return value;
+            return original;
         }
 
         if (elytraItem instanceof ButterflyElytraItem butterflyElytraItem) {
@@ -44,11 +50,11 @@ public abstract class ElytraFeatureRendererMixin {
             return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/elytra/" + type + ".png");
         }
 
-        return value;
+        return original;
     }
 
     @Unique
-    private ItemStack getEquippedElytra(LivingEntity livingEntity) {
+    private ItemStack clutterbestiary$getEquippedElytra(LivingEntity livingEntity) {
         ItemStack chestItemStack = livingEntity.getEquippedStack(EquipmentSlot.CHEST);
         ItemStack itemStack = chestItemStack;
 

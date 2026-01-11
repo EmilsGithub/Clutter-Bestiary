@@ -1,7 +1,6 @@
 package net.emilsg.clutterbestiary.animation_handling.animation_states;
 
 import net.emilsg.clutterbestiary.animation_handling.IndexedAnimationState;
-import net.emilsg.clutterbestiary.entity.custom.RedPandaEntity;
 
 public enum RedPandaEntityAnimationState implements IndexedAnimationState {
     IDLING(0),
@@ -18,11 +17,6 @@ public enum RedPandaEntityAnimationState implements IndexedAnimationState {
 
     RedPandaEntityAnimationState(final int index) {
         this.index = index;
-    }
-
-    public static RedPandaEntityAnimationState fromIndex(int idx) {
-        for (var s : values()) if (s.index == idx) return s;
-        return IDLING;
     }
 
     public int getIndex() {

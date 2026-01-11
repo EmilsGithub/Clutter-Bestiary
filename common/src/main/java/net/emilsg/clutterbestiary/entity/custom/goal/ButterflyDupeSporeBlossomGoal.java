@@ -10,8 +10,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldView;
 
 public class ButterflyDupeSporeBlossomGoal extends MoveToTargetPosGoal {
-    ButterflyEntity butterflyEntity;
-    int dupeCooldown;
+    private final ButterflyEntity butterflyEntity;
+    private final int dupeCooldown;
 
     public ButterflyDupeSporeBlossomGoal(ButterflyEntity butterflyEntity, double speed, int dupeCooldown) {
         super(butterflyEntity, speed, 12);
@@ -19,8 +19,9 @@ public class ButterflyDupeSporeBlossomGoal extends MoveToTargetPosGoal {
         this.dupeCooldown = dupeCooldown;
     }
 
+    @Override
     public boolean canStart() {
-        return this.butterflyEntity.getDupeTimer() >= dupeCooldown && super.canStart();
+        return this.butterflyEntity.getDupeTimer() >= this.dupeCooldown && super.canStart();
     }
 
     @Override
@@ -28,10 +29,12 @@ public class ButterflyDupeSporeBlossomGoal extends MoveToTargetPosGoal {
         return 1.5F;
     }
 
+    @Override
     public boolean shouldContinue() {
-        return super.shouldContinue() && this.butterflyEntity.getDupeTimer() >= dupeCooldown;
+        return super.shouldContinue() && this.butterflyEntity.getDupeTimer() >= this.dupeCooldown;
     }
 
+    @Override
     public void tick() {
         super.tick();
         if (this.hasReached()) {
@@ -43,6 +46,7 @@ public class ButterflyDupeSporeBlossomGoal extends MoveToTargetPosGoal {
         }
     }
 
+    @Override
     protected boolean isTargetPos(WorldView world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         return state.isOf(Blocks.SPORE_BLOSSOM);

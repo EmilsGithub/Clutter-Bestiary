@@ -1,4 +1,7 @@
 {
+  "entity.clutterbestiary.arrowfish_projectile": "Рыба-стрела",
+  "entity.clutterbestiary.woodpecker": "Дятел",
+  "item.clutterbestiary.woodpecker_spawn_egg": "Яйцо призыва дятла",
   "sounds.clutterbestiary.entity_kiwi_call": "Птица киви свистит",
   "sounds.clutterbestiary.entity_nether_newt_ambient": "Незерский тритон пищит",
   "sounds.clutterbestiary.entity_nether_newt_hurt": "Незерский тритон ранен",
@@ -7,8 +10,8 @@
   "sounds.clutterbestiary.entity_mossbloom_hurt": "Мохоцвет ранен",
   "sounds.clutterbestiary.entity_emperor_penguin_ambient": "Императорский пингвин гогочет",
   "sounds.clutterbestiary.entity_ember_tortoise_hurt": "Тлеющая черепаха ранена",
-
   "entity.clutterbestiary.butterfly": "Бабочка",
+  "entity.clutterbestiary.butterfly_larva": "Личинка бабочки",
   "entity.clutterbestiary.chameleon": "Хамелеон",
   "entity.clutterbestiary.echofin": "Эхохвост",
   "entity.clutterbestiary.mossbloom": "Мохоцвет",
@@ -26,7 +29,6 @@
   "entity.clutterbestiary.dragonfly": "Стрекоза",
   "entity.clutterbestiary.booplet": "Буплет",
   "entity.clutterbestiary.koi": "Кои",
-
   "clutterbestiary.yellow.butterfly": "Жёлтая бабочка",
   "clutterbestiary.red.butterfly": "Красная бабочка",
   "clutterbestiary.blue.butterfly": "Синяя бабочка",
@@ -46,9 +48,7 @@
   "clutterbestiary.warped.butterfly": "Искажённая бабочка",
   "clutterbestiary.crimson.butterfly": "Багровая бабочка",
   "clutterbestiary.soul.butterfly": "Бабочка душ",
-
   "itemgroup.clutterbestiary.item_group": "Clutter: Bestiary",
-
   "item.clutterbestiary.white_butterfly_elytra": "Белые бабочковые элитры",
   "item.clutterbestiary.light_gray_butterfly_elytra": "Светло-серые бабочковые элитры",
   "item.clutterbestiary.gray_butterfly_elytra": "Серые бабочковые элитры",
@@ -114,7 +114,6 @@
   "item.clutterbestiary.dragonfly_spawn_egg": "Яйцо призыва стрекозы",
   "item.clutterbestiary.booplet_spawn_egg": "Яйцо призыва буплета",
   "item.clutterbestiary.koi_spawn_egg": "Яйцо призыва кои",
-
   "tooltip.clutterbestiary.base_color.koi": "Базовый цвет",
   "tooltip.clutterbestiary.primary_pattern.koi": "Первичный узор",
   "tooltip.clutterbestiary.secondary_pattern.koi": "Вторичный узор",
@@ -134,7 +133,6 @@
   "tooltip.clutterbestiary.striped.koi": "Полосатый",
   "tooltip.clutterbestiary.small_spots.koi": "Мелкие пятна",
   "tooltip.clutterbestiary.medium_spots.koi": "Средние пятна",
-
   "advancements.bestiary.root.title": "Clutter Bestiary",
   "advancements.bestiary.root.description": "Тут много животных",
   "advancements.bestiary.boop.title": "Буп",

@@ -17,11 +17,6 @@ public enum CoatiEntityAnimationState implements IndexedAnimationState {
         this.index = index;
     }
 
-    public static CoatiEntityAnimationState fromIndex(int idx) {
-        for (var s : values()) if (s.index == idx) return s;
-        return IDLING;
-    }
-
     @Override
     public int getIndex() {
         return index;

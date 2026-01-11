@@ -1,0 +1,26 @@
+{
+  "parent": "clutterbestiary:bestiary/fishy_business",
+  "criteria": {
+    "iridescent_white_koi": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.pearl_of_the_pond.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:koi_bucket"
+    },
+    "title": {
+      "translate": "advancements.bestiary.pearl_of_the_pond.title"
+    }
+  },
+  "requirements": [
+    [
+      "iridescent_white_koi"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

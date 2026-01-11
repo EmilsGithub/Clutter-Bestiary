@@ -1,0 +1,37 @@
+{
+  "parent": "clutterbestiary:bestiary/stoatally_yours",
+  "criteria": {
+    "breed_stoats": {
+      "conditions": {
+        "child": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "clutterbestiary:stoat"
+            }
+          }
+        ]
+      },
+      "trigger": "minecraft:bred_animals"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.stoat_of_affairs.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:rabbit"
+    },
+    "title": {
+      "translate": "advancements.bestiary.stoat_of_affairs.title"
+    }
+  },
+  "requirements": [
+    [
+      "breed_stoats"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

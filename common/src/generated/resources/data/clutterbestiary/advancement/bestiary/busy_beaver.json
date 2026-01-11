@@ -1,0 +1,26 @@
+{
+  "parent": "clutterbestiary:bestiary/dam_good_work",
+  "criteria": {
+    "strip_25_logs": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.bestiary.busy_beaver.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "clutterbestiary:beaver_spawn_egg"
+    },
+    "title": {
+      "translate": "advancements.bestiary.busy_beaver.title"
+    }
+  },
+  "requirements": [
+    [
+      "strip_25_logs"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

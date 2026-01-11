@@ -7,6 +7,7 @@ public class CommonEntityAttributeRegistry {
 
     public static void register() {
         EntityAttributeRegistry.register(ModEntityTypes.BUTTERFLY, ButterflyEntity::setAttributes);
+        EntityAttributeRegistry.register(ModEntityTypes.BUTTERFLY_LARVA, ButterflyLarvaEntity::setAttributes);
         EntityAttributeRegistry.register(ModEntityTypes.CHAMELEON, ChameleonEntity::setAttributes);
         EntityAttributeRegistry.register(ModEntityTypes.ECHOFIN, EchofinEntity::setAttributes);
         EntityAttributeRegistry.register(ModEntityTypes.MOSSBLOOM, MossbloomEntity::setAttributes);
@@ -25,9 +26,14 @@ public class CommonEntityAttributeRegistry {
         EntityAttributeRegistry.register(ModEntityTypes.DRAGONFLY, DragonflyEntity::setAttributes);
         EntityAttributeRegistry.register(ModEntityTypes.BOOPLET, BoopletEntity::setAttributes);
         EntityAttributeRegistry.register(ModEntityTypes.KOI, KoiEntity::setAttributes);
-        EntityAttributeRegistry.register(ModEntityTypes.KOI_EGGS, KoiEntity::setAttributes);
+        EntityAttributeRegistry.register(ModEntityTypes.KOI_EGGS, KoiEggsEntity::setAttributes);
         EntityAttributeRegistry.register(ModEntityTypes.RIVER_TURTLE, RiverTurtleEntity::setAttributes);
         EntityAttributeRegistry.register(ModEntityTypes.COATI, CoatiEntity::setAttributes);
         EntityAttributeRegistry.register(ModEntityTypes.RED_PANDA, RedPandaEntity::setAttributes);
+        EntityAttributeRegistry.register(ModEntityTypes.STOAT, StoatEntity::setAttributes);
+        EntityAttributeRegistry.register(ModEntityTypes.CROCODILE, CrocodileEntity::setAttributes);
+        EntityAttributeRegistry.register(ModEntityTypes.CHORUS_BEETLE, ChorusBeetleEntity::setAttributes);
+        EntityAttributeRegistry.register(ModEntityTypes.WOODPECKER, WoodpeckerEntity::setAttributes);
+        EntityAttributeRegistry.register(ModEntityTypes.ARROWFISH, ArrowfishEntity::setAttributes);
     }
 }

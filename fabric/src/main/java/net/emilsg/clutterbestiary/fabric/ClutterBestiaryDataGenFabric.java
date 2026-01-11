@@ -1,10 +1,9 @@
 package net.emilsg.clutterbestiary.fabric;
 
+import net.emilsg.clutterbestiary.fabric.datagen.*;
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.minecraft.registry.RegistryBuilder;
-
-import net.emilsg.clutterbestiary.fabric.datagen.*;
 
 public class ClutterBestiaryDataGenFabric implements DataGeneratorEntrypoint {
 
@@ -20,6 +19,9 @@ public class ClutterBestiaryDataGenFabric implements DataGeneratorEntrypoint {
         pack.addProvider(RecipeDataGenerator::new);
 
         pack.addProvider(LootTableDataGenerator::new);
+        pack.addProvider(EntityLootTableDataGenerator::new);
+
+        pack.addProvider(AdvancementDataGenerator::new);
 
         pack.addProvider(ModelDataGenerator::new);
     }

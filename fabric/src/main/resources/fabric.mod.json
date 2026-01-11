@@ -3,7 +3,7 @@
   "id": "clutterbestiary",
   "version": "${version}-Fabric-1.21.1",
   "name": "Clutter: Bestiary",
-  "description": "The entities from Clutter, plus more, updated, improved and split into a separate mod.",
+  "description": "Lots and lots of creatures, still with a vanilla-ish feeling.",
   "authors": [
     "EmilSG",
     "cebularz_",
@@ -40,6 +40,6 @@
     "fabric-api": "*"
   },
   "suggests": {
-    "another-mod": "*"
+    "trinkets": "*"
   }
 }

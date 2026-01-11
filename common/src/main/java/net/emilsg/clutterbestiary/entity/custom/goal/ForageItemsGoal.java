@@ -65,8 +65,7 @@ public class ForageItemsGoal extends Goal {
             ItemStack stack = target.getStack();
             if (!stack.isEmpty()) {
                 ItemStack remainder = this.coati.insertInto(this.coati.getWildInventory(), stack.copy());
-                this.coati.startState(CoatiEntityAnimationState.IDLING);
-                this.coati.startState(CoatiEntityAnimationState.PICKING_UP_ITEM);
+                this.coati.replayState(CoatiEntityAnimationState.PICKING_UP_ITEM);
                 this.coati.playSound(SoundEvents.ENTITY_ITEM_PICKUP);
                 if (remainder.isEmpty()) {
                     target.discard();
