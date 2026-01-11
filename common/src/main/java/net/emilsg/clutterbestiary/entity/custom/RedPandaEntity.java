@@ -347,7 +347,7 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
                 heldItem.decrementUnlessCreative(1, player);
 
                 if (this.getTimesFed() == 3) {
-                    this.tame(player);
+                    this.doTame(player);
                 } else {
                     this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_VILLAGER_HAPPY_PARTICLES);
                     this.playSound(SoundEvents.ENTITY_CAT_EAT);
@@ -638,7 +638,7 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
         }
     }
 
-    private void tame(PlayerEntity player) {
+    private void doTame(PlayerEntity player) {
         this.setOwner(player);
         this.navigation.stop();
         this.setTarget(null);
