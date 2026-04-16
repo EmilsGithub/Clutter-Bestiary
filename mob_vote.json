@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "vote_id": "mob_vote_1",
+  "title": "Clutter Bestiary",
+  "message": "Vote for the next mob before the deadline.",
+  "button_text": "Open mob vote",
+  "url": "https://example.com/mobvote",
+  "deadline": "2026-05-30T23:59:59Z"
+}
