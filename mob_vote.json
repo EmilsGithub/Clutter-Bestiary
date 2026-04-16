@@ -2,8 +2,8 @@
   "enabled": true,
   "vote_id": "mob_vote_1",
   "title": "Clutter Bestiary",
-  "message": "Clutter: Bestiary Mob Vote 1 is active!",
+  "message": "Mob Vote 1 is active!",
   "button_text": "Join the Clutter Discord Server to Vote!",
   "url": "https://discord.gg/bc39jHNTVR",
-  "deadline": "2026-05-30T23:59:59Z"
+  "deadline": "2026-04-30T23:59:59Z"
 }
