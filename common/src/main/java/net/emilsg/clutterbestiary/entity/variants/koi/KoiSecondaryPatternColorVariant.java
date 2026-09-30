@@ -4,9 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.entity.variants.BestiaryBasicVariant;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.resources.Identifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -14,12 +13,12 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 public enum KoiSecondaryPatternColorVariant implements BestiaryBasicVariant {
-    BLACK("black", Formatting.DARK_GRAY, 0x1C2226),
-    WHITE("white", Formatting.WHITE, 0xC3C3E5);
+    BLACK("black", ChatFormatting.DARK_GRAY, 0x1C2226),
+    WHITE("white", ChatFormatting.WHITE, 0xC3C3E5);
 
     private static final Map<Identifier, KoiSecondaryPatternColorVariant> BY_ID =
             Arrays.stream(values()).collect(Collectors.toMap(
-                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName()),
+                    v -> Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, v.getName()),
                     v -> v
             ));
 
@@ -31,14 +30,14 @@ public enum KoiSecondaryPatternColorVariant implements BestiaryBasicVariant {
                                 ? DataResult.success(v)
                                 : DataResult.error(() -> "Unknown koi secondary pattern color variant: " + id);
                     },
-                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName())
+                    v -> Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, v.getName())
             );
 
     private final String name;
-    private final Formatting colorFormatting;
+    private final ChatFormatting colorFormatting;
     private final int colorHex;
 
-    KoiSecondaryPatternColorVariant(String name, Formatting colorFormatting, int colorHex) {
+    KoiSecondaryPatternColorVariant(String name, ChatFormatting colorFormatting, int colorHex) {
         this.name = name;
         this.colorFormatting = colorFormatting;
         this.colorHex = colorHex;
@@ -57,7 +56,7 @@ public enum KoiSecondaryPatternColorVariant implements BestiaryBasicVariant {
         return colorHex;
     }
 
-    public Formatting getFormatting() {
+    public ChatFormatting getFormatting() {
         return this.colorFormatting;
     }
 

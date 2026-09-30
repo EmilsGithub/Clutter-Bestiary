@@ -1,13 +1,13 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.ButterflyLarvaEntity;
-import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-public class ButterflyLarvaWanderGoal extends WanderAroundFarGoal {
+public class ButterflyLarvaWanderGoal extends WaterAvoidingRandomStrollGoal {
     private final ButterflyLarvaEntity larva;
 
     public ButterflyLarvaWanderGoal(ButterflyLarvaEntity larva) {
@@ -16,11 +16,11 @@ public class ButterflyLarvaWanderGoal extends WanderAroundFarGoal {
     }
 
     @Override
-    protected @Nullable Vec3d getWanderTarget() {
+    protected @Nullable Vec3 getPosition() {
         for (int attempt = 0; attempt < 8; attempt++) {
-            Vec3d target = super.getWanderTarget();
+            Vec3 target = super.getPosition();
             if (target != null
-                    && this.larva.getHomePos().isWithinDistance(target, ButterflyLarvaEntity.HOME_RADIUS)
+                    && this.larva.getHomePos().closerToCenterThan(target, ButterflyLarvaEntity.HOME_RADIUS)
                     && this.isDryTarget(target)) {
                 return target;
             }
@@ -29,11 +29,11 @@ public class ButterflyLarvaWanderGoal extends WanderAroundFarGoal {
         return null;
     }
 
-    private boolean isDryTarget(Vec3d target) {
-        World world = this.larva.getWorld();
-        BlockPos targetPos = BlockPos.ofFloored(target);
+    private boolean isDryTarget(Vec3 target) {
+        Level world = this.larva.level();
+        BlockPos targetPos = BlockPos.containing(target);
         return world.getFluidState(targetPos).isEmpty()
-                && world.getFluidState(targetPos.down()).isEmpty()
-                && world.getBlockState(targetPos.down()).isSolidBlock(world, targetPos.down());
+                && world.getFluidState(targetPos.below()).isEmpty()
+                && world.getBlockState(targetPos.below()).isRedstoneConductor(world, targetPos.below());
     }
 }

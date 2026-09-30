@@ -23,7 +23,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "clutterbestiary:warped_butterfly_elytra"
+        "recipes": "clutterbestiary:warped_butterfly_elytra"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

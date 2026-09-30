@@ -1,40 +1,35 @@
 package net.emilsg.clutterbestiary.entity.client.render.feature;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.emilsg.clutterbestiary.entity.client.model.ChorusBeetleModel;
+import net.emilsg.clutterbestiary.entity.client.render.state.ChorusBeetleRenderState;
 import net.emilsg.clutterbestiary.entity.custom.ChorusBeetleEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.feature.FeatureRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRendererContext;
-import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 
-public class ChorusBeetleFlowerFeatureRenderer<T extends ChorusBeetleEntity, M extends ChorusBeetleModel<T>> extends FeatureRenderer<T, M> {
+public class ChorusBeetleFlowerFeatureRenderer extends RenderLayer<ChorusBeetleRenderState, ChorusBeetleModel<ChorusBeetleEntity>> {
     private static final float FLOWER_OFFSET_X = -0.0625f;
     private static final float FLOWER_OFFSET_Y = 0.15f;
     private static final float FLOWER_OFFSET_Z = 0.0f;
     private static final float FLOWER_SIZE = 0.8f;
 
-    public ChorusBeetleFlowerFeatureRenderer(FeatureRendererContext<T, M> context) {
+    public ChorusBeetleFlowerFeatureRenderer(RenderLayerParent<ChorusBeetleRenderState, ChorusBeetleModel<ChorusBeetleEntity>> context) {
         super(context);
     }
 
     @Override
-    public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, T entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
-        if (!entity.isCarryingChorusFlower()) return;
+    public void submit(PoseStack matrices, SubmitNodeCollector submitNodeCollector, int light, ChorusBeetleRenderState state, float yRot, float xRot) {
+        if (state.chorusFlower.isEmpty()) return;
 
-        matrices.push();
-        this.getContextModel().getPart().getChild("all").rotate(matrices);
+        matrices.pushPose();
+        this.getParentModel().root().getChild("all").translateAndRotate(matrices);
         matrices.translate(FLOWER_OFFSET_X, FLOWER_OFFSET_Y, FLOWER_OFFSET_Z);
         matrices.scale(FLOWER_SIZE, FLOWER_SIZE, FLOWER_SIZE);
-        
-        MinecraftClient.getInstance().getItemRenderer().renderItem(
-                entity, new ItemStack(Items.CHORUS_FLOWER), ModelTransformationMode.FIXED, false, matrices, vertexConsumers, entity.getWorld(), light, OverlayTexture.DEFAULT_UV, entity.getId()
-        );
 
-        matrices.pop();
+        state.chorusFlower.submit(matrices, submitNodeCollector, light, OverlayTexture.NO_OVERLAY, state.outlineColor);
+
+        matrices.popPose();
     }
 }

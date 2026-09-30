@@ -1,8 +1,7 @@
 package net.emilsg.clutterbestiary.entity.variants;
 
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.Identifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -27,7 +26,7 @@ public enum EchofinVariant {
     }
 
     public Identifier getEmissiveTextureLocation() {
-        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/echofin/" + getName() + "_echofin_emissive.png");
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/echofin/" + getName() + "_echofin_emissive.png");
     }
 
     public String getId() {
@@ -39,6 +38,6 @@ public enum EchofinVariant {
     }
 
     public Identifier getTextureLocation() {
-        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/echofin/" + getName() + "_echofin.png");
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/echofin/" + getName() + "_echofin.png");
     }
 }

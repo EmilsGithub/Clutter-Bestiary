@@ -2,10 +2,10 @@ package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.block.custom.CrocodileEggBlock;
 import net.emilsg.clutterbestiary.entity.custom.CrocodileEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class CrocodileLayEggGoal extends GroundNestLayEggGoal<CrocodileEntity> {
     public CrocodileLayEggGoal(CrocodileEntity crocodile, double speed, BlockState eggState) {
@@ -13,12 +13,12 @@ public class CrocodileLayEggGoal extends GroundNestLayEggGoal<CrocodileEntity> {
     }
 
     @Override
-    protected BlockState getEggState(ServerWorld world) {
-        return super.getEggState(world).with(CrocodileEggBlock.EGGS, world.random.nextBetween(1, 3));
+    protected BlockState getEggState(ServerLevel world) {
+        return super.getEggState(world).setValue(CrocodileEggBlock.EGGS, world.getRandom().nextIntBetweenInclusive(1, 3));
     }
 
     @Override
     protected boolean isValidNestBlock(BlockState state) {
-        return state.isIn(BlockTags.DIRT) || state.isIn(BlockTags.SAND) || state.isOf(Blocks.MUD);
+        return state.is(BlockTags.DIRT) || state.is(BlockTags.SAND) || state.is(Blocks.MUD);
     }
 }

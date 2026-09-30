@@ -2,10 +2,9 @@ package net.emilsg.clutterbestiary.entity.client.animation;
 
 import net.emilsg.clutterbestiary.animation_handling.EntityAnimationController;
 import net.emilsg.clutterbestiary.animation_handling.IndexedAnimationState;
-import net.minecraft.client.render.entity.animation.Animation;
-import net.minecraft.entity.AnimationState;
-import net.minecraft.entity.Entity;
-
+import net.minecraft.client.animation.AnimationDefinition;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.Entity;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -17,24 +16,24 @@ public class AnimationBindings<E extends Entity, S extends Enum<S> & IndexedAnim
     private final List<Binding<E, S>> bindings = new ArrayList<>();
     private final Set<S> boundStates = new HashSet<>();
 
-    public AnimationBindings<E, S> bind(S state, Animation animation) {
+    public AnimationBindings<E, S> bind(S state, AnimationDefinition animation) {
         return this.bind(state, entity -> animation, 1.0f);
     }
 
-    public AnimationBindings<E, S> bind(S state, Animation animation, float speed) {
+    public AnimationBindings<E, S> bind(S state, AnimationDefinition animation, float speed) {
         return this.bind(state, entity -> animation, speed);
     }
 
-    public AnimationBindings<E, S> bind(S state, Animation animation, ToDoubleFunction<E> speed) {
+    public AnimationBindings<E, S> bind(S state, AnimationDefinition animation, ToDoubleFunction<E> speed) {
         return this.bind(state, entity -> animation, speed);
     }
 
-    public AnimationBindings<E, S> bind(S state, Function<E, Animation> animation, float speed) {
+    public AnimationBindings<E, S> bind(S state, Function<E, AnimationDefinition> animation, float speed) {
         if (speed <= 0 || !Float.isFinite(speed)) throw new IllegalArgumentException("Animation speed must be positive and finite");
         return this.bind(state, animation, entity -> speed);
     }
 
-    private AnimationBindings<E, S> bind(S state, Function<E, Animation> animation, ToDoubleFunction<E> speed) {
+    private AnimationBindings<E, S> bind(S state, Function<E, AnimationDefinition> animation, ToDoubleFunction<E> speed) {
         if (!boundStates.add(state)) throw new IllegalArgumentException("Duplicate animation binding for " + state);
         bindings.add(new Binding<>(state, animation, speed));
         return this;
@@ -43,7 +42,7 @@ public class AnimationBindings<E extends Entity, S extends Enum<S> & IndexedAnim
     public void apply(E entity, EntityAnimationController<E, S> controller, float age, AnimationUpdater updater) {
         for (Binding<E, S> binding : bindings) {
             AnimationState state = controller.getAnimationState(binding.state);
-            if (state.isRunning()) {
+            if (state.isStarted()) {
                 float speed = (float) binding.speed.applyAsDouble(entity);
                 if (speed <= 0 || !Float.isFinite(speed)) throw new IllegalStateException("Animation speed must be positive and finite");
                 updater.update(state, binding.animation.apply(entity), age, speed);
@@ -53,9 +52,9 @@ public class AnimationBindings<E extends Entity, S extends Enum<S> & IndexedAnim
 
     @FunctionalInterface
     public interface AnimationUpdater {
-        void update(AnimationState state, Animation animation, float age, float speed);
+        void update(AnimationState state, AnimationDefinition animation, float age, float speed);
     }
 
-    private record Binding<E, S>(S state, Function<E, Animation> animation, ToDoubleFunction<E> speed) {
+    private record Binding<E, S>(S state, Function<E, AnimationDefinition> animation, ToDoubleFunction<E> speed) {
     }
 }

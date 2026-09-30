@@ -11,13 +11,13 @@ public class BoopletWanderGoal extends WanderAroundFarOftenGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return super.canStart() && boopletEntity.getTimeSinceBoop() >= 10;
+    public boolean canUse() {
+        return super.canUse() && boopletEntity.getTimeSinceBoop() >= 10;
     }
 
     @Override
-    public boolean shouldContinue() {
-        return super.shouldContinue() && boopletEntity.getTimeSinceBoop() >= 10;
+    public boolean canContinueToUse() {
+        return super.canContinueToUse() && boopletEntity.getTimeSinceBoop() >= 10;
     }
 
     @Override

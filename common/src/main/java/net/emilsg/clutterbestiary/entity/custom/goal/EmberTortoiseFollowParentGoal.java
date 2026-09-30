@@ -1,22 +1,22 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.EmberTortoiseEntity;
-import net.minecraft.entity.ai.goal.FollowParentGoal;
-import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.animal.Animal;
 
 public class EmberTortoiseFollowParentGoal extends FollowParentGoal {
-    AnimalEntity animalEntity;
+    Animal animalEntity;
 
-    public EmberTortoiseFollowParentGoal(AnimalEntity animal, double speed) {
+    public EmberTortoiseFollowParentGoal(Animal animal, double speed) {
         super(animal, speed);
         this.animalEntity = animal;
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         if (animalEntity instanceof EmberTortoiseEntity emberTortoise)
-            return !emberTortoise.isShielding() && super.canStart();
-        else return super.canStart();
+            return !emberTortoise.isShielding() && super.canUse();
+        else return super.canUse();
     }
 
     @Override

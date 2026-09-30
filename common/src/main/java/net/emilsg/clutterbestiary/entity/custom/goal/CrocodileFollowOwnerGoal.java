@@ -1,11 +1,11 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.CrocodileEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.entity.vehicle.BoatEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.vehicle.boat.Boat;
+import net.minecraft.world.level.pathfinder.PathType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -27,31 +27,31 @@ public class CrocodileFollowOwnerGoal extends Goal {
         this.boatSpeed = boatSpeed;
         this.minDistance = minDistance;
         this.maxDistance = maxDistance;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         LivingEntity owner = this.crocodile.getOwner();
-        if (owner == null || this.crocodile.cannotFollowOwner()) return false;
-        if (this.crocodile.squaredDistanceTo(this.getFollowTarget(owner)) < this.minDistance * this.minDistance) return false;
+        if (owner == null || this.crocodile.unableToMoveToOwner()) return false;
+        if (this.crocodile.distanceToSqr(this.getFollowTarget(owner)) < this.minDistance * this.minDistance) return false;
 
         this.owner = owner;
         return true;
     }
 
     @Override
-    public boolean shouldContinue() {
-        return this.owner != null && this.owner.isAlive() && this.owner.getWorld() == this.crocodile.getWorld()
-                && !this.crocodile.cannotFollowOwner()
-                && this.crocodile.squaredDistanceTo(this.getFollowTarget(this.owner)) > this.maxDistance * this.maxDistance;
+    public boolean canContinueToUse() {
+        return this.owner != null && this.owner.isAlive() && this.owner.level() == this.crocodile.level()
+                && !this.crocodile.unableToMoveToOwner()
+                && this.crocodile.distanceToSqr(this.getFollowTarget(this.owner)) > this.maxDistance * this.maxDistance;
     }
 
     @Override
     public void start() {
         this.updateCountdownTicks = 0;
-        this.oldWaterPathfindingPenalty = this.crocodile.getPathfindingPenalty(PathNodeType.WATER);
-        this.crocodile.setPathfindingPenalty(PathNodeType.WATER, 0.0f);
+        this.oldWaterPathfindingPenalty = this.crocodile.getPathfindingMalus(PathType.WATER);
+        this.crocodile.setPathfindingMalus(PathType.WATER, 0.0f);
         this.crocodile.setFollowingOwner(true);
     }
 
@@ -59,7 +59,7 @@ public class CrocodileFollowOwnerGoal extends Goal {
     public void stop() {
         this.owner = null;
         this.crocodile.getNavigation().stop();
-        this.crocodile.setPathfindingPenalty(PathNodeType.WATER, this.oldWaterPathfindingPenalty);
+        this.crocodile.setPathfindingMalus(PathType.WATER, this.oldWaterPathfindingPenalty);
         this.crocodile.setFollowingOwner(false);
     }
 
@@ -68,20 +68,20 @@ public class CrocodileFollowOwnerGoal extends Goal {
         if (this.owner == null) return;
 
         Entity followTarget = this.getFollowTarget(this.owner);
-        boolean followingBoat = followTarget instanceof BoatEntity;
-        this.crocodile.getLookControl().lookAt(this.owner, 10.0f, this.crocodile.getMaxLookPitchChange());
+        boolean followingBoat = followTarget instanceof Boat;
+        this.crocodile.getLookControl().setLookAt(this.owner, 10.0f, this.crocodile.getMaxHeadXRot());
 
         if (--this.updateCountdownTicks <= 0) {
-            this.updateCountdownTicks = this.getTickCount(10);
+            this.updateCountdownTicks = this.adjustedTickDelay(10);
             if (!followingBoat && this.crocodile.shouldTryTeleportToOwner()) {
-                this.crocodile.tryTeleportToOwner();
+                this.crocodile.tryToTeleportToOwner();
             } else {
-                this.crocodile.getNavigation().startMovingTo(followTarget, followingBoat ? this.boatSpeed : this.speed);
+                this.crocodile.getNavigation().moveTo(followTarget, followingBoat ? this.boatSpeed : this.speed);
             }
         }
     }
 
     private Entity getFollowTarget(LivingEntity owner) {
-        return owner.getVehicle() instanceof BoatEntity boat ? boat : owner;
+        return owner.getVehicle() instanceof Boat boat ? boat : owner;
     }
 }

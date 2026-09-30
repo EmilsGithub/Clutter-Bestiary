@@ -1,13 +1,20 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.emilsg.clutterbestiary.animation_handling.animation_states.RiverTurtleAnimationState;
 import net.emilsg.clutterbestiary.entity.client.animation.AnimationBindings;
 import net.emilsg.clutterbestiary.entity.client.animation.RiverTurtleAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutterbestiary.entity.custom.RiverTurtleEntity;
 import net.minecraft.client.model.*;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
 public class RiverTurtleModel<T extends RiverTurtleEntity> extends BestiaryModel<T> {
     private static final AnimationBindings<RiverTurtleEntity, RiverTurtleAnimationState> ANIMATIONS = new AnimationBindings<RiverTurtleEntity, RiverTurtleAnimationState>()
@@ -15,7 +22,6 @@ public class RiverTurtleModel<T extends RiverTurtleEntity> extends BestiaryModel
             .bind(RiverTurtleAnimationState.UNHIDING, RiverTurtleAnimations.RIVER_TURTLE_UNHIDE)
             .bind(RiverTurtleAnimationState.SIT_START, RiverTurtleAnimations.RIVER_TURTLE_SIT_START)
             .bind(RiverTurtleAnimationState.SIT_END, RiverTurtleAnimations.RIVER_TURTLE_SIT_END);
-    private final ModelPart root;
     private final ModelPart all;
     private final ModelPart body;
     private final ModelPart neck;
@@ -23,7 +29,7 @@ public class RiverTurtleModel<T extends RiverTurtleEntity> extends BestiaryModel
     private final ModelPart tail;
 
     public RiverTurtleModel(ModelPart root) {
-        this.root = root;
+        super(root);
         this.all = root.getChild("all");
         this.body = this.all.getChild("body");
         this.neck = this.body.getChild("neck");
@@ -31,81 +37,76 @@ public class RiverTurtleModel<T extends RiverTurtleEntity> extends BestiaryModel
         this.tail = this.body.getChild("tail");
     }
 
-    public static TexturedModelData getTexturedModelData() {
-        ModelData modelData = new ModelData();
-        ModelPartData modelPartData = modelData.getRoot();
-        ModelPartData all = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.pivot(2.0F, 24.0F, 3.0F));
+    public static LayerDefinition getTexturedModelData() {
+        MeshDefinition modelData = new MeshDefinition();
+        PartDefinition modelPartData = modelData.getRoot();
+        PartDefinition all = modelPartData.addOrReplaceChild("all", CubeListBuilder.create(), PartPose.offset(2.0F, 24.0F, 3.0F));
 
-        ModelPartData body = all.addChild("body", ModelPartBuilder.create(), ModelTransform.pivot(-2.0F, -2.0F, 0.0F));
+        PartDefinition body = all.addOrReplaceChild("body", CubeListBuilder.create(), PartPose.offset(-2.0F, -2.0F, 0.0F));
 
-        ModelPartData frontLegs = body.addChild("frontLegs", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 1.0F, -5.25F));
+        PartDefinition frontLegs = body.addOrReplaceChild("frontLegs", CubeListBuilder.create(), PartPose.offset(0.0F, 1.0F, -5.25F));
 
-        ModelPartData frontRightLeg = frontLegs.addChild("frontRightLeg", ModelPartBuilder.create().uv(0, 0).cuboid(-1.0F, 0.0F, -1.01F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(-3.0F, -1.0F, 0.0F));
+        PartDefinition frontRightLeg = frontLegs.addOrReplaceChild("frontRightLeg", CubeListBuilder.create().texOffs(0, 0).addBox(-1.0F, 0.0F, -1.01F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(-3.0F, -1.0F, 0.0F));
 
-        ModelPartData frontRightLegToes = frontRightLeg.addChild("frontRightLegToes", ModelPartBuilder.create().uv(1, 13).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 1.0F, new Dilation(0.001F)), ModelTransform.pivot(0.0F, 1.99F, -1.0F));
+        PartDefinition frontRightLegToes = frontRightLeg.addOrReplaceChild("frontRightLegToes", CubeListBuilder.create().texOffs(1, 13).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.001F)), PartPose.offset(0.0F, 1.99F, -1.0F));
 
-        ModelPartData frontLeftLeg = frontLegs.addChild("frontLeftLeg", ModelPartBuilder.create().uv(0, 4).cuboid(-1.0F, 0.0F, -1.01F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(3.0F, -1.0F, 0.0F));
+        PartDefinition frontLeftLeg = frontLegs.addOrReplaceChild("frontLeftLeg", CubeListBuilder.create().texOffs(0, 4).addBox(-1.0F, 0.0F, -1.01F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(3.0F, -1.0F, 0.0F));
 
-        ModelPartData frontLeftLegToes = frontLeftLeg.addChild("frontLeftLegToes", ModelPartBuilder.create().uv(-1, 35).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 1.99F, -1.0F));
+        PartDefinition frontLeftLegToes = frontLeftLeg.addOrReplaceChild("frontLeftLegToes", CubeListBuilder.create().texOffs(-1, 35).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 1.99F, -1.0F));
 
-        ModelPartData backLegs = body.addChild("backLegs", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 0.0F, 0.25F));
+        PartDefinition backLegs = body.addOrReplaceChild("backLegs", CubeListBuilder.create(), PartPose.offset(0.0F, 0.0F, 0.25F));
 
-        ModelPartData backRightLeg = backLegs.addChild("backRightLeg", ModelPartBuilder.create().uv(8, 21).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.001F)), ModelTransform.pivot(-3.0F, 0.0F, 0.0F));
+        PartDefinition backRightLeg = backLegs.addOrReplaceChild("backRightLeg", CubeListBuilder.create().texOffs(8, 21).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.001F)), PartPose.offset(-3.0F, 0.0F, 0.0F));
 
-        ModelPartData backRightLegToes = backRightLeg.addChild("backRightLegToes", ModelPartBuilder.create().uv(1, 15).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 1.99F, -1.0F));
+        PartDefinition backRightLegToes = backRightLeg.addOrReplaceChild("backRightLegToes", CubeListBuilder.create().texOffs(1, 15).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 1.99F, -1.0F));
 
-        ModelPartData backLeftLeg = backLegs.addChild("backLeftLeg", ModelPartBuilder.create().uv(16, 21).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.001F)), ModelTransform.pivot(3.0F, 0.0F, 0.0F));
+        PartDefinition backLeftLeg = backLegs.addOrReplaceChild("backLeftLeg", CubeListBuilder.create().texOffs(16, 21).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.001F)), PartPose.offset(3.0F, 0.0F, 0.0F));
 
-        ModelPartData backLeftLegToes = backLeftLeg.addChild("backLeftLegToes", ModelPartBuilder.create().uv(1, 17).cuboid(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 1.99F, -1.0F));
+        PartDefinition backLeftLegToes = backLeftLeg.addOrReplaceChild("backLeftLegToes", CubeListBuilder.create().texOffs(1, 17).addBox(-1.0F, 0.0F, -1.0F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 1.99F, -1.0F));
 
-        ModelPartData stomach = body.addChild("stomach", ModelPartBuilder.create().uv(0, 12).cuboid(-5.0F, -3.0F, -6.0F, 6.0F, 2.0F, 7.0F, new Dilation(0.0F)), ModelTransform.pivot(2.0F, 2.0F, 0.0F));
+        PartDefinition stomach = body.addOrReplaceChild("stomach", CubeListBuilder.create().texOffs(0, 12).addBox(-5.0F, -3.0F, -6.0F, 6.0F, 2.0F, 7.0F, new CubeDeformation(0.0F)), PartPose.offset(2.0F, 2.0F, 0.0F));
 
-        ModelPartData shell = body.addChild("shell", ModelPartBuilder.create().uv(0, 0).cuboid(-4.5F, -2.5F, -4.5F, 9.0F, 3.0F, 9.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -0.5F, -2.5F));
+        PartDefinition shell = body.addOrReplaceChild("shell", CubeListBuilder.create().texOffs(0, 0).addBox(-4.5F, -2.5F, -4.5F, 9.0F, 3.0F, 9.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -0.5F, -2.5F));
 
-        ModelPartData neck = body.addChild("neck", ModelPartBuilder.create().uv(19, 12).cuboid(-1.0F, -1.0F, -4.0F, 2.0F, 2.0F, 4.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, -6.0F));
+        PartDefinition neck = body.addOrReplaceChild("neck", CubeListBuilder.create().texOffs(19, 12).addBox(-1.0F, -1.0F, -4.0F, 2.0F, 2.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, -6.0F));
 
-        ModelPartData head = neck.addChild("head", ModelPartBuilder.create().uv(0, 21).cuboid(-1.0F, -1.0F, -3.0F, 2.0F, 2.0F, 4.0F, new Dilation(0.125F)), ModelTransform.pivot(0.0F, -1.0F, -3.0F));
+        PartDefinition head = neck.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 21).addBox(-1.0F, -1.0F, -3.0F, 2.0F, 2.0F, 4.0F, new CubeDeformation(0.125F)), PartPose.offset(0.0F, -1.0F, -3.0F));
 
-        ModelPartData tail = body.addChild("tail", ModelPartBuilder.create().uv(19, 27).cuboid(-1.0F, -0.5F, 0.0F, 2.0F, 1.0F, 5.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.5F, 1.0F));
-        return TexturedModelData.of(modelData, 64, 64);
+        PartDefinition tail = body.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(19, 27).addBox(-1.0F, -0.5F, 0.0F, 2.0F, 1.0F, 5.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.5F, 1.0F));
+        return LayerDefinition.create(modelData, 64, 64);
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
-    }
-
-    @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        matrices.push();
-
-        if (this.child) {
-            float babyScale = 0.5f;
-            matrices.scale(babyScale, babyScale, babyScale);
-            matrices.translate(0.0D, 1.5D, 0D);
-            this.head.scale(createVec3f(0.6f));
-        }
-
-        this.getPart().render(matrices, vertices, light, overlay, color);
-        matrices.pop();
-    }
-
-    @Override
-    public void setAngles(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
+    public void setupAnim(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
+        this.root().getAllParts().forEach(ModelPart::resetPose);
         this.setHeadAngles(entity, headYaw, headPitch, animationProgress);
 
-        if (!entity.isHiding() && !entity.isTouchingWater()) {
-            this.animateMovement(RiverTurtleAnimations.RIVER_TURTLE_WALK, limbAngle, limbDistance, 3f, 2f);
-        } else if (entity.isTouchingWater()) {
-            this.animateMovement(RiverTurtleAnimations.RIVER_TURTLE_SWIM, limbAngle, limbDistance, 3f, 2f);
+        if (!entity.isHiding() && !entity.isInWater()) {
+            this.animateWalk(RiverTurtleAnimations.RIVER_TURTLE_WALK, limbAngle, limbDistance, 3f, 2f);
+        } else if (entity.isInWater()) {
+            this.animateWalk(RiverTurtleAnimations.RIVER_TURTLE_SWIM, limbAngle, limbDistance, 3f, 2f);
         }
 
-        ANIMATIONS.apply(entity, entity.getAnimationController(), animationProgress, this::updateAnimation);
+        ANIMATIONS.apply(entity, entity.getAnimationController(), animationProgress, this::animate);
     }
 
     @Override
     protected ModelPart getHeadPart() {
         return neck;
+    }
+
+    @Override
+    public float getBabyScale() {
+        return 0.5F;
+    }
+
+    @Override
+    public float getBabyYOffset() {
+        return 1.5F;
+    }
+
+    @Override
+    protected ModelPart getBabyHead() {
+        return this.head;
     }
 }

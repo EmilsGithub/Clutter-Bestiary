@@ -23,7 +23,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "clutterbestiary:soul_butterfly_elytra"
+        "recipes": "clutterbestiary:soul_butterfly_elytra"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

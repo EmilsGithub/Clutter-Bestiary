@@ -1,26 +1,25 @@
 package net.emilsg.clutterbestiary.animation_handling;
 
 import net.emilsg.clutterbestiary.animation_handling.AnimationStateMachine.Condition;
-import net.minecraft.entity.AnimationState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.Entity;
 import java.util.HashMap;
 import java.util.Map;
 
 public class EntityAnimationController<E extends Entity, S extends Enum<S> & IndexedAnimationState> {
     private final E entity;
     private final AnimationStateMachine<E, S> machine;
-    private final TrackedData<Integer> trackedState;
-    private final TrackedData<Integer> trackedRevision;
-    private final TrackedData<Long> trackedStart;
+    private final EntityDataAccessor<Integer> trackedState;
+    private final EntityDataAccessor<Integer> trackedRevision;
+    private final EntityDataAccessor<Long> trackedStart;
     private final S initialState;
     private final Map<Integer, S> statesByIndex = new HashMap<>();
     private final AnimationStateCollection<S> animations;
     private long lastServerTick = Long.MIN_VALUE;
 
-    public EntityAnimationController(E entity, S initialState, Class<S> enumClass, TrackedData<Integer> trackedState, TrackedData<Integer> trackedRevision, TrackedData<Long> trackedStart) {
+    public EntityAnimationController(E entity, S initialState, Class<S> enumClass, EntityDataAccessor<Integer> trackedState, EntityDataAccessor<Integer> trackedRevision, EntityDataAccessor<Long> trackedStart) {
         this.entity = entity;
         this.initialState = initialState;
         this.machine = new AnimationStateMachine<>(entity, initialState, enumClass);
@@ -45,7 +44,7 @@ public class EntityAnimationController<E extends Entity, S extends Enum<S> & Ind
     }
 
     public S getState() {
-        return entity.getWorld().isClient ? statesByIndex.getOrDefault(entity.getDataTracker().get(trackedState), initialState) : machine.getCurrent();
+        return entity.level().isClientSide() ? statesByIndex.getOrDefault(entity.getEntityData().get(trackedState), initialState) : machine.getCurrent();
     }
 
     public AnimationState getAnimationState(S state) {
@@ -54,41 +53,41 @@ public class EntityAnimationController<E extends Entity, S extends Enum<S> & Ind
     }
 
     public void requestState(S state) {
-        if (!entity.getWorld().isClient && machine.requestState(state)) {
+        if (!entity.level().isClientSide() && machine.requestState(state)) {
             this.publishState();
         }
     }
 
     public void replayState(S state) {
-        if (!entity.getWorld().isClient) {
+        if (!entity.level().isClientSide()) {
             machine.forceState(state);
             this.publishState();
         }
     }
 
     public void tick() {
-        if (entity.getWorld().isClient) {
+        if (entity.level().isClientSide()) {
             this.syncPlayback();
-        } else if (entity.isAlive() && lastServerTick != entity.getWorld().getTime()) {
-            lastServerTick = entity.getWorld().getTime();
+        } else if (entity.isAlive() && lastServerTick != entity.level().getGameTime()) {
+            lastServerTick = entity.level().getGameTime();
             if (machine.tick()) this.publishState();
         }
     }
 
     private void publishState() {
         // A goal can request a state before the controller ticks in the same entity tick.
-        lastServerTick = entity.getWorld().getTime();
-        DataTracker tracker = entity.getDataTracker();
+        lastServerTick = entity.level().getGameTime();
+        SynchedEntityData tracker = entity.getEntityData();
         tracker.set(trackedState, machine.getCurrent().getIndex());
-        tracker.set(trackedStart, entity.getWorld().getTime());
+        tracker.set(trackedStart, entity.level().getGameTime());
         tracker.set(trackedRevision, tracker.get(trackedRevision) + 1);
     }
 
     private void syncPlayback() {
-        if (!entity.getWorld().isClient) return;
+        if (!entity.level().isClientSide()) return;
 
-        DataTracker tracker = entity.getDataTracker();
+        SynchedEntityData tracker = entity.getEntityData();
         // Read the complete tracked snapshot during ticking/rendering, after metadata updates have been applied.
-        animations.sync(this.getState(), tracker.get(trackedRevision), tracker.get(trackedStart), entity.getWorld().getTime(), entity.age);
+        animations.sync(this.getState(), tracker.get(trackedRevision), tracker.get(trackedStart), entity.level().getGameTime(), entity.tickCount);
     }
 }

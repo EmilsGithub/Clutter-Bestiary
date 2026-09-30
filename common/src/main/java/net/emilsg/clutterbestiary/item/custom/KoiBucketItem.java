@@ -1,20 +1,23 @@
 package net.emilsg.clutterbestiary.item.custom;
 
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.TooltipDisplay;
+import java.util.function.Consumer;
 import com.mojang.serialization.MapCodec;
 import net.emilsg.clutterbestiary.entity.variants.koi.*;
 import net.emilsg.clutterbestiary.util.ModUtil;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.EntityType;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.material.Fluid;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class KoiBucketItem extends BestiaryEntityBucketItem {
@@ -23,48 +26,48 @@ public class KoiBucketItem extends BestiaryEntityBucketItem {
     public static final MapCodec<KoiPrimaryPatternColorVariant> PRIMARY_COLOR_CODEC = KoiPrimaryPatternColorVariant.CODEC.fieldOf("PrimaryPatternColor");
     public static final MapCodec<KoiSecondaryPatternTypeVariant> SECONDARY_TYPE_CODEC = KoiSecondaryPatternTypeVariant.CODEC.fieldOf("SecondaryPatternType");
     public static final MapCodec<KoiSecondaryPatternColorVariant> SECONDARY_COLOR_CODEC = KoiSecondaryPatternColorVariant.CODEC.fieldOf("SecondaryPatternColor");
-    public KoiBucketItem(Supplier<? extends EntityType<?>> type, Fluid fluid, SoundEvent emptyingSound, Settings settings) {
+    public KoiBucketItem(Supplier<? extends EntityType<?>> type, Fluid fluid, SoundEvent emptyingSound, Properties settings) {
         super(type, fluid, emptyingSound, settings);
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, TooltipContext ctx, List<Text> tooltip, TooltipType type) {
-        super.appendTooltip(stack, ctx, tooltip, type);
+    public void appendHoverText(ItemStack stack, Item.TooltipContext ctx, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
+        super.appendHoverText(stack, ctx, display, tooltip, type);
 
-        var cmp = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
+        var cmp = stack.getOrDefault(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY);
 
-        var baseOpt = cmp.get(BASE_COLOR_CODEC).result();
+        var baseOpt = ModUtil.readComponentData(cmp, BASE_COLOR_CODEC);
         if (baseOpt.isEmpty()) return;
         var base = baseOpt.get();
 
-        tooltip.add(Text.translatable("tooltip.clutterbestiary.base_color.koi").formatted(Formatting.GRAY));
+        tooltip.accept(Component.translatable("tooltip.clutterbestiary.base_color.koi").withStyle(ChatFormatting.GRAY));
         if (base.hasSeparateTexture()) {
             int tick = (int) (System.currentTimeMillis() / 100) % base.getColorHex().length;
-            tooltip.add(ModUtil.buildCyclicFormattedName("tooltip.clutterbestiary." + base.getName() + ".koi", base.getColorHex(), tick, true));
+            tooltip.accept(ModUtil.buildCyclicFormattedName("tooltip.clutterbestiary." + base.getName() + ".koi", base.getColorHex(), tick, true));
             return;
         } else {
-            tooltip.add(Text.translatable("tooltip.clutterbestiary." + base.getName() + ".koi").formatted(base.getFormatting()));
+            tooltip.accept(Component.translatable("tooltip.clutterbestiary." + base.getName() + ".koi").withStyle(base.getFormatting()));
         }
 
-        var pType = cmp.get(PRIMARY_TYPE_CODEC).result().orElse(null);
-        var pColor = cmp.get(PRIMARY_COLOR_CODEC).result().orElse(null);
-        var sType = cmp.get(SECONDARY_TYPE_CODEC).result().orElse(null);
-        var sColor = cmp.get(SECONDARY_COLOR_CODEC).result().orElse(null);
+        var pType = ModUtil.readComponentData(cmp, PRIMARY_TYPE_CODEC).orElse(null);
+        var pColor = ModUtil.readComponentData(cmp, PRIMARY_COLOR_CODEC).orElse(null);
+        var sType = ModUtil.readComponentData(cmp, SECONDARY_TYPE_CODEC).orElse(null);
+        var sColor = ModUtil.readComponentData(cmp, SECONDARY_COLOR_CODEC).orElse(null);
 
         if (pType != null && pColor != null) {
-            tooltip.add(Text.translatable("tooltip.clutterbestiary.primary_pattern.koi").formatted(Formatting.GRAY));
-            tooltip.add(Text.translatable("tooltip.clutterbestiary." + pType.getName() + ".koi")
-                    .formatted(pType.getFormatting())
-                    .formatted(pColor.getFormatting()));
+            tooltip.accept(Component.translatable("tooltip.clutterbestiary.primary_pattern.koi").withStyle(ChatFormatting.GRAY));
+            tooltip.accept(Component.translatable("tooltip.clutterbestiary." + pType.getName() + ".koi")
+                    .withStyle(pType.getFormatting())
+                    .withStyle(pColor.getFormatting()));
         }
         if (sType != null && sColor != null) {
-            tooltip.add(Text.translatable("tooltip.clutterbestiary.secondary_pattern.koi").formatted(Formatting.GRAY));
-            tooltip.add(Text.translatable("tooltip.clutterbestiary." + sType.getName() + ".koi")
-                    .formatted(sType.getFormatting())
-                    .formatted(sColor.getFormatting()));
+            tooltip.accept(Component.translatable("tooltip.clutterbestiary.secondary_pattern.koi").withStyle(ChatFormatting.GRAY));
+            tooltip.accept(Component.translatable("tooltip.clutterbestiary." + sType.getName() + ".koi")
+                    .withStyle(sType.getFormatting())
+                    .withStyle(sColor.getFormatting()));
         }
 
-        tooltip.add(ScreenTexts.EMPTY);
+        tooltip.accept(CommonComponents.EMPTY);
     }
 
 }

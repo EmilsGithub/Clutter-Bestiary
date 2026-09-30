@@ -6,20 +6,17 @@
         "item": {
           "items": "minecraft:spyglass"
         },
-        "player": [
-          {
-            "condition": "minecraft:entity_properties",
-            "entity": "this",
-            "predicate": {
-              "type_specific": {
-                "type": "minecraft:player",
-                "looking_at": {
-                  "type": "clutterbestiary:emperor_penguin"
-                }
+        "player": {
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:type_specific/player": {
+              "looking_at": {
+                "minecraft:entity_type": "clutterbestiary:emperor_penguin"
               }
             }
           }
-        ]
+        }
       },
       "trigger": "minecraft:using_item"
     }
@@ -29,7 +26,6 @@
       "translate": "advancements.bestiary.happy_feet.description"
     },
     "icon": {
-      "count": 1,
       "id": "clutterbestiary:emperor_penguin_spawn_egg"
     },
     "title": {

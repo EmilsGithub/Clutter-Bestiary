@@ -4,9 +4,7 @@
   "cookingtime": 100,
   "experience": 0.35,
   "group": "levitating_echofin",
-  "ingredient": {
-    "item": "clutterbestiary:raw_levitating_echofin"
-  },
+  "ingredient": "clutterbestiary:raw_levitating_echofin",
   "result": {
     "id": "clutterbestiary:cooked_levitating_echofin"
   }

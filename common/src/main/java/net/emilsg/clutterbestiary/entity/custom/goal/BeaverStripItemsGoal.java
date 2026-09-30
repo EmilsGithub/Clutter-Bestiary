@@ -1,8 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.BeaverEntity;
-import net.minecraft.entity.ai.goal.Goal;
-
+import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.EnumSet;
 
 public class BeaverStripItemsGoal extends Goal {
@@ -10,16 +9,16 @@ public class BeaverStripItemsGoal extends Goal {
 
     public BeaverStripItemsGoal(BeaverEntity BeaverEntity) {
         this.beaverEntity = BeaverEntity;
-        this.setControls(EnumSet.of(Goal.Control.JUMP, Goal.Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Goal.Flag.JUMP, Goal.Flag.MOVE, Flag.LOOK));
     }
 
     @Override
-    public boolean canStart() {
-        return this.beaverEntity.isStrippingItems() && this.beaverEntity.isOnGround() && !this.beaverEntity.isInsideWaterOrBubbleColumn();
+    public boolean canUse() {
+        return this.beaverEntity.isStrippingItems() && this.beaverEntity.onGround() && !this.beaverEntity.isInWater();
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         return this.beaverEntity.isStrippingItems();
     }
 

@@ -1,13 +1,12 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.ButterflyEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
-import net.minecraft.world.World;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
 public class ButterflyEscapeFluidGoal extends Goal {
@@ -22,17 +21,17 @@ public class ButterflyEscapeFluidGoal extends Goal {
 
     public ButterflyEscapeFluidGoal(ButterflyEntity butterfly) {
         this.butterfly = butterfly;
-        this.setControls(EnumSet.of(Control.MOVE));
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override
-    public boolean canStart() {
-        return this.butterfly.isInFluid();
+    public boolean canUse() {
+        return this.butterfly.isInLiquid();
     }
 
     @Override
-    public boolean shouldContinue() {
-        return this.butterfly.isInFluid();
+    public boolean canContinueToUse() {
+        return this.butterfly.isInLiquid();
     }
 
     @Override
@@ -56,39 +55,39 @@ public class ButterflyEscapeFluidGoal extends Goal {
         }
 
         if (this.escapePos != null) {
-            Vec3d target = this.escapePos.toCenterPos();
-            this.butterfly.getMoveControl().moveTo(target.x, target.y, target.z, ESCAPE_SPEED);
+            Vec3 target = Vec3.atCenterOf(this.escapePos);
+            this.butterfly.getMoveControl().setWantedPosition(target.x, target.y, target.z, ESCAPE_SPEED);
         }
 
-        Vec3d velocity = this.butterfly.getVelocity();
+        Vec3 velocity = this.butterfly.getDeltaMovement();
         if (velocity.y < MIN_UPWARD_VELOCITY) {
-            this.butterfly.setVelocity(velocity.x, MIN_UPWARD_VELOCITY, velocity.z);
+            this.butterfly.setDeltaMovement(velocity.x, MIN_UPWARD_VELOCITY, velocity.z);
         }
     }
 
     private BlockPos findEscapePos() {
-        BlockPos origin = this.butterfly.getBlockPos();
+        BlockPos origin = this.butterfly.blockPosition();
 
         for (int y = 1; y <= VERTICAL_SEARCH_RANGE; y++) {
-            BlockPos candidate = origin.up(y);
+            BlockPos candidate = origin.above(y);
             if (this.canReachDirectly(candidate)) return candidate;
         }
 
         for (int radius = 1; radius <= HORIZONTAL_SEARCH_RANGE; radius++) {
             for (int y = 0; y <= VERTICAL_SEARCH_RANGE; y++) {
                 for (int x = -radius; x <= radius; x++) {
-                    BlockPos north = origin.add(x, y, -radius);
+                    BlockPos north = origin.offset(x, y, -radius);
                     if (this.canReachDirectly(north)) return north;
 
-                    BlockPos south = origin.add(x, y, radius);
+                    BlockPos south = origin.offset(x, y, radius);
                     if (this.canReachDirectly(south)) return south;
                 }
 
                 for (int z = -radius + 1; z < radius; z++) {
-                    BlockPos west = origin.add(-radius, y, z);
+                    BlockPos west = origin.offset(-radius, y, z);
                     if (this.canReachDirectly(west)) return west;
 
-                    BlockPos east = origin.add(radius, y, z);
+                    BlockPos east = origin.offset(radius, y, z);
                     if (this.canReachDirectly(east)) return east;
                 }
             }
@@ -100,14 +99,14 @@ public class ButterflyEscapeFluidGoal extends Goal {
     private boolean canReachDirectly(BlockPos pos) {
         if (!this.butterfly.isSafeFlightTarget(pos)) return false;
 
-        World world = this.butterfly.getWorld();
-        Vec3d start = this.butterfly.getBoundingBox().getCenter();
-        Vec3d target = pos.toCenterPos();
-        if (world.raycast(new RaycastContext(start, target, RaycastContext.ShapeType.COLLIDER,
-                RaycastContext.FluidHandling.NONE, this.butterfly)).getType() != HitResult.Type.MISS) {
+        Level world = this.butterfly.level();
+        Vec3 start = this.butterfly.getBoundingBox().getCenter();
+        Vec3 target = Vec3.atCenterOf(pos);
+        if (world.clip(new ClipContext(start, target, ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE, this.butterfly)).getType() != HitResult.Type.MISS) {
             return false;
         }
 
-        return world.isSpaceEmpty(this.butterfly, this.butterfly.getBoundingBox().offset(target.subtract(start)));
+        return world.noCollision(this.butterfly, this.butterfly.getBoundingBox().move(target.subtract(start)));
     }
 }

@@ -2,9 +2,8 @@ package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.animation_handling.animation_states.CoatiEntityAnimationState;
 import net.emilsg.clutterbestiary.entity.custom.CoatiEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.EnumSet;
 
 public class CoatiFindBurrowGoal extends Goal {
@@ -15,19 +14,19 @@ public class CoatiFindBurrowGoal extends Goal {
     public CoatiFindBurrowGoal(CoatiEntity coatiEntity, int daysFedHoneyNeeded) {
         this.coati = coatiEntity;
         this.daysFedHoneyNeeded = daysFedHoneyNeeded;
-        this.setControls(EnumSet.of(Control.JUMP, Control.MOVE));
+        this.setFlags(EnumSet.of(Flag.JUMP, Flag.MOVE));
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         if (this.coati.getPostDigCooldown() > 0) return false;
         BlockPos burrowPos = this.coati.getBurrowPos();
-        return !this.coati.isBaby() && !this.coati.isDigSessionActive() && this.coati.getDaysFedHoney() >= this.daysFedHoneyNeeded && this.coati.isOnGround() && !this.coati.getWorld().getBlockState(burrowPos.down()).isAir();
+        return !this.coati.isBaby() && !this.coati.isDigSessionActive() && this.coati.getDaysFedHoney() >= this.daysFedHoneyNeeded && this.coati.onGround() && !this.coati.level().getBlockState(burrowPos.below()).isAir();
     }
 
     @Override
-    public boolean shouldContinue() {
-        return !handedOff && !this.coati.getNavigation().isIdle() && this.coati.getNavigation().isFollowingPath();
+    public boolean canContinueToUse() {
+        return !handedOff && !this.coati.getNavigation().isDone() && this.coati.getNavigation().isInProgress();
     }
 
     @Override
@@ -48,15 +47,15 @@ public class CoatiFindBurrowGoal extends Goal {
         BlockPos target = this.coati.getBurrowPos();
 
         // While we're still running toward the burrow, always be sniffing
-        if (!target.isWithinDistance(this.coati.getPos(), 1.5f)) {
+        if (!target.closerToCenterThan(this.coati.position(), 1.5f)) {
             // Only force if not already sniffing, so we don't reset the anim timer every tick
             if (!this.coati.isSniffing()
-                    && this.coati.isOnGround()
-                    && !this.coati.isInsideWaterOrBubbleColumn()) {
+                    && this.coati.onGround()
+                    && !this.coati.isInWater()) {
                 this.coati.startState(CoatiEntityAnimationState.SNIFFING);
             }
 
-            this.coati.getNavigation().startMovingTo(
+            this.coati.getNavigation().moveTo(
                     target.getX() + 0.5,
                     target.getY(),
                     target.getZ() + 0.5,
@@ -66,7 +65,7 @@ public class CoatiFindBurrowGoal extends Goal {
         }
 
         // Reached burrow – hand off to digging logic
-        if (!handedOff && this.coati.isOnGround() && !this.coati.isInsideWaterOrBubbleColumn()) {
+        if (!handedOff && this.coati.onGround() && !this.coati.isInWater()) {
             this.coati.getNavigation().stop();
 
             // Optional: keep SNIFFING here too, or switch to another state if you want

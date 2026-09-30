@@ -1,57 +1,60 @@
 package net.emilsg.clutterbestiary.item.custom;
 
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.passive.FoxEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-import net.minecraft.world.event.GameEvent;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.fox.Fox;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.phys.Vec3;
 
 public class RandomTeleportItem extends Item {
     private final int cooldownInTicks;
     private final int useTimeInTicks;
     private final int maxTeleportDistance;
 
-    public RandomTeleportItem(Settings settings, int cooldownInTicks, int useTimeInTicks, int maxTeleportDistance) {
+    public RandomTeleportItem(Properties settings, int cooldownInTicks, int useTimeInTicks, int maxTeleportDistance) {
         super(settings);
         this.useTimeInTicks = useTimeInTicks;
         this.cooldownInTicks = cooldownInTicks;
         this.maxTeleportDistance = maxTeleportDistance;
     }
 
-    public ItemStack finishUsing(ItemStack stack, World world, LivingEntity user) {
-        ItemStack itemStack = super.finishUsing(stack, world, user);
-        if (!world.isClient) {
+    @Override
+    public ItemStack finishUsingItem(ItemStack stack, Level world, LivingEntity user) {
+        // Keep a copy for the cooldown group; the used stack may be empty after consumption.
+        ItemStack usedStack = stack.copy();
+        ItemStack itemStack = super.finishUsingItem(stack, world, user);
+        if (!world.isClientSide()) {
             double d = user.getX();
             double e = user.getY();
             double f = user.getZ();
 
             for (int i = 0; i < 16; ++i) {
                 double g = user.getX() + (user.getRandom().nextDouble() - 0.5) * maxTeleportDistance;
-                double h = MathHelper.clamp(user.getY() + (double) (user.getRandom().nextInt(16) - 8), world.getBottomY(), world.getBottomY() + ((ServerWorld) world).getLogicalHeight() - 1);
+                double h = Mth.clamp(user.getY() + (double) (user.getRandom().nextInt(16) - 8), world.getMinY(), world.getMinY() + ((ServerLevel) world).getLogicalHeight() - 1);
                 double j = user.getZ() + (user.getRandom().nextDouble() - 0.5) * maxTeleportDistance;
-                if (user.hasVehicle()) {
+                if (user.isPassenger()) {
                     user.stopRiding();
                 }
 
-                Vec3d vec3d = user.getPos();
-                if (user.teleport(g, h, j, true)) {
-                    world.emitGameEvent(GameEvent.TELEPORT, vec3d, GameEvent.Emitter.of(user));
-                    SoundEvent soundEvent = user instanceof FoxEntity ? SoundEvents.ENTITY_FOX_TELEPORT : SoundEvents.ITEM_CHORUS_FRUIT_TELEPORT;
-                    world.playSound(null, d, e, f, soundEvent, SoundCategory.PLAYERS, 1.0F, 1.0F);
+                Vec3 vec3d = user.position();
+                if (user.randomTeleport(g, h, j, true, state -> false)) {
+                    world.gameEvent(GameEvent.TELEPORT, vec3d, GameEvent.Context.of(user));
+                    SoundEvent soundEvent = user instanceof Fox ? SoundEvents.FOX_TELEPORT : SoundEvents.CHORUS_FRUIT_TELEPORT;
+                    world.playSound(null, d, e, f, soundEvent, SoundSource.PLAYERS, 1.0F, 1.0F);
                     user.playSound(soundEvent, 1.0F, 1.0F);
                     break;
                 }
             }
-            if (user instanceof PlayerEntity) {
-                ((PlayerEntity) user).getItemCooldownManager().set(this, cooldownInTicks);
+            if (user instanceof Player player) {
+                player.getCooldowns().addCooldown(usedStack, cooldownInTicks);
             }
         }
 
@@ -59,7 +62,7 @@ public class RandomTeleportItem extends Item {
     }
 
     @Override
-    public int getMaxUseTime(ItemStack stack, LivingEntity user) {
+    public int getUseDuration(ItemStack stack, LivingEntity user) {
         return useTimeInTicks;
     }
 }

@@ -13,7 +13,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "clutterbestiary:cooked_levitating_echofin_from_smelting_raw_levitating_echofin"
+        "recipes": "clutterbestiary:cooked_levitating_echofin_from_smelting_raw_levitating_echofin"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

@@ -6,19 +6,18 @@ import dev.architectury.registry.registries.RegistrySupplier;
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.entity.custom.CoatiEntity;
 import net.emilsg.clutterbestiary.menu.handler.CoatiScreenHandler;
-import net.minecraft.entity.Entity;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.inventory.MenuType;
 
 public final class ModMenuTypes {
-    private static final DeferredRegister<ScreenHandlerType<?>> MENUS = DeferredRegister.create(ClutterBestiary.MOD_ID, RegistryKeys.SCREEN_HANDLER);
+    private static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(ClutterBestiary.MOD_ID, Registries.MENU);
 
-    public static final RegistrySupplier<ScreenHandlerType<CoatiScreenHandler>> COATI =
-            MENUS.register("coati_screen", () -> MenuRegistry.ofExtended((syncId, inv, buf) -> {
-                int entityId = buf.readInt();
-                Entity e = inv.player.getWorld().getEntityById(entityId);
+    public static final RegistrySupplier<MenuType<CoatiScreenHandler>> COATI =
+            MENUS.register("coati_screen", () -> MenuRegistry.ofExtended((syncId, inv, entityId) -> {
+                Entity e = inv.player.level().getEntity(entityId);
                 return new CoatiScreenHandler(syncId, inv, (CoatiEntity) e);
-            }));
+            }, CoatiScreenHandler.ENTITY_ID_CODEC));
 
     public static void register() {
         MENUS.register();

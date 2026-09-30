@@ -1,70 +1,76 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.variants.koi.*;
-import net.minecraft.entity.EntityStatuses;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Arm;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityEvent;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class KoiEggsEntity extends MobEntity {
-    private static final TrackedData<String> BASE_COLOR = DataTracker.registerData(KoiEggsEntity.class, TrackedDataHandlerRegistry.STRING);
-    private static final TrackedData<String> PRIMARY_PATTERN_COLOR = DataTracker.registerData(KoiEggsEntity.class, TrackedDataHandlerRegistry.STRING);
-    private static final TrackedData<String> PRIMARY_PATTERN_TYPE = DataTracker.registerData(KoiEggsEntity.class, TrackedDataHandlerRegistry.STRING);
-    private static final TrackedData<String> SECONDARY_PATTERN_COLOR = DataTracker.registerData(KoiEggsEntity.class, TrackedDataHandlerRegistry.STRING);
-    private static final TrackedData<String> SECONDARY_PATTERN_TYPE = DataTracker.registerData(KoiEggsEntity.class, TrackedDataHandlerRegistry.STRING);
+public class KoiEggsEntity extends Mob {
+    private static final EntityDataAccessor<String> BASE_COLOR = SynchedEntityData.defineId(KoiEggsEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> PRIMARY_PATTERN_COLOR = SynchedEntityData.defineId(KoiEggsEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> PRIMARY_PATTERN_TYPE = SynchedEntityData.defineId(KoiEggsEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> SECONDARY_PATTERN_COLOR = SynchedEntityData.defineId(KoiEggsEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> SECONDARY_PATTERN_TYPE = SynchedEntityData.defineId(KoiEggsEntity.class, EntityDataSerializers.STRING);
+
+    private static final int MIN_HATCH_TIME = 6000; // 5 minutes
+    private static final int MAX_HATCH_TIME = 12000; // 10 minutes
 
     private int timeToHatch;
 
-    public KoiEggsEntity(EntityType<? extends MobEntity> entityType, World world) {
+    public KoiEggsEntity(EntityType<? extends Mob> entityType, Level world) {
         super(entityType, world);
-        this.timeToHatch = 1200;
+        this.timeToHatch = MIN_HATCH_TIME + this.random.nextInt(MAX_HATCH_TIME - MIN_HATCH_TIME + 1);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(BASE_COLOR, KoiBaseColorVariant.ORANGE.getID());
-        builder.add(PRIMARY_PATTERN_COLOR, KoiPrimaryPatternColorVariant.WHITE.getID());
-        builder.add(PRIMARY_PATTERN_TYPE, KoiPrimaryPatternTypeVariant.SPOTTED.getID());
-        builder.add(SECONDARY_PATTERN_COLOR, KoiSecondaryPatternColorVariant.BLACK.getID());
-        builder.add(SECONDARY_PATTERN_TYPE, KoiSecondaryPatternTypeVariant.SMALL_SPOTS.getID());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(BASE_COLOR, KoiBaseColorVariant.ORANGE.getID());
+        builder.define(PRIMARY_PATTERN_COLOR, KoiPrimaryPatternColorVariant.WHITE.getID());
+        builder.define(PRIMARY_PATTERN_TYPE, KoiPrimaryPatternTypeVariant.SPOTTED.getID());
+        builder.define(SECONDARY_PATTERN_COLOR, KoiSecondaryPatternColorVariant.BLACK.getID());
+        builder.define(SECONDARY_PATTERN_TYPE, KoiSecondaryPatternTypeVariant.SMALL_SPOTS.getID());
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.timeToHatch = nbt.contains("HatchTime") ? nbt.getInt("HatchTime") : 120;
-        this.setBaseColorVariant(KoiBaseColorVariant.fromId(nbt.getString("BaseColor")));
-        this.setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant.fromId(nbt.getString("PrimaryPatternColor")));
-        this.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.fromId(nbt.getString("PrimaryPatternType")));
-        this.setSecondaryPatternColorVariant(KoiSecondaryPatternColorVariant.fromId(nbt.getString("SecondaryPatternColor")));
-        this.setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant.fromId(nbt.getString("SecondaryPatternType")));
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.timeToHatch = nbt.getIntOr("HatchTime", this.timeToHatch);
+        this.setBaseColorVariant(KoiBaseColorVariant.fromId(nbt.getStringOr("BaseColor", "")));
+        this.setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant.fromId(nbt.getStringOr("PrimaryPatternColor", "")));
+        this.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.fromId(nbt.getStringOr("PrimaryPatternType", "")));
+        this.setSecondaryPatternColorVariant(KoiSecondaryPatternColorVariant.fromId(nbt.getStringOr("SecondaryPatternColor", "")));
+        this.setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant.fromId(nbt.getStringOr("SecondaryPatternType", "")));
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putInt("HatchTime", this.timeToHatch);
         nbt.putString("BaseColor", this.getBaseColorVariant().getID());
         nbt.putString("PrimaryPatternColor", this.getPrimaryPatternColorVariant().getID());
@@ -73,134 +79,129 @@ public class KoiEggsEntity extends MobEntity {
         nbt.putString("SecondaryPatternType", this.getSecondaryPatternTypeVariant().getID());
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return LivingEntity.createLivingAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 1D).add(EntityAttributes.GENERIC_FOLLOW_RANGE, 1D);
+    public static AttributeSupplier.Builder setAttributes() {
+        return LivingEntity.createLivingAttributes().add(Attributes.MAX_HEALTH, 1D).add(Attributes.FOLLOW_RANGE, 1D);
     }
 
     @Override
-    public void equipStack(EquipmentSlot slot, ItemStack stack) {
-    }
-
-    @Override
-    public Iterable<ItemStack> getArmorItems() {
-        return List.of();
+    public void setItemSlot(EquipmentSlot slot, ItemStack stack) {
     }
 
     public KoiBaseColorVariant getBaseColorVariant() {
-        return KoiBaseColorVariant.fromId(this.dataTracker.get(BASE_COLOR));
+        return KoiBaseColorVariant.fromId(this.entityData.get(BASE_COLOR));
     }
 
     public void setBaseColorVariant(KoiBaseColorVariant baseColorVariant) {
-        this.dataTracker.set(BASE_COLOR, baseColorVariant.getID());
+        this.entityData.set(BASE_COLOR, baseColorVariant.getID());
     }
 
     @Override
-    public ItemStack getEquippedStack(EquipmentSlot slot) {
+    public ItemStack getItemBySlot(EquipmentSlot slot) {
         return ItemStack.EMPTY;
     }
 
     @Override
-    public Arm getMainArm() {
-        return Arm.RIGHT;
+    public HumanoidArm getMainArm() {
+        return HumanoidArm.RIGHT;
     }
 
     public KoiPrimaryPatternColorVariant getPrimaryPatternColorVariant() {
-        return KoiPrimaryPatternColorVariant.fromId(this.dataTracker.get(PRIMARY_PATTERN_COLOR));
+        return KoiPrimaryPatternColorVariant.fromId(this.entityData.get(PRIMARY_PATTERN_COLOR));
     }
 
     public void setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant primaryPatternColorVariant) {
-        this.dataTracker.set(PRIMARY_PATTERN_COLOR, primaryPatternColorVariant.getID());
+        this.entityData.set(PRIMARY_PATTERN_COLOR, primaryPatternColorVariant.getID());
     }
 
     public KoiPrimaryPatternTypeVariant getPrimaryPatternTypeVariant() {
-        return KoiPrimaryPatternTypeVariant.fromId(this.dataTracker.get(PRIMARY_PATTERN_TYPE));
+        return KoiPrimaryPatternTypeVariant.fromId(this.entityData.get(PRIMARY_PATTERN_TYPE));
     }
 
     public void setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant primaryPatternTypeVariant) {
-        this.dataTracker.set(PRIMARY_PATTERN_TYPE, primaryPatternTypeVariant.getID());
+        this.entityData.set(PRIMARY_PATTERN_TYPE, primaryPatternTypeVariant.getID());
     }
 
     public KoiSecondaryPatternColorVariant getSecondaryPatternColorVariant() {
-        return KoiSecondaryPatternColorVariant.fromId(this.dataTracker.get(SECONDARY_PATTERN_COLOR));
+        return KoiSecondaryPatternColorVariant.fromId(this.entityData.get(SECONDARY_PATTERN_COLOR));
     }
 
     public void setSecondaryPatternColorVariant(KoiSecondaryPatternColorVariant secondaryPatternColorVariant) {
-        this.dataTracker.set(SECONDARY_PATTERN_COLOR, secondaryPatternColorVariant.getID());
+        this.entityData.set(SECONDARY_PATTERN_COLOR, secondaryPatternColorVariant.getID());
     }
 
     public KoiSecondaryPatternTypeVariant getSecondaryPatternTypeVariant() {
-        return KoiSecondaryPatternTypeVariant.fromId(this.dataTracker.get(SECONDARY_PATTERN_TYPE));
+        return KoiSecondaryPatternTypeVariant.fromId(this.entityData.get(SECONDARY_PATTERN_TYPE));
     }
 
     public void setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant secondaryPatternTypeVariant) {
-        this.dataTracker.set(SECONDARY_PATTERN_TYPE, secondaryPatternTypeVariant.getID());
+        this.entityData.set(SECONDARY_PATTERN_TYPE, secondaryPatternTypeVariant.getID());
     }
 
     @Override
     public void tick() {
-        this.setNoGravity(this.isSubmergedInWater());
+        this.setNoGravity(this.isUnderWater());
         super.tick();
-        if (this.getWorld() instanceof ServerWorld serverWorld) this.tickHatching(serverWorld);
+        if (this.level() instanceof ServerLevel serverWorld) this.tickHatching(serverWorld);
     }
 
     @Override
-    public void tickMovement() {
-        super.tickMovement();
+    public void aiStep() {
+        super.aiStep();
         this.floatAboveGroundInWater();
     }
 
     @Override
     protected @Nullable SoundEvent getDeathSound() {
-        return SoundEvents.ENTITY_SLIME_DEATH_SMALL;
+        return SoundEvents.SLIME_DEATH_SMALL;
     }
 
     @Override
     protected @Nullable SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.ENTITY_SALMON_HURT;
+        return SoundEvents.SALMON_HURT;
     }
 
     @Override
-    protected int getNextAirUnderwater(int air) {
+    protected int decreaseAirSupply(int air) {
         return air;
     }
 
     private void floatAboveGroundInWater() {
-        if (!this.isTouchingWater()) return;
+        if (!this.isInWater()) return;
 
-        BlockPos currentPos = this.getBlockPos();
-        World world = this.getWorld();
+        BlockPos currentPos = this.blockPosition();
+        Level world = this.level();
 
         for (int y = 0; y < 10; y++) {
-            BlockPos checkPos = currentPos.down(y);
-            if (!world.getBlockState(checkPos).isAir() && world.getBlockState(checkPos).isSolidBlock(world, checkPos)) {
+            BlockPos checkPos = currentPos.below(y);
+            if (!world.getBlockState(checkPos).isAir() && world.getBlockState(checkPos).isRedstoneConductor(world, checkPos)) {
                 double targetY = checkPos.getY() + 2.0;
                 double verticalVelocity = this.getY() < targetY ? 0.01 : 0.0;
 
                 double pushX = 0.0;
                 double pushZ = 0.0;
 
-                if (world.getBlockState(currentPos.north()).isSolidBlock(world, currentPos.north())) pushZ += 0.001;
-                if (world.getBlockState(currentPos.south()).isSolidBlock(world, currentPos.south())) pushZ -= 0.001;
-                if (world.getBlockState(currentPos.east()).isSolidBlock(world, currentPos.east())) pushX -= 0.001;
-                if (world.getBlockState(currentPos.west()).isSolidBlock(world, currentPos.west())) pushX += 0.001;
+                if (world.getBlockState(currentPos.north()).isRedstoneConductor(world, currentPos.north())) pushZ += 0.001;
+                if (world.getBlockState(currentPos.south()).isRedstoneConductor(world, currentPos.south())) pushZ -= 0.001;
+                if (world.getBlockState(currentPos.east()).isRedstoneConductor(world, currentPos.east())) pushX -= 0.001;
+                if (world.getBlockState(currentPos.west()).isRedstoneConductor(world, currentPos.west())) pushX += 0.001;
 
-                this.setVelocity(this.getVelocity().x + pushX, verticalVelocity, this.getVelocity().z + pushZ);
+                this.setDeltaMovement(this.getDeltaMovement().x + pushX, verticalVelocity, this.getDeltaMovement().z + pushZ);
                 break;
             }
         }
     }
 
-    private void hatch(ServerWorld world) {
+    private void hatch(ServerLevel world) {
         int amount = random.nextInt(13) == 0 ? random.nextBoolean() ? 3 : 2 : 1;
 
         double x = this.getX() + (amount > 1 ? ((random.nextBoolean() ? 1 : -1) * random.nextFloat() / 5) : 0);
         double y = this.getY() + (amount > 1 ? ((random.nextBoolean() ? 1 : -1) * random.nextFloat() / 5) : 0);
         double z = this.getZ() + (amount > 1 ? ((random.nextBoolean() ? 1 : -1) * random.nextFloat() / 5) : 0);
 
-        world.spawnParticles(ParticleTypes.BUBBLE, x, y, z, amount, 0.1, 0.1, 0.1, 5.0E-4);
+        world.sendParticles(ParticleTypes.BUBBLE, x, y, z, amount, 0.1, 0.1, 0.1, 5.0E-4);
 
         for (int i = 0; i < amount; i++) {
-            KoiEntity koiEntity = ModEntityTypes.KOI.get().create(world);
+            KoiEntity koiEntity = ModEntityTypes.KOI.get().create(world, EntitySpawnReason.BREEDING);
             if (koiEntity == null) return;
 
             koiEntity.setBaby(true);
@@ -209,21 +210,21 @@ public class KoiEggsEntity extends MobEntity {
             koiEntity.setPrimaryPatternTypeVariant(this.getPrimaryPatternTypeVariant());
             koiEntity.setSecondaryPatternColorVariant(this.getSecondaryPatternColorVariant());
             koiEntity.setSecondaryPatternTypeVariant(this.getSecondaryPatternTypeVariant());
-            koiEntity.refreshPositionAndAngles(x, y, z, this.getYaw(), this.getPitch());
-            world.spawnEntity(koiEntity);
+            koiEntity.snapTo(x, y, z, this.getYRot(), this.getXRot());
+            world.addFreshEntity(koiEntity);
         }
         this.discard();
     }
 
-    private void tickHatching(ServerWorld world) {
+    private void tickHatching(ServerLevel world) {
         if (this.timeToHatch <= 0) {
             this.hatch(world);
             return;
         }
         this.timeToHatch--;
         if (this.timeToHatch == 800 || this.timeToHatch == 40) {
-            world.sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
-            world.playSound(null, this.getBlockPos(), SoundEvents.BLOCK_SNIFFER_EGG_CRACK, SoundCategory.NEUTRAL, 0.5f, 1.5f);
+            world.broadcastEntityEvent(this, EntityEvent.TAMING_SUCCEEDED);
+            world.playSound(null, this.blockPosition(), SoundEvents.SNIFFER_EGG_CRACK, SoundSource.NEUTRAL, 0.5f, 1.5f);
         }
     }
 

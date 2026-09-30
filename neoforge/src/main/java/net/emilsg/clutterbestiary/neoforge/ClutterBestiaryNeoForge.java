@@ -2,18 +2,16 @@ package net.emilsg.clutterbestiary.neoforge;
 
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.ClutterBestiaryClient;
-import net.emilsg.clutterbestiary.entity.client.ArrowfishCrossbowModel;
+import net.emilsg.clutterbestiary.entity.client.BucketEntityVariantProperty;
 import net.emilsg.clutterbestiary.menu.ModMenuTypes;
 import net.emilsg.clutterbestiary.menu.screen.CoatiInventoryScreen;
 import net.emilsg.clutterbestiary.neoforge.spawns.ModBiomeModifierSerializers;
-import net.emilsg.clutterbestiary.neoforge.util.ModModelPredicateProvider;
-import net.minecraft.client.util.ModelIdentifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RegisterSelectItemModelPropertyEvent;
 
 @Mod(ClutterBestiary.MOD_ID)
 public final class ClutterBestiaryNeoForge {
@@ -28,18 +26,16 @@ public final class ClutterBestiaryNeoForge {
             ClutterBestiaryClient.registerEntityModelLayers();
             modEventBus.addListener(this::onClientSetup);
             modEventBus.addListener(this::registerScreens);
-            modEventBus.addListener(this::registerAdditionalModels);
-            ArrowfishCrossbowModel.setModelLookup(manager -> manager.getModel(ModelIdentifier.standalone(ArrowfishCrossbowModel.MODEL_ID)));
+            modEventBus.addListener(this::registerItemModelProperties);
         }
     }
 
-    public void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
-        event.register(ModelIdentifier.standalone(ArrowfishCrossbowModel.MODEL_ID));
+    public void registerItemModelProperties(RegisterSelectItemModelPropertyEvent event) {
+        event.register(BucketEntityVariantProperty.ID, BucketEntityVariantProperty.TYPE);
     }
 
     public void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(ClutterBestiaryClient::registerClientSetup);
-        event.enqueueWork(ModModelPredicateProvider::register);
     }
 
     public void registerScreens(RegisterMenuScreensEvent event) {

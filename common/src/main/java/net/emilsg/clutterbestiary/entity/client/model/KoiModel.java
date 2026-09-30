@@ -1,15 +1,21 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.emilsg.clutterbestiary.entity.client.animation.KoiAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.ParentFishModel;
 import net.emilsg.clutterbestiary.entity.custom.KoiEntity;
 import net.emilsg.clutterbestiary.entity.variants.koi.KoiPrimaryPatternTypeVariant;
 import net.minecraft.client.model.*;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
 public class KoiModel<T extends KoiEntity> extends ParentFishModel<T> {
-    private final ModelPart root;
     private final ModelPart all;
     private final ModelPart body;
     private final ModelPart bodyPatternLayer;
@@ -17,7 +23,7 @@ public class KoiModel<T extends KoiEntity> extends ParentFishModel<T> {
     private final ModelPart headPatternLayer;
 
     public KoiModel(ModelPart root) {
-        this.root = root;
+        super(root);
         this.all = root.getChild("all");
         this.body = this.all.getChild("body");
         this.bodyPatternLayer = this.body.getChild("bodyPatternLayer");
@@ -25,65 +31,45 @@ public class KoiModel<T extends KoiEntity> extends ParentFishModel<T> {
         this.headPatternLayer = this.head.getChild("headPatternLayer");
     }
 
-    public static TexturedModelData getTexturedModelData() {
-        ModelData modelData = new ModelData();
-        ModelPartData modelPartData = modelData.getRoot();
-        ModelPartData all = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 23.0F, -5.0F));
+    public static LayerDefinition getTexturedModelData() {
+        MeshDefinition modelData = new MeshDefinition();
+        PartDefinition modelPartData = modelData.getRoot();
+        PartDefinition all = modelPartData.addOrReplaceChild("all", CubeListBuilder.create(), PartPose.offset(0.0F, 23.0F, -5.0F));
 
-        ModelPartData body = all.addChild("body", ModelPartBuilder.create().uv(0, 0).cuboid(-2.0F, -4.0F, -1.0F, 4.0F, 4.0F, 9.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+        PartDefinition body = all.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).addBox(-2.0F, -4.0F, -1.0F, 4.0F, 4.0F, 9.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
 
-        ModelPartData bodyPatternLayer = body.addChild("bodyPatternLayer", ModelPartBuilder.create().uv(0, 13).cuboid(-2.0F, -4.0F, -1.0F, 4.0F, 4.0F, 9.0F, new Dilation(0.01F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+        PartDefinition bodyPatternLayer = body.addOrReplaceChild("bodyPatternLayer", CubeListBuilder.create().texOffs(0, 13).addBox(-2.0F, -4.0F, -1.0F, 4.0F, 4.0F, 9.0F, new CubeDeformation(0.01F)), PartPose.offset(0.0F, 0.0F, 0.0F));
 
-        ModelPartData bodySecondaryPatternLayer = body.addChild("bodySecondaryPatternLayer", ModelPartBuilder.create().uv(0, 40).cuboid(-2.0F, -4.0F, -1.0F, 4.0F, 4.0F, 9.0F, new Dilation(0.02F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+        PartDefinition bodySecondaryPatternLayer = body.addOrReplaceChild("bodySecondaryPatternLayer", CubeListBuilder.create().texOffs(0, 40).addBox(-2.0F, -4.0F, -1.0F, 4.0F, 4.0F, 9.0F, new CubeDeformation(0.02F)), PartPose.offset(0.0F, 0.0F, 0.0F));
 
-        ModelPartData backFin = body.addChild("backFin", ModelPartBuilder.create().uv(26, -1).cuboid(0.0F, -2.0F, -3.5F, 0.0F, 2.0F, 7.0F, new Dilation(0.001F)), ModelTransform.pivot(0.0F, -4.0F, 3.5F));
+        PartDefinition backFin = body.addOrReplaceChild("backFin", CubeListBuilder.create().texOffs(26, -1).addBox(0.0F, -2.0F, -3.5F, 0.0F, 2.0F, 7.0F, new CubeDeformation(0.001F)), PartPose.offset(0.0F, -4.0F, 3.5F));
 
-        ModelPartData frontLeftFin = body.addChild("frontLeftFin", ModelPartBuilder.create().uv(28, 16).cuboid(0.0F, 0.0F, -1.5F, 2.0F, 0.0F, 3.0F, new Dilation(0.001F)), ModelTransform.pivot(2.0F, 0.0F, 0.5F));
+        PartDefinition frontLeftFin = body.addOrReplaceChild("frontLeftFin", CubeListBuilder.create().texOffs(28, 16).addBox(0.0F, 0.0F, -1.5F, 2.0F, 0.0F, 3.0F, new CubeDeformation(0.001F)), PartPose.offset(2.0F, 0.0F, 0.5F));
 
-        ModelPartData frontRightFin = body.addChild("frontRightFin", ModelPartBuilder.create().uv(23, 16).cuboid(-2.0F, 0.0F, -1.5F, 2.0F, 0.0F, 3.0F, new Dilation(0.001F)), ModelTransform.pivot(-2.0F, 0.0F, 0.5F));
+        PartDefinition frontRightFin = body.addOrReplaceChild("frontRightFin", CubeListBuilder.create().texOffs(23, 16).addBox(-2.0F, 0.0F, -1.5F, 2.0F, 0.0F, 3.0F, new CubeDeformation(0.001F)), PartPose.offset(-2.0F, 0.0F, 0.5F));
 
-        ModelPartData backLeftFin = body.addChild("backLeftFin", ModelPartBuilder.create().uv(31, 20).cuboid(0.0F, 0.0F, -1.5F, 3.0F, 0.0F, 3.0F, new Dilation(0.001F)), ModelTransform.pivot(2.0F, 0.0F, 5.5F));
+        PartDefinition backLeftFin = body.addOrReplaceChild("backLeftFin", CubeListBuilder.create().texOffs(31, 20).addBox(0.0F, 0.0F, -1.5F, 3.0F, 0.0F, 3.0F, new CubeDeformation(0.001F)), PartPose.offset(2.0F, 0.0F, 5.5F));
 
-        ModelPartData backRightFin = body.addChild("backRightFin", ModelPartBuilder.create().uv(24, 20).cuboid(-3.0F, 0.0F, -1.5F, 3.0F, 0.0F, 3.0F, new Dilation(0.001F)), ModelTransform.pivot(-2.0F, 0.0F, 5.5F));
+        PartDefinition backRightFin = body.addOrReplaceChild("backRightFin", CubeListBuilder.create().texOffs(24, 20).addBox(-3.0F, 0.0F, -1.5F, 3.0F, 0.0F, 3.0F, new CubeDeformation(0.001F)), PartPose.offset(-2.0F, 0.0F, 5.5F));
 
-        ModelPartData tailFin = body.addChild("tailFin", ModelPartBuilder.create().uv(0, 26).cuboid(0.0F, -4.0F, 0.0F, 0.0F, 8.0F, 6.0F, new Dilation(0.001F)), ModelTransform.pivot(0.0F, -2.0F, 8.0F));
+        PartDefinition tailFin = body.addOrReplaceChild("tailFin", CubeListBuilder.create().texOffs(0, 26).addBox(0.0F, -4.0F, 0.0F, 0.0F, 8.0F, 6.0F, new CubeDeformation(0.001F)), PartPose.offset(0.0F, -2.0F, 8.0F));
 
-        ModelPartData head = body.addChild("head", ModelPartBuilder.create().uv(26, 9).cuboid(-1.5F, -1.5F, -3.0F, 3.0F, 3.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -1.5F, -1.0F));
+        PartDefinition head = body.addOrReplaceChild("head", CubeListBuilder.create().texOffs(26, 9).addBox(-1.5F, -1.5F, -3.0F, 3.0F, 3.0F, 3.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -1.5F, -1.0F));
 
-        ModelPartData headPatternLayer = head.addChild("headPatternLayer", ModelPartBuilder.create().uv(12, 26).cuboid(-1.5F, -1.5F, -3.0F, 3.0F, 3.0F, 3.0F, new Dilation(0.01F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+        PartDefinition headPatternLayer = head.addOrReplaceChild("headPatternLayer", CubeListBuilder.create().texOffs(12, 26).addBox(-1.5F, -1.5F, -3.0F, 3.0F, 3.0F, 3.0F, new CubeDeformation(0.01F)), PartPose.offset(0.0F, 0.0F, 0.0F));
 
-        ModelPartData leftWhisker = head.addChild("leftWhisker", ModelPartBuilder.create().uv(27, 23).cuboid(0.0F, 0.0F, -0.5F, 0.0F, 1.0F, 1.0F, new Dilation(0.001F)), ModelTransform.pivot(1.5F, 1.5F, -1.5F));
+        PartDefinition leftWhisker = head.addOrReplaceChild("leftWhisker", CubeListBuilder.create().texOffs(27, 23).addBox(0.0F, 0.0F, -0.5F, 0.0F, 1.0F, 1.0F, new CubeDeformation(0.001F)), PartPose.offset(1.5F, 1.5F, -1.5F));
 
-        ModelPartData rightWhisker = head.addChild("rightWhisker", ModelPartBuilder.create().uv(30, 23).cuboid(0.0F, 1.0F, 1.5F, 0.0F, 1.0F, 1.0F, new Dilation(0.001F)), ModelTransform.pivot(-1.5F, 0.5F, -3.5F));
-        return TexturedModelData.of(modelData, 64, 64);
+        PartDefinition rightWhisker = head.addOrReplaceChild("rightWhisker", CubeListBuilder.create().texOffs(30, 23).addBox(0.0F, 1.0F, 1.5F, 0.0F, 1.0F, 1.0F, new CubeDeformation(0.001F)), PartPose.offset(-1.5F, 0.5F, -3.5F));
+        return LayerDefinition.create(modelData, 64, 64);
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
-    }
-
-    @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        matrices.push();
-
-        if (this.child) {
-            float babyScale = 0.35f;
-            matrices.scale(babyScale, babyScale, babyScale);
-            matrices.translate(0.0D, 2.65D, 0D);
-            this.head.scale(createVec3f(0.6f));
-        }
-
-        this.getPart().render(matrices, vertices, light, overlay, color);
-        matrices.pop();
-    }
-
-    @Override
-    public void setAngles(KoiEntity entity, float limbSwing, float limbSwingAmount, float animationProgress, float headYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
+    public void setupAnim(KoiEntity entity, float limbSwing, float limbSwingAmount, float animationProgress, float headYaw, float headPitch) {
+        this.root().getAllParts().forEach(ModelPart::resetPose);
         this.updatePatternVisibility(entity.getPrimaryPatternTypeVariant() != KoiPrimaryPatternTypeVariant.NONE);
 
-        this.updateAnimation(entity.swimmingAnimationState, KoiAnimations.KOI_SWIM, animationProgress, 1f);
+        this.animate(entity.swimmingAnimationState, KoiAnimations.KOI_SWIM, animationProgress, 1f);
     }
 
     @Override
@@ -93,5 +79,20 @@ public class KoiModel<T extends KoiEntity> extends ParentFishModel<T> {
 
     private void updatePatternVisibility(boolean patternVisibility) {
         this.bodyPatternLayer.visible = patternVisibility;
+    }
+
+    @Override
+    public float getBabyScale() {
+        return 0.35F;
+    }
+
+    @Override
+    public float getBabyYOffset() {
+        return 2.65F;
+    }
+
+    @Override
+    protected ModelPart getBabyHead() {
+        return this.head;
     }
 }

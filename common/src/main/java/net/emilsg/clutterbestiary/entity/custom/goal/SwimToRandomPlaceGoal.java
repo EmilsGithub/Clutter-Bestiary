@@ -1,9 +1,9 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentFishEntity;
-import net.minecraft.entity.ai.goal.SwimAroundGoal;
+import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
 
-public class SwimToRandomPlaceGoal extends SwimAroundGoal {
+public class SwimToRandomPlaceGoal extends RandomSwimmingGoal {
     private final ParentFishEntity fish;
 
     public SwimToRandomPlaceGoal(ParentFishEntity fish, double speed) {
@@ -11,7 +11,7 @@ public class SwimToRandomPlaceGoal extends SwimAroundGoal {
         this.fish = fish;
     }
 
-    public boolean canStart() {
-        return this.fish.getHasSelfControl() && super.canStart();
+    public boolean canUse() {
+        return this.fish.getHasSelfControl() && super.canUse();
     }
 }

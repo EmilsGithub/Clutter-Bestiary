@@ -1,29 +1,29 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.EmberTortoiseEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.LookAtEntityGoal;
-import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.animal.Animal;
 
-public class EmberTortoiseLookAtEntityGoal extends LookAtEntityGoal {
-    AnimalEntity animalEntity;
+public class EmberTortoiseLookAtEntityGoal extends LookAtPlayerGoal {
+    Animal animalEntity;
 
-    public EmberTortoiseLookAtEntityGoal(AnimalEntity animal, Class<? extends LivingEntity> targetType, float range) {
+    public EmberTortoiseLookAtEntityGoal(Animal animal, Class<? extends LivingEntity> targetType, float range) {
         super(animal, targetType, range);
         this.animalEntity = animal;
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         if (animalEntity instanceof EmberTortoiseEntity emberTortoise)
-            return !emberTortoise.isShielding() && super.canStart();
-        else return super.canStart();
+            return !emberTortoise.isShielding() && super.canUse();
+        else return super.canUse();
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         if (animalEntity instanceof EmberTortoiseEntity emberTortoise && emberTortoise.isShielding()) return false;
-        return this.target != null && super.shouldContinue();
+        return this.lookAt != null && super.canContinueToUse();
     }
 
     @Override

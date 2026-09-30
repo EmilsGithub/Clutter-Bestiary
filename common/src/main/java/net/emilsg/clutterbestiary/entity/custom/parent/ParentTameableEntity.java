@@ -1,67 +1,67 @@
 package net.emilsg.clutterbestiary.entity.custom.parent;
 
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ParentTameableEntity extends TameableEntity {
-    private static final TrackedData<Boolean> MOVING = DataTracker.registerData(ParentTameableEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Boolean> IS_FLEEING = DataTracker.registerData(ParentTameableEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+public abstract class ParentTameableEntity extends TamableAnimal {
+    private static final EntityDataAccessor<Boolean> MOVING = SynchedEntityData.defineId(ParentTameableEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IS_FLEEING = SynchedEntityData.defineId(ParentTameableEntity.class, EntityDataSerializers.BOOLEAN);
 
-    protected ParentTameableEntity(EntityType<? extends TameableEntity> entityType, World world) {
+    protected ParentTameableEntity(EntityType<? extends TamableAnimal> entityType, Level world) {
         super(entityType, world);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(MOVING, false);
-        builder.add(IS_FLEEING, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(MOVING, false);
+        builder.define(IS_FLEEING, false);
     }
 
     @Nullable
     @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+    public AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
         return null;
     }
 
     public abstract Item getTamingItem();
 
     @Override
-    public abstract boolean isBreedingItem(ItemStack stack);
+    public abstract boolean isFood(ItemStack stack);
 
     public boolean isFleeing() {
-        return this.dataTracker.get(IS_FLEEING);
+        return this.entityData.get(IS_FLEEING);
     }
 
     public boolean isMoving() {
-        return this.dataTracker.get(MOVING);
+        return this.entityData.get(MOVING);
     }
 
     public void setMoving(boolean moving) {
-        this.dataTracker.set(MOVING, moving);
+        this.entityData.set(MOVING, moving);
     }
 
     public void setIsFleeing(boolean moving) {
-        this.dataTracker.set(IS_FLEEING, moving);
+        this.entityData.set(IS_FLEEING, moving);
     }
 
     @Override
-    public void tickMovement() {
-        if (!this.getWorld().isClient) {
-            Vec3d velocity = this.getVelocity();
-            boolean isMoving = velocity.lengthSquared() > 1.0E-7;
+    public void aiStep() {
+        if (!this.level().isClientSide()) {
+            Vec3 velocity = this.getDeltaMovement();
+            boolean isMoving = velocity.lengthSqr() > 1.0E-7;
             this.setMoving(isMoving);
         }
-        super.tickMovement();
+        super.aiStep();
     }
 }

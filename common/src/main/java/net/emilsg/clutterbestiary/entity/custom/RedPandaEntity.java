@@ -1,5 +1,10 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import java.util.function.Predicate;
+import net.minecraft.world.entity.animal.feline.CatSoundVariants;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
+import java.util.Optional;
 import net.emilsg.clutterbestiary.animation_handling.EntityAnimationController;
 import net.emilsg.clutterbestiary.animation_handling.HandledEntityAnimations;
 import net.emilsg.clutterbestiary.animation_handling.IdleAnimationGroup;
@@ -12,63 +17,77 @@ import net.emilsg.clutterbestiary.entity.variants.RedPandaVariant;
 import net.emilsg.clutterbestiary.util.ModAdvancements;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
 import net.emilsg.clutterbestiary.util.ModItemTags;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.passive.TameableEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.DamageTypeTags;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.LocalDifficulty;
-import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderSet.Named;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.EntityEvent;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.Nullable;
 
 public class RedPandaEntity extends ParentTameableEntity implements HandledEntityAnimations<RedPandaEntity, RedPandaEntityAnimationState> {
-    private static final Ingredient BREEDING_INGREDIENT = Ingredient.fromTag(ModItemTags.RED_PANDA_BREEDING_FOOD);
-    private static final Ingredient TAMING_INGREDIENT = Ingredient.fromTag(ModItemTags.RED_PANDA_CRAVINGS);
+    private static final Predicate<ItemStack> BREEDING_INGREDIENT = stack -> stack.is(ModItemTags.RED_PANDA_BREEDING_FOOD);
+    private static final Predicate<ItemStack> TAMING_INGREDIENT = stack -> stack.is(ModItemTags.RED_PANDA_CRAVINGS);
     private static final int LAY_DOWN_TICKS = 10;
     private static final int STAND_UP_TICKS = 10;
     private static final int Y_POSE_START_TICKS = 15;
     private static final int Y_POSE_END_TICKS = 15;
     private static final int SIT_END_TICKS = 10;
-    public static final TrackedData<Integer> PARTNER_ID = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<String> VARIANT = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.STRING);
-    private static final TrackedData<Integer> ANIMATION_STATE = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Integer> ANIMATION_REVISION = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Long> ANIMATION_START = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.LONG);
-    private static final TrackedData<Boolean> IS_SLEEPING = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Boolean> IS_Y_POSING = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Integer> Y_POSE_DURATION = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Integer> Y_POSE_TICKER = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Integer> SLEEP_TIMER = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Integer> SLEEP_TRACKER = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<String> CURRENT_CRAVING = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.STRING);
-    private static final TrackedData<Integer> TIMES_FED = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Boolean> IS_SITTING = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Boolean> IS_STAYING = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<BlockPos> STAYING_POS = DataTracker.registerData(RedPandaEntity.class, TrackedDataHandlerRegistry.BLOCK_POS);
+    public static final EntityDataAccessor<Integer> PARTNER_ID = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<String> VARIANT = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Integer> ANIMATION_STATE = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> ANIMATION_REVISION = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Long> ANIMATION_START = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Boolean> IS_SLEEPING = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IS_Y_POSING = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> Y_POSE_DURATION = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> Y_POSE_TICKER = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> SLEEP_TIMER = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> SLEEP_TRACKER = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<String> CURRENT_CRAVING = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Integer> TIMES_FED = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> IS_SITTING = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IS_STAYING = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<BlockPos> STAYING_POS = SynchedEntityData.defineId(RedPandaEntity.class, EntityDataSerializers.BLOCK_POS);
     public final AnimationState rightEarTwitchAnimationState = new AnimationState();
     public final AnimationState leftEarTwitchAnimationState = new AnimationState();
     public final AnimationState sniffAnimationState = new AnimationState();
@@ -78,73 +97,73 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
             .add(33, rightEarTwitchAnimationState)
             .add(34, sniffAnimationState);
 
-    public RedPandaEntity(EntityType<? extends TameableEntity> entityType, World world) {
+    public RedPandaEntity(EntityType<? extends TamableAnimal> entityType, Level world) {
         super(entityType, world);
         this.setupAnimationController();
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.5f, DamageTypeTags.PANIC_ENVIRONMENTAL_CAUSES));
-        this.goalSelector.add(2, new SitGoal(this));
-        this.goalSelector.add(3, new AnimalMateGoal(this, 1.0f));
-        this.goalSelector.add(4, new TemptGoal(this, 1.25f, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(5, new RedPandaFollowOwnerGoal(this, 1.0f, 10.0f, 2.0f));
-        this.goalSelector.add(6, new FollowParentGoal(this, 1.25));
-        this.goalSelector.add(6, new RedPandaChallengeOtherGoal(this, 0.00025f));
-        this.goalSelector.add(6, new RedPandaLookAtPartnerGoal(this));
-        this.goalSelector.add(7, new RedPandaSleepGoal(this));
-        this.goalSelector.add(8, new RedPandaWanderAroundFarGoal(this, 1.0f));
-        this.goalSelector.add(9, new LookAroundGoal(this));
-        this.goalSelector.add(10, new LookAtEntityGoal(this, PlayerEntity.class, 6.0f));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new PanicGoal(this, 1.5f, DamageTypeTags.PANIC_ENVIRONMENTAL_CAUSES));
+        this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
+        this.goalSelector.addGoal(3, new BreedGoal(this, 1.0f));
+        this.goalSelector.addGoal(4, new TemptGoal(this, 1.25f, BREEDING_INGREDIENT, false));
+        this.goalSelector.addGoal(5, new RedPandaFollowOwnerGoal(this, 1.0f, 10.0f, 2.0f));
+        this.goalSelector.addGoal(6, new FollowParentGoal(this, 1.25));
+        this.goalSelector.addGoal(6, new RedPandaChallengeOtherGoal(this, 0.00025f));
+        this.goalSelector.addGoal(6, new RedPandaLookAtPartnerGoal(this));
+        this.goalSelector.addGoal(7, new RedPandaSleepGoal(this));
+        this.goalSelector.addGoal(8, new RedPandaWanderAroundFarGoal(this, 1.0f));
+        this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Player.class, 6.0f));
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(ANIMATION_STATE, RedPandaEntityAnimationState.IDLING.getIndex());
-        builder.add(ANIMATION_REVISION, 0);
-        builder.add(ANIMATION_START, -1L);
-        builder.add(IS_SLEEPING, false);
-        builder.add(IS_Y_POSING, false);
-        builder.add(Y_POSE_DURATION, 0);
-        builder.add(Y_POSE_TICKER, 0);
-        builder.add(SLEEP_TIMER, 0);
-        builder.add(SLEEP_TRACKER, 0);
-        builder.add(PARTNER_ID, -1);
-        builder.add(CURRENT_CRAVING, "");
-        builder.add(TIMES_FED, 0);
-        builder.add(IS_SITTING, false);
-        builder.add(IS_STAYING, false);
-        builder.add(STAYING_POS, this.getBlockPos());
-        builder.add(VARIANT, RedPandaVariant.FLUFF.getId());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(ANIMATION_STATE, RedPandaEntityAnimationState.IDLING.getIndex());
+        builder.define(ANIMATION_REVISION, 0);
+        builder.define(ANIMATION_START, -1L);
+        builder.define(IS_SLEEPING, false);
+        builder.define(IS_Y_POSING, false);
+        builder.define(Y_POSE_DURATION, 0);
+        builder.define(Y_POSE_TICKER, 0);
+        builder.define(SLEEP_TIMER, 0);
+        builder.define(SLEEP_TRACKER, 0);
+        builder.define(PARTNER_ID, -1);
+        builder.define(CURRENT_CRAVING, "");
+        builder.define(TIMES_FED, 0);
+        builder.define(IS_SITTING, false);
+        builder.define(IS_STAYING, false);
+        builder.define(STAYING_POS, this.blockPosition());
+        builder.define(VARIANT, RedPandaVariant.FLUFF.getId());
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData entityData) {
         this.setRandomCraving();
-        this.setStayingPos(this.getBlockPos());
+        this.setStayingPos(this.blockPosition());
         this.setStaying(false);
         this.setVariant(RedPandaVariant.getRandom());
 
-        return super.initialize(world, difficulty, spawnReason, entityData);
+        return super.finalizeSpawn(world, difficulty, spawnReason, entityData);
     }
 
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.setIsSleeping(nbt.getBoolean("IsSleeping"));
-        this.setSleepTimer(nbt.getInt("SleepTimer"));
-        this.setSleepTracker(nbt.getInt("SleepTracker"));
-        this.setSit(nbt.getBoolean("IsSitting"));
-        this.setTimesFed(nbt.getInt("TimesFed"));
-        this.setYPoseDuration(nbt.getInt("YPoseDuration"));
-        this.setCurrentCraving(Registries.ITEM.get(Identifier.tryParse(nbt.getString("CurrentCraving"))));
-        this.setVariant(RedPandaVariant.fromId(nbt.getString("Variant")));
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.setIsSleeping(nbt.getBooleanOr("IsSleeping", false));
+        this.setSleepTimer(nbt.getIntOr("SleepTimer", 0));
+        this.setSleepTracker(nbt.getIntOr("SleepTracker", 0));
+        this.setSit(nbt.getBooleanOr("IsSitting", false));
+        this.setTimesFed(nbt.getIntOr("TimesFed", 0));
+        this.setYPoseDuration(nbt.getIntOr("YPoseDuration", 0));
+        this.setCurrentCraving(BuiltInRegistries.ITEM.getValue(Identifier.tryParse(nbt.getStringOr("CurrentCraving", ""))));
+        this.setVariant(RedPandaVariant.fromId(nbt.getStringOr("Variant", "")));
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putBoolean("IsSleeping", this.isSleeping());
         nbt.putInt("SleepTimer", this.getSleepTimer());
         nbt.putInt("SleepTracker", this.getSleepTracker());
@@ -155,18 +174,18 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
         nbt.putString("Variant", this.getTypeVariant());
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.RED_PANDAS_SPAWN_ON);
+    public static boolean checkAnimalSpawnRules(EntityType<? extends Animal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos.below()).is(ModBlockTags.RED_PANDAS_SPAWN_ON);
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentAnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 12.0D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.18f)
-                .add(EntityAttributes.GENERIC_ATTACK_SPEED, 0.6f)
-                .add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.15f)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2.5f)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    public static AttributeSupplier.Builder setAttributes() {
+        return ParentAnimalEntity.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 12.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.18f)
+                .add(Attributes.ATTACK_SPEED, 0.6f)
+                .add(Attributes.ATTACK_KNOCKBACK, 0.15f)
+                .add(Attributes.ATTACK_DAMAGE, 2.5f)
+                .add(Attributes.FOLLOW_RANGE, 16.0f);
     }
 
     public boolean canBeChallenged() {
@@ -174,13 +193,13 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
     }
 
     @Override
-    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        RedPandaEntity redPandaEntity = ModEntityTypes.RED_PANDA.get().create(world);
+    public @Nullable AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
+        RedPandaEntity redPandaEntity = ModEntityTypes.RED_PANDA.get().create(world, EntitySpawnReason.BREEDING);
 
         if (redPandaEntity != null) {
-            if (this.isTamed()) {
-                redPandaEntity.setOwnerUuid(this.getOwnerUuid());
-                redPandaEntity.setTamed(true, true);
+            if (this.isTame()) {
+                redPandaEntity.setOwnerReference(this.getOwnerReference());
+                redPandaEntity.setTame(true, true);
             } else {
                 redPandaEntity.setRandomCraving();
             }
@@ -196,7 +215,7 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
     }
 
     @Override
-    public boolean damage(DamageSource source, float amount) {
+    public boolean hurtServer(ServerLevel serverLevel, DamageSource source, float amount) {
         if (this.getSleepState()) {
             this.setSleepTimer(0);
             this.setSleepTracker(0);
@@ -204,23 +223,23 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
             this.startState(RedPandaEntityAnimationState.IDLING);
         }
 
-        return super.damage(source, amount);
+        return super.hurtServer(serverLevel, source, amount);
     }
 
     public Item getCurrentCraving() {
-        return Registries.ITEM.get(Identifier.tryParse(this.dataTracker.get(CURRENT_CRAVING)));
+        return BuiltInRegistries.ITEM.getValue(Identifier.tryParse(this.entityData.get(CURRENT_CRAVING)));
     }
 
     public void setCurrentCraving(Item currentCraving) {
-        this.dataTracker.set(CURRENT_CRAVING, currentCraving.toString());
+        this.entityData.set(CURRENT_CRAVING, currentCraving.toString());
     }
 
     public int getPartnerID() {
-        return this.dataTracker.get(PARTNER_ID);
+        return this.entityData.get(PARTNER_ID);
     }
 
     public void setPartnerID(int partnerID) {
-        this.dataTracker.set(PARTNER_ID, partnerID);
+        this.entityData.set(PARTNER_ID, partnerID);
     }
 
     public boolean getSleepState() {
@@ -228,27 +247,27 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
     }
 
     public int getSleepTimer() {
-        return this.dataTracker.get(SLEEP_TIMER);
+        return this.entityData.get(SLEEP_TIMER);
     }
 
     public void setSleepTimer(int sleepTimer) {
-        this.dataTracker.set(SLEEP_TIMER, sleepTimer);
+        this.entityData.set(SLEEP_TIMER, sleepTimer);
     }
 
     public int getSleepTracker() {
-        return this.dataTracker.get(SLEEP_TRACKER);
+        return this.entityData.get(SLEEP_TRACKER);
     }
 
     public void setSleepTracker(int sleepTracker) {
-        this.dataTracker.set(SLEEP_TRACKER, sleepTracker);
+        this.entityData.set(SLEEP_TRACKER, sleepTracker);
     }
 
     public BlockPos getStayingPos() {
-        return this.dataTracker.get(STAYING_POS);
+        return this.entityData.get(STAYING_POS);
     }
 
     public void setStayingPos(BlockPos stayingPos) {
-        this.dataTracker.set(STAYING_POS, stayingPos);
+        this.entityData.set(STAYING_POS, stayingPos);
     }
 
     @Override
@@ -258,15 +277,15 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
     }
 
     public int getTimesFed() {
-        return this.dataTracker.get(TIMES_FED);
+        return this.entityData.get(TIMES_FED);
     }
 
     public void setTimesFed(int timesFed) {
-        this.dataTracker.set(TIMES_FED, timesFed);
+        this.entityData.set(TIMES_FED, timesFed);
     }
 
     public String getTypeVariant() {
-        return this.dataTracker.get(VARIANT);
+        return this.entityData.get(VARIANT);
     }
 
     public RedPandaVariant getVariant() {
@@ -274,50 +293,49 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
     }
 
     public void setVariant(RedPandaVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId());
+        this.entityData.set(VARIANT, variant.getId());
     }
 
     public int getYPoseDuration() {
-        return this.dataTracker.get(Y_POSE_DURATION);
+        return this.entityData.get(Y_POSE_DURATION);
     }
 
     public void setYPoseDuration(int yPoseDuration) {
-        this.dataTracker.set(Y_POSE_DURATION, yPoseDuration);
+        this.entityData.set(Y_POSE_DURATION, yPoseDuration);
     }
 
     public int getYPoseTicker() {
-        return this.dataTracker.get(Y_POSE_TICKER);
+        return this.entityData.get(Y_POSE_TICKER);
     }
 
     public void setYPoseTicker(int yPoseTicker) {
-        this.dataTracker.set(Y_POSE_TICKER, yPoseTicker);
+        this.entityData.set(Y_POSE_TICKER, yPoseTicker);
     }
 
     @Override
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack heldItem = player.getStackInHand(hand);
-        World world = this.getWorld();
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack heldItem = player.getItemInHand(hand);
+        Level world = this.level();
 
-        if (this.isSleeping()) return ActionResult.PASS;
+        if (this.isSleeping()) return InteractionResult.PASS;
 
-        if (this.isTamed() && this.getOwner() == player && player.shouldCancelInteraction()) {
-            if (world.isClient) return ActionResult.CONSUME;
+        if (this.isTame() && this.getOwner() == player && player.isSecondaryUseActive()) {
+            if (world.isClientSide()) return InteractionResult.CONSUME;
             boolean staying = !this.isStaying();
 
             this.setStaying(staying);
-            if (staying) this.setStayingPos(this.getBlockPos());
+            if (staying) this.setStayingPos(this.blockPosition());
 
-            player.sendMessage(
-                    Text.translatable("translation.clutterbestiary.red_panda.name", this.getName()).formatted(Formatting.BLUE)
-                            .append(Text.translatable(staying ? "translation.clutterbestiary.red_panda.is_staying" : "translation.clutterbestiary.red_panda.not_staying")),
-                    true
+            player.sendOverlayMessage(
+                    Component.translatable("translation.clutterbestiary.red_panda.name", this.getName()).withStyle(ChatFormatting.BLUE)
+                            .append(Component.translatable(staying ? "translation.clutterbestiary.red_panda.is_staying" : "translation.clutterbestiary.red_panda.not_staying"))
             );
 
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        if (this.isTamed() && this.getOwner() == player && !TAMING_INGREDIENT.test(heldItem) && !BREEDING_INGREDIENT.test(heldItem) && !player.shouldCancelInteraction()) {
-            if (!world.isClient) {
+        if (this.isTame() && this.getOwner() == player && !TAMING_INGREDIENT.test(heldItem) && !BREEDING_INGREDIENT.test(heldItem) && !player.isSecondaryUseActive()) {
+            if (!world.isClientSide()) {
                 this.setSit(!this.isSat());
                 if (this.isSat()) {
                     this.startState(RedPandaEntityAnimationState.SIT_START);
@@ -326,87 +344,87 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
                 }
             }
 
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        if (!TAMING_INGREDIENT.test(heldItem) && !BREEDING_INGREDIENT.test(heldItem) && !player.shouldCancelInteraction()) {
-            if (!world.isClient) {
-                player.sendMessage(
-                        Text.translatable("translation.clutterbestiary.red_panda.name", this.getName()).formatted(Formatting.BLUE)
-                                .append(Text.translatable("translation.clutterbestiary.red_panda.craving").formatted(Formatting.BLUE))
-                                .append(Text.translatable(this.getCurrentCraving().getTranslationKey()).formatted(Formatting.WHITE)), true
+        if (!TAMING_INGREDIENT.test(heldItem) && !BREEDING_INGREDIENT.test(heldItem) && !player.isSecondaryUseActive()) {
+            if (!world.isClientSide()) {
+                player.sendOverlayMessage(
+                        Component.translatable("translation.clutterbestiary.red_panda.name", this.getName()).withStyle(ChatFormatting.BLUE)
+                                .append(Component.translatable("translation.clutterbestiary.red_panda.craving").withStyle(ChatFormatting.BLUE))
+                                .append(Component.translatable(this.getCurrentCraving().getDescriptionId()).withStyle(ChatFormatting.WHITE))
                 );
             }
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         } else if (heldItem.getItem() == this.getCurrentCraving()) {
             if (this.getTimesFed() >= 3 || this.getTimesFed() < 0) {
-                return ActionResult.PASS;
+                return InteractionResult.PASS;
             } else {
-                if (world.isClient) return ActionResult.CONSUME;
+                if (world.isClientSide()) return InteractionResult.CONSUME;
                 this.setTimesFed(this.getTimesFed() + 1);
-                heldItem.decrementUnlessCreative(1, player);
+                heldItem.consume(1, player);
 
                 if (this.getTimesFed() == 3) {
                     this.doTame(player);
                 } else {
-                    this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_VILLAGER_HAPPY_PARTICLES);
-                    this.playSound(SoundEvents.ENTITY_CAT_EAT);
+                    this.level().broadcastEntityEvent(this, EntityEvent.VILLAGER_HAPPY);
+                    this.makeSound(SoundEvents.CAT_SOUNDS.get(CatSoundVariants.SoundSet.CLASSIC).adultSounds().eatSound().value());
                     this.setRandomCraving();
                 }
-                return ActionResult.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
         }
 
-        return super.interactMob(player, hand);
+        return super.mobInteract(player, hand);
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return BREEDING_INGREDIENT.test(stack);
     }
 
     public boolean isSat() {
-        return this.dataTracker.get(IS_SITTING);
+        return this.entityData.get(IS_SITTING);
     }
 
     public boolean isSleeping() {
-        return this.dataTracker.get(IS_SLEEPING);
+        return this.entityData.get(IS_SLEEPING);
     }
 
     public boolean isStaying() {
-        return this.dataTracker.get(IS_STAYING);
+        return this.entityData.get(IS_STAYING);
     }
 
     public void setStaying(boolean isStaying) {
-        this.dataTracker.set(IS_STAYING, isStaying);
+        this.entityData.set(IS_STAYING, isStaying);
     }
 
     public boolean isYPosing() {
-        return this.dataTracker.get(IS_Y_POSING);
+        return this.entityData.get(IS_Y_POSING);
     }
 
-    public void onDeath(DamageSource damageSource) {
+    public void die(DamageSource damageSource) {
         this.startState(RedPandaEntityAnimationState.IDLING);
-        super.onDeath(damageSource);
+        super.die(damageSource);
     }
 
     @Override
-    public void onTrackedDataSet(TrackedData<?> data) {
-        if (ANIMATION_STATE.equals(data)) this.calculateDimensions();
-        super.onTrackedDataSet(data);
+    public void onSyncedDataUpdated(EntityDataAccessor<?> data) {
+        if (ANIMATION_STATE.equals(data)) this.refreshDimensions();
+        super.onSyncedDataUpdated(data);
     }
 
     public void setIsSleeping(boolean isSleeping) {
-        this.dataTracker.set(IS_SLEEPING, isSleeping);
+        this.entityData.set(IS_SLEEPING, isSleeping);
     }
 
     public void setIsYPosing(boolean yPosing) {
-        this.dataTracker.set(IS_Y_POSING, yPosing);
+        this.entityData.set(IS_Y_POSING, yPosing);
     }
 
     public void setSit(boolean sitting) {
-        super.setSitting(sitting);
-        this.dataTracker.set(IS_SITTING, sitting);
+        super.setOrderedToSit(sitting);
+        this.entityData.set(IS_SITTING, sitting);
     }
 
     private void setupAnimationController() {
@@ -429,7 +447,7 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
     public boolean shouldTryTeleportToOwner() {
         if (this.isStaying()) return false;
         LivingEntity livingEntity = this.getOwner();
-        return livingEntity != null && this.squaredDistanceTo(this.getOwner()) >= 216.0;
+        return livingEntity != null && this.distanceToSqr(this.getOwner()) >= 216.0;
     }
 
     @Override
@@ -440,15 +458,15 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
     @Override
     public void tick() {
         super.tick();
-        World world = this.getWorld();
+        Level world = this.level();
 
-        if (!world.isClient) {
+        if (!world.isClientSide()) {
             if (this.getYPoseDuration() <= 0) this.setIsYPosing(false);
 
             if (this.getSleepTimer() > 0) this.setSleepTimer(this.getSleepTimer() - 1);
             this.setIsSleeping(this.getSleepTimer() > 0);
 
-            if ((!this.isTamed() && !this.isStaying()) && (world.isDay() ? random.nextInt(3000) == 0 : random.nextInt(9000) == 0) && !this.isSleeping() && this.getSleepTimer() <= 0 && this.getPartnerID() == -1) {
+            if ((!this.isTame() && !this.isStaying()) && (world.isBrightOutside() ? random.nextInt(3000) == 0 : random.nextInt(9000) == 0) && !this.isSleeping() && this.getSleepTimer() <= 0 && this.getPartnerID() == -1) {
                 int sleepDuration = (30 + random.nextInt(18) * 5) * 20;
 
                 this.setSleepTimer(sleepDuration);
@@ -459,38 +477,38 @@ public class RedPandaEntity extends ParentTameableEntity implements HandledEntit
 
         this.animationController.tick();
 
-        if (this.getWorld().isClient) {
+        if (this.level().isClientSide()) {
             this.idleAnimations.tick(this, this.isAlive());
         }
     }
 
     @Override
-    protected int computeFallDamage(float fallDistance, float damageMultiplier) {
-        return (int) (super.computeFallDamage(fallDistance, damageMultiplier) * 0.5);
+    protected int calculateFallDamage(double fallDistance, float damageMultiplier) {
+        return (int) (super.calculateFallDamage(fallDistance, damageMultiplier) * 0.5);
     }
 
-    protected void updateLimbs(float v) {
+    protected void updateWalkAnimation(float v) {
         float f;
-        if (this.getPose() == EntityPose.STANDING) {
+        if (this.getPose() == Pose.STANDING) {
             f = Math.min(v * 6.0F, 1.0F);
         } else {
             f = 0.0F;
         }
 
-        this.limbAnimator.updateLimbs(f * 1.15f, 0.5F);
+        this.walkAnimation.update(f * 1.15f, 0.5F, 1.0F);
     }
 
-    private void doTame(PlayerEntity player) {
-        this.setOwner(player);
+    private void doTame(Player player) {
+        this.tame(player);
         ModAdvancements.grant(player, ModAdvancements.THREE_COURSE_MEAL);
         this.navigation.stop();
         this.setTarget(null);
         this.setSit(true);
-        this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
+        this.level().broadcastEntityEvent(this, EntityEvent.TAMING_SUCCEEDED);
     }
 
     private void setRandomCraving() {
-        var entries = Registries.ITEM.getEntryList(ModItemTags.RED_PANDA_CRAVINGS);
+        var entries = BuiltInRegistries.ITEM.get(ModItemTags.RED_PANDA_CRAVINGS);
         if (entries.isPresent()) {
             var tagList = entries.get();
             int randomFromTag = this.random.nextInt(tagList.size());

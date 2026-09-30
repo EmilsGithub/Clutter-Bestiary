@@ -1,27 +1,22 @@
 package net.emilsg.clutterbestiary.entity.client.render;
 
+import net.emilsg.clutterbestiary.entity.client.render.parent.BestiaryMobRenderer;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.emilsg.clutterbestiary.entity.client.layer.ModModelLayers;
 import net.emilsg.clutterbestiary.entity.client.model.DragonflyModel;
 import net.emilsg.clutterbestiary.entity.custom.DragonflyEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.MobEntityRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.Identifier;
 
-public class DragonflyRenderer extends MobEntityRenderer<DragonflyEntity, DragonflyModel<DragonflyEntity>> {
+public class DragonflyRenderer extends BestiaryMobRenderer<DragonflyEntity, DragonflyModel<DragonflyEntity>> {
 
-    public DragonflyRenderer(EntityRendererFactory.Context ctx) {
-        super(ctx, new DragonflyModel<>(ctx.getPart(ModModelLayers.DRAGONFLY)), 0.4f);
+    public DragonflyRenderer(EntityRendererProvider.Context ctx) {
+        super(ctx, new DragonflyModel<>(ctx.bakeLayer(ModModelLayers.DRAGONFLY)), 0.4f);
     }
 
     @Override
-    public Identifier getTexture(DragonflyEntity dragonflyEntity) {
+    public Identifier getTextureLocation(DragonflyEntity dragonflyEntity) {
         return dragonflyEntity.getVariant().getTextureLocation();
     }
 
-    @Override
-    public void render(DragonflyEntity dragonflyEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
-        super.render(dragonflyEntity, f, g, matrixStack, vertexConsumerProvider, i);
-    }
 }

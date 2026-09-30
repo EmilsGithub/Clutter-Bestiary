@@ -1,9 +1,9 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.EmberTortoiseEntity;
-import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 
-public class EmberTortoiseWanderAroundFarGoal extends WanderAroundFarGoal {
+public class EmberTortoiseWanderAroundFarGoal extends WaterAvoidingRandomStrollGoal {
     EmberTortoiseEntity emberTortoise;
 
     public EmberTortoiseWanderAroundFarGoal(EmberTortoiseEntity emberTortoise, double speed, float probability) {
@@ -12,8 +12,8 @@ public class EmberTortoiseWanderAroundFarGoal extends WanderAroundFarGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return !this.emberTortoise.isShielding() && super.canStart();
+    public boolean canUse() {
+        return !this.emberTortoise.isShielding() && super.canUse();
     }
 
     @Override

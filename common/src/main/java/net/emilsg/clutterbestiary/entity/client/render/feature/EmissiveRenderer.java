@@ -1,33 +1,31 @@
 package net.emilsg.clutterbestiary.entity.client.render.feature;
 
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.feature.FeatureRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRendererContext;
-import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.Identifier;
-
+import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.function.Function;
+import net.emilsg.clutterbestiary.entity.client.render.state.BestiaryRenderState;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.LivingEntity;
 
-public class EmissiveRenderer<E extends Entity, EM extends EntityModel<E>> extends FeatureRenderer<E, EM> {
+public class EmissiveRenderer<E extends LivingEntity, S extends BestiaryRenderState<E>, EM extends EntityModel<? super S>> extends RenderLayer<S, EM> {
     private final Function<E, Identifier> emissiveTextureProvider;
 
-    public EmissiveRenderer(FeatureRendererContext<E, EM> context, Function<E, Identifier> emissiveTextureProvider) {
+    public EmissiveRenderer(RenderLayerParent<S, EM> context, Function<E, Identifier> emissiveTextureProvider) {
         super(context);
         this.emissiveTextureProvider = emissiveTextureProvider;
     }
 
     @Override
-    public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, E entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
-        Identifier emissiveTexture = emissiveTextureProvider.apply(entity);
+    public void submit(PoseStack matrices, SubmitNodeCollector submitNodeCollector, int light, S state, float yRot, float xRot) {
+        if (state.entity == null) return;
+        Identifier emissiveTexture = emissiveTextureProvider.apply(state.entity);
         if (emissiveTexture == null) return;
-        RenderLayer emissiveLayer = RenderLayer.getEyes(emissiveTexture);
-        VertexConsumer vertexConsumer = vertexConsumers.getBuffer(emissiveLayer);
-        this.getContextModel().render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV);
+        submitNodeCollector.order(1).submitModel(this.getParentModel(), state, matrices, RenderTypes.eyes(emissiveTexture), light, OverlayTexture.NO_OVERLAY, state.outlineColor);
     }
 
 }

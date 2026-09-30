@@ -1,4 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.animation_handling.EntityAnimationController;
 import net.emilsg.clutterbestiary.animation_handling.HandledEntityAnimations;
@@ -11,41 +14,51 @@ import net.emilsg.clutterbestiary.entity.custom.goal.ChorusBeetleReturnFlowerGoa
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.util.ModAdvancements;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.control.FlightMoveControl;
-import net.minecraft.entity.ai.control.JumpControl;
-import net.minecraft.entity.ai.control.MoveControl;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.ai.pathing.BirdNavigation;
-import net.minecraft.entity.ai.pathing.EntityNavigation;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.RaycastContext;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.FlyingMoveControl;
+import net.minecraft.world.entity.ai.control.JumpControl;
+import net.minecraft.world.entity.ai.control.MoveControl;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -60,18 +73,18 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
     private static final double MAX_LANDING_ANIMATION_SPEED = 1.5;
     private static final double MAX_LANDING_ANIMATION_SPEED_HEIGHT = 8.0;
     private static final double GROUND_CHECK_DISTANCE = 32.0;
-    private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.CHORUS_FLOWER);
-    private static final TrackedData<Boolean> FLYING = DataTracker.registerData(ChorusBeetleEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Boolean> CARRYING_CHORUS_FLOWER = DataTracker.registerData(ChorusBeetleEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Integer> ANIMATION_STATE = DataTracker.registerData(ChorusBeetleEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Integer> ANIMATION_REVISION = DataTracker.registerData(ChorusBeetleEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Long> ANIMATION_START = DataTracker.registerData(ChorusBeetleEntity.class, TrackedDataHandlerRegistry.LONG);
+    private static final Ingredient BREEDING_INGREDIENT = Ingredient.of(Items.CHORUS_FLOWER);
+    private static final EntityDataAccessor<Boolean> FLYING = SynchedEntityData.defineId(ChorusBeetleEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> CARRYING_CHORUS_FLOWER = SynchedEntityData.defineId(ChorusBeetleEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> ANIMATION_STATE = SynchedEntityData.defineId(ChorusBeetleEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> ANIMATION_REVISION = SynchedEntityData.defineId(ChorusBeetleEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Long> ANIMATION_START = SynchedEntityData.defineId(ChorusBeetleEntity.class, EntityDataSerializers.LONG);
 
     public final AnimationState wingFlickAnimationState = new AnimationState();
     public final AnimationState mandibleNibbleAnimationState = new AnimationState();
 
-    private final EntityNavigation landNavigation;
-    private final EntityNavigation flightNavigation;
+    private final PathNavigation landNavigation;
+    private final PathNavigation flightNavigation;
     private final MoveControl landMoveControl;
     private final MoveControl flightMoveControl;
     private final EntityAnimationController<ChorusBeetleEntity, ChorusBeetleAnimationState> animationController = new EntityAnimationController<>(this, ChorusBeetleAnimationState.IDLING, ChorusBeetleAnimationState.class, ANIMATION_STATE, ANIMATION_REVISION, ANIMATION_START);
@@ -90,137 +103,137 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
     private int landingAnimationSpeedAge = Integer.MIN_VALUE;
     private double landingAnimationSpeed = MIN_LANDING_ANIMATION_SPEED;
 
-    public ChorusBeetleEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
+    public ChorusBeetleEntity(EntityType<? extends ParentAnimalEntity> entityType, Level world) {
         super(entityType, world);
         this.landNavigation = this.navigation;
         this.flightNavigation = this.createFlightNavigation(world);
         this.landMoveControl = this.moveControl;
-        this.flightMoveControl = new FlightMoveControl(this, 20, true);
+        this.flightMoveControl = new FlyingMoveControl(this, 20, true);
         this.jumpControl = new ChorusBeetleJumpControl(this);
         this.setupAnimationController();
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(FLYING, false);
-        builder.add(CARRYING_CHORUS_FLOWER, false);
-        builder.add(ANIMATION_STATE, ChorusBeetleAnimationState.IDLING.getIndex());
-        builder.add(ANIMATION_REVISION, 0);
-        builder.add(ANIMATION_START, -1L);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(FLYING, false);
+        builder.define(CARRYING_CHORUS_FLOWER, false);
+        builder.define(ANIMATION_STATE, ChorusBeetleAnimationState.IDLING.getIndex());
+        builder.define(ANIMATION_REVISION, 0);
+        builder.define(ANIMATION_START, -1L);
     }
 
     @Override
-    protected void updateLimbs(float v) {
+    protected void updateWalkAnimation(float v) {
         float f;
-        if (this.getPose() == EntityPose.STANDING) {
+        if (this.getPose() == Pose.STANDING) {
             f = Math.min(v * 6.0F, 1.0F);
         } else {
             f = 0.0F;
         }
 
-        this.limbAnimator.updateLimbs(f, 1.25F);
+        this.walkAnimation.update(f, 1.25F, 1.0F);
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.pendingChorusFlowerDrops = Math.max(0, nbt.getInt("PendingChorusFlowerDrops"));
-        this.flowerFetchRequested = nbt.getBoolean("FlowerFetchRequested");
-        this.flowerFetchCooldown = Math.max(0, nbt.getInt("FlowerFetchCooldown"));
-        this.flowerRequesterUuid = nbt.containsUuid("FlowerRequester") ? nbt.getUuid("FlowerRequester") : null;
-        this.dataTracker.set(CARRYING_CHORUS_FLOWER, this.pendingChorusFlowerDrops > 0);
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.pendingChorusFlowerDrops = Math.max(0, nbt.getIntOr("PendingChorusFlowerDrops", 0));
+        this.flowerFetchRequested = nbt.getBooleanOr("FlowerFetchRequested", false);
+        this.flowerFetchCooldown = Math.max(0, nbt.getIntOr("FlowerFetchCooldown", 0));
+        this.flowerRequesterUuid = nbt.read("FlowerRequester", UUIDUtil.CODEC).orElse(null);
+        this.entityData.set(CARRYING_CHORUS_FLOWER, this.pendingChorusFlowerDrops > 0);
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putInt("PendingChorusFlowerDrops", this.pendingChorusFlowerDrops);
         nbt.putBoolean("FlowerFetchRequested", this.flowerFetchRequested);
         nbt.putInt("FlowerFetchCooldown", this.flowerFetchCooldown);
-        if (this.flowerRequesterUuid != null) nbt.putUuid("FlowerRequester", this.flowerRequesterUuid);
+        if (this.flowerRequesterUuid != null) nbt.store("FlowerRequester", UUIDUtil.CODEC, this.flowerRequesterUuid);
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(2, new ChorusBeetleBreakFlowerGoal(this, 1.15, 12));
-        this.goalSelector.add(2, new ChorusBeetleReturnFlowerGoal(this, 1.15));
-        this.goalSelector.add(3, new AnimalMateGoal(this, 1.0));
-        this.goalSelector.add(4, new ChorusBeetleFlyAroundGoal(this, 1.0));
-        this.goalSelector.add(5, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(6, new FollowParentGoal(this, 1.0));
-        this.goalSelector.add(7, new WanderAroundFarGoal(this, 1.0));
-        this.goalSelector.add(8, new LookAtEntityGoal(this, PlayerEntity.class, 6.0f));
-        this.goalSelector.add(9, new LookAroundGoal(this));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
+        this.goalSelector.addGoal(2, new ChorusBeetleBreakFlowerGoal(this, 1.15, 12));
+        this.goalSelector.addGoal(2, new ChorusBeetleReturnFlowerGoal(this, 1.15));
+        this.goalSelector.addGoal(3, new BreedGoal(this, 1.0));
+        this.goalSelector.addGoal(4, new ChorusBeetleFlyAroundGoal(this, 1.0));
+        this.goalSelector.addGoal(5, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
+        this.goalSelector.addGoal(6, new FollowParentGoal(this, 1.0));
+        this.goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 1.0));
+        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 6.0f));
+        this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentAnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 8.0D)
-                .add(EntityAttributes.GENERIC_FLYING_SPEED, 0.35f)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.2f)
-                .add(EntityAttributes.GENERIC_STEP_HEIGHT, 1.0f)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    public static AttributeSupplier.Builder setAttributes() {
+        return ParentAnimalEntity.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 8.0D)
+                .add(Attributes.FLYING_SPEED, 0.35f)
+                .add(Attributes.MOVEMENT_SPEED, 0.2f)
+                .add(Attributes.STEP_HEIGHT, 1.0f)
+                .add(Attributes.FOLLOW_RANGE, 16.0f);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.CHORUS_BEETLES_SPAWN_ON);
+    public static boolean checkAnimalSpawnRules(EntityType<? extends Animal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos.below()).is(ModBlockTags.CHORUS_BEETLES_SPAWN_ON);
     }
 
     @Nullable
     @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.CHORUS_BEETLE.get().create(world);
+    public AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
+        return ModEntityTypes.CHORUS_BEETLE.get().create(world, EntitySpawnReason.BREEDING);
     }
 
     @Override
     protected @Nullable SoundEvent getAmbientSound() {
-        return SoundEvents.ENTITY_ENDERMITE_AMBIENT;
+        return SoundEvents.ENDERMITE_AMBIENT;
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.ENTITY_ENDERMITE_HURT;
+        return SoundEvents.ENDERMITE_HURT;
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return SoundEvents.ENTITY_ENDERMITE_DEATH;
+        return SoundEvents.ENDERMITE_DEATH;
     }
 
     @Override
-    public int getMinAmbientSoundDelay() {
+    public int getAmbientSoundInterval() {
         return 240;
     }
 
     @Override
-    public float getSoundPitch() {
-        return super.getSoundPitch() * 1.2f;
+    public float getVoicePitch() {
+        return super.getVoicePitch() * 1.2f;
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return BREEDING_INGREDIENT.test(stack);
     }
 
     @Override
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack stack = player.getStackInHand(hand);
-        if (!stack.isOf(Items.CHORUS_FRUIT)) return super.interactMob(player, hand);
-        if (this.getWorld().isClient) return ActionResult.CONSUME;
-        if (!this.canAcceptFlowerFetchRequest()) return ActionResult.PASS;
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!stack.is(Items.CHORUS_FRUIT)) return super.mobInteract(player, hand);
+        if (this.level().isClientSide()) return InteractionResult.CONSUME;
+        if (!this.canAcceptFlowerFetchRequest()) return InteractionResult.PASS;
 
-        stack.decrementUnlessCreative(1, player);
+        stack.consume(1, player);
         this.flowerFetchRequested = true;
         this.flowerFetchCooldown = FLOWER_FETCH_COOLDOWN_TICKS;
-        this.flowerRequesterUuid = player.getUuid();
-        if (this.getWorld() instanceof ServerWorld serverWorld) {
-            serverWorld.spawnParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + this.getHeight() * 0.5,
+        this.flowerRequesterUuid = player.getUUID();
+        if (this.level() instanceof ServerLevel serverWorld) {
+            serverWorld.sendParticles(ParticleTypes.HAPPY_VILLAGER, this.getX(), this.getY() + this.getBbHeight() * 0.5,
                     this.getZ(), 7, 0.25, 0.2, 0.25, 0.0);
         }
-        return ActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     public boolean hasFlowerFetchRequest() {
@@ -232,12 +245,12 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
     }
 
     @Nullable
-    public PlayerEntity getFlowerRequester() {
-        return this.flowerRequesterUuid == null ? null : this.getWorld().getPlayerByUuid(this.flowerRequesterUuid);
+    public Player getFlowerRequester() {
+        return this.flowerRequesterUuid == null ? null : this.level().getPlayerByUUID(this.flowerRequesterUuid);
     }
 
     public boolean isCarryingChorusFlower() {
-        return this.dataTracker.get(CARRYING_CHORUS_FLOWER);
+        return this.entityData.get(CARRYING_CHORUS_FLOWER);
     }
 
     public void consumeFlowerFetchRequest() {
@@ -249,7 +262,7 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
     }
 
     public boolean isFlying() {
-        return this.dataTracker.get(FLYING);
+        return this.entityData.get(FLYING);
     }
 
     public boolean isLanding() {
@@ -268,7 +281,7 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
         this.postBreakHoverTicks = 0;
         this.landingDriftX = 0.0;
         this.landingDriftZ = 0.0;
-        this.dataTracker.set(FLYING, flying);
+        this.entityData.set(FLYING, flying);
         this.setNoGravity(false);
         this.navigation = flying ? this.flightNavigation : this.landNavigation;
         this.moveControl = flying ? this.flightMoveControl : this.landMoveControl;
@@ -285,7 +298,7 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
         double driftAngle = this.getRandom().nextDouble() * Math.PI * 2.0;
         this.landingDriftX = Math.cos(driftAngle) * LANDING_DRIFT_SPEED;
         this.landingDriftZ = Math.sin(driftAngle) * LANDING_DRIFT_SPEED;
-        this.setVelocity(this.landingDriftX, -LANDING_DESCENT_SPEED, this.landingDriftZ);
+        this.setDeltaMovement(this.landingDriftX, -LANDING_DESCENT_SPEED, this.landingDriftZ);
     }
 
     public void beginPostBreakHover(int hoverTicks) {
@@ -304,24 +317,24 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
         this.postBreakHoverTicks = hoverTicks;
         this.setNoGravity(true);
         this.moveControl = this.flightMoveControl;
-        this.setVelocity(0.0, 0.0, 0.0);
+        this.setDeltaMovement(0.0, 0.0, 0.0);
     }
 
     public void queueChorusFlowerDrop() {
         this.pendingChorusFlowerDrops++;
-        this.dataTracker.set(CARRYING_CHORUS_FLOWER, true);
+        this.entityData.set(CARRYING_CHORUS_FLOWER, true);
     }
 
     @Override
     public void tick() {
-        if (!this.getWorld().isClient) this.validateFlowerRequester();
+        if (!this.level().isClientSide()) this.validateFlowerRequester();
         super.tick();
-        if (!this.getWorld().isClient) {
+        if (!this.level().isClientSide()) {
             if (this.flowerFetchCooldown > 0) this.flowerFetchCooldown--;
             if (this.postBreakHoverTicks > 0) {
                 this.navigation.stop();
                 this.setNoGravity(true);
-                this.setVelocity(this.getVelocity().multiply(0.5, 0.0, 0.5));
+                this.setDeltaMovement(this.getDeltaMovement().multiply(0.5, 0.0, 0.5));
                 if (--this.postBreakHoverTicks == 0) {
                     if (this.isCarryingChorusFlower()) {
                         this.resumeFlying();
@@ -330,17 +343,17 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
                     }
                 }
             } else if (this.landing) {
-                if (this.isTouchingWater()) {
+                if (this.isInWater()) {
                     this.setFlying(false);
-                    this.setVelocity(Vec3d.ZERO);
+                    this.setDeltaMovement(Vec3.ZERO);
                 } else {
                     this.navigation.stop();
                     this.setNoGravity(true);
-                    this.setVelocity(this.landingDriftX, -LANDING_DESCENT_SPEED, this.landingDriftZ);
+                    this.setDeltaMovement(this.landingDriftX, -LANDING_DESCENT_SPEED, this.landingDriftZ);
                     this.fallDistance = 0.0f;
-                    if (this.isOnGround()) {
+                    if (this.onGround()) {
                         this.setFlying(false);
-                        this.setVelocity(Vec3d.ZERO);
+                        this.setDeltaMovement(Vec3.ZERO);
                         if (this.pendingChorusFlowerDrops == 0 && !this.flowerFetchRequested) this.flowerRequesterUuid = null;
                     }
                 }
@@ -350,7 +363,7 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
         }
 
         this.animationController.tick();
-        if (this.getWorld().isClient) this.idleAnimations.tick(this, this.isAlive());
+        if (this.level().isClientSide()) this.idleAnimations.tick(this, this.isAlive());
     }
 
     private void resumeFlying() {
@@ -358,20 +371,20 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
         this.setNoGravity(false);
         this.navigation = this.flightNavigation;
         this.moveControl = this.flightMoveControl;
-        this.setVelocity(0.0, 0.0, 0.0);
+        this.setDeltaMovement(0.0, 0.0, 0.0);
     }
 
     private void givePendingChorusFlowersToRequester() {
         if (this.pendingChorusFlowerDrops <= 0 || this.flowerRequesterUuid == null) return;
 
-        PlayerEntity player = this.getWorld().getPlayerByUuid(this.flowerRequesterUuid);
+        Player player = this.level().getPlayerByUUID(this.flowerRequesterUuid);
         if (player != null && this.getBoundingBox().intersects(player.getBoundingBox())
-                && player.giveItemStack(new ItemStack(Items.CHORUS_FLOWER, this.pendingChorusFlowerDrops))) {
-            this.playSound(SoundEvents.ENTITY_ITEM_PICKUP, 0.2f, 1.0f);
+                && player.addItem(new ItemStack(Items.CHORUS_FLOWER, this.pendingChorusFlowerDrops))) {
+            this.playSound(SoundEvents.ITEM_PICKUP, 0.2f, 1.0f);
             ModAdvancements.grant(player, ModAdvancements.SPECIAL_DELIVERY);
             this.pendingChorusFlowerDrops = 0;
             this.flowerRequesterUuid = null;
-            this.dataTracker.set(CARRYING_CHORUS_FLOWER, false);
+            this.entityData.set(CARRYING_CHORUS_FLOWER, false);
         }
     }
 
@@ -381,42 +394,42 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
             return;
         }
 
-        PlayerEntity player = this.getWorld().getPlayerByUuid(this.flowerRequesterUuid);
-        if (player == null || !player.isAlive() || this.squaredDistanceTo(player) > MAX_REQUESTER_DISTANCE_SQUARED) {
+        Player player = this.level().getPlayerByUUID(this.flowerRequesterUuid);
+        if (player == null || !player.isAlive() || this.distanceToSqr(player) > MAX_REQUESTER_DISTANCE_SQUARED) {
             this.clearFlowerFetchTask();
         }
     }
 
     private void clearFlowerFetchTask() {
-        if (this.pendingChorusFlowerDrops > 0 && !this.getWorld().isClient) {
-            this.dropStack(new ItemStack(Items.CHORUS_FLOWER, this.pendingChorusFlowerDrops));
+        if (this.pendingChorusFlowerDrops > 0 && !this.level().isClientSide()) {
+            this.spawnAtLocation((ServerLevel) this.level(), new ItemStack(Items.CHORUS_FLOWER, this.pendingChorusFlowerDrops));
         }
         this.flowerFetchRequested = false;
         this.pendingChorusFlowerDrops = 0;
         this.flowerRequesterUuid = null;
-        this.dataTracker.set(CARRYING_CHORUS_FLOWER, false);
+        this.entityData.set(CARRYING_CHORUS_FLOWER, false);
         if (this.isFlying() && !this.isLanding()) this.beginLanding();
     }
 
     public void cancelFlowerFetchTaskWithAnger() {
-        if (this.getWorld() instanceof ServerWorld serverWorld) {
-            double particleY = this.getY() + this.getHeight() * 0.5;
-            serverWorld.spawnParticles(ParticleTypes.ANGRY_VILLAGER, this.getX(), particleY, this.getZ(), 5, 0.3, 0.2, 0.3, 0.0);
-            serverWorld.spawnParticles(ParticleTypes.CLOUD, this.getX(), particleY, this.getZ(), 10, 0.3, 0.2, 0.3, 0.02);
+        if (this.level() instanceof ServerLevel serverWorld) {
+            double particleY = this.getY() + this.getBbHeight() * 0.5;
+            serverWorld.sendParticles(ParticleTypes.ANGRY_VILLAGER, this.getX(), particleY, this.getZ(), 5, 0.3, 0.2, 0.3, 0.0);
+            serverWorld.sendParticles(ParticleTypes.CLOUD, this.getX(), particleY, this.getZ(), 10, 0.3, 0.2, 0.3, 0.02);
         }
         this.clearFlowerFetchTask();
     }
 
     public double getLandingAnimationSpeed() {
-        if (this.landingAnimationSpeedAge == this.age) return this.landingAnimationSpeed;
+        if (this.landingAnimationSpeedAge == this.tickCount) return this.landingAnimationSpeed;
 
-        this.landingAnimationSpeedAge = this.age;
-        Vec3d start = this.getPos();
-        Vec3d end = start.add(0.0, -GROUND_CHECK_DISTANCE, 0.0);
-        BlockHitResult hit = this.getWorld().raycast(new RaycastContext(start, end, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, this));
-        double distance = hit.getType() == HitResult.Type.MISS ? GROUND_CHECK_DISTANCE : start.y - hit.getPos().y;
-        double heightFactor = MathHelper.clamp(distance / MAX_LANDING_ANIMATION_SPEED_HEIGHT, 0.0, 1.0);
-        this.landingAnimationSpeed = MathHelper.lerp(heightFactor, MIN_LANDING_ANIMATION_SPEED, MAX_LANDING_ANIMATION_SPEED);
+        this.landingAnimationSpeedAge = this.tickCount;
+        Vec3 start = this.position();
+        Vec3 end = start.add(0.0, -GROUND_CHECK_DISTANCE, 0.0);
+        BlockHitResult hit = this.level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        double distance = hit.getType() == HitResult.Type.MISS ? GROUND_CHECK_DISTANCE : start.y - hit.getLocation().y;
+        double heightFactor = Mth.clamp(distance / MAX_LANDING_ANIMATION_SPEED_HEIGHT, 0.0, 1.0);
+        this.landingAnimationSpeed = Mth.lerp(heightFactor, MIN_LANDING_ANIMATION_SPEED, MAX_LANDING_ANIMATION_SPEED);
         return this.landingAnimationSpeed;
     }
 
@@ -436,11 +449,11 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
     }
 
     private boolean isWalking() {
-        return !this.isFlying() && this.getVelocity().horizontalLengthSquared() > 1.0E-4;
+        return !this.isFlying() && this.getDeltaMovement().horizontalDistanceSqr() > 1.0E-4;
     }
 
     @Override
-    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+    public boolean causeFallDamage(double fallDistance, float damageMultiplier, DamageSource damageSource) {
         return false;
     }
 
@@ -449,16 +462,15 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
         return this.animationController;
     }
 
-    private EntityNavigation createFlightNavigation(World world) {
-        BirdNavigation navigation = new BirdNavigation(this, world);
-        navigation.setCanPathThroughDoors(false);
-        navigation.setCanSwim(false);
-        navigation.setCanEnterOpenDoors(true);
+    private PathNavigation createFlightNavigation(Level world) {
+        FlyingPathNavigation navigation = new FlyingPathNavigation(this, world);
+        navigation.setCanOpenDoors(false);
+        navigation.setCanFloat(false);
         return navigation;
     }
 
     @Override
-    public float getScaleFactor() {
+    public float getAgeScale() {
         return this.isBaby() ? 0.5f : 1.0f;
     }
 
@@ -472,10 +484,10 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
         }
 
         @Override
-        public void setActive() {
-            if (this.chorusBeetle.isTouchingWater() || this.chorusBeetle.isInLava()
-                    || this.chorusBeetle.isOnGround() && this.chorusBeetle.getMoveControl().getTargetY() - this.chorusBeetle.getY() > MIN_UPWARD_STEP) {
-                super.setActive();
+        public void jump() {
+            if (this.chorusBeetle.isInWater() || this.chorusBeetle.isInLava()
+                    || this.chorusBeetle.onGround() && this.chorusBeetle.getMoveControl().getWantedY() - this.chorusBeetle.getY() > MIN_UPWARD_STEP) {
+                super.jump();
             }
         }
     }

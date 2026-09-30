@@ -3,9 +3,8 @@ package net.emilsg.clutterbestiary.entity.variants;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.resources.Identifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -13,13 +12,13 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 public enum JellyfishVariant {
-    GREEN("green", Formatting.GREEN),
-    BLUE("blue", Formatting.BLUE),
-    PURPLE("purple", Formatting.DARK_PURPLE);
+    GREEN("green", ChatFormatting.GREEN),
+    BLUE("blue", ChatFormatting.BLUE),
+    PURPLE("purple", ChatFormatting.DARK_PURPLE);
 
     private static final Map<Identifier, JellyfishVariant> BY_ID =
             Arrays.stream(values()).collect(Collectors.toMap(
-                    variant -> Identifier.of(ClutterBestiary.MOD_ID, variant.getName()),
+                    variant -> Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, variant.getName()),
                     variant -> variant
             ));
     public static final Codec<JellyfishVariant> CODEC =
@@ -30,12 +29,12 @@ public enum JellyfishVariant {
                                 ? DataResult.success(variant)
                                 : DataResult.error(() -> "Unknown jellyfish variant: " + id);
                     },
-                    variant -> Identifier.of(ClutterBestiary.MOD_ID, variant.getName())
+                    variant -> Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, variant.getName())
             );
     private final String name;
-    private final Formatting colorFormatting;
+    private final ChatFormatting colorFormatting;
 
-    JellyfishVariant(String name, Formatting colorFormatting) {
+    JellyfishVariant(String name, ChatFormatting colorFormatting) {
         this.name = name;
         this.colorFormatting = colorFormatting;
     }
@@ -49,7 +48,7 @@ public enum JellyfishVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
-    public Formatting getColorFormatting() {
+    public ChatFormatting getColorFormatting() {
         return this.colorFormatting;
     }
 
@@ -62,6 +61,6 @@ public enum JellyfishVariant {
     }
 
     public Identifier getTextureLocation() {
-        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/jellyfish/" + getName() + "_jellyfish.png");
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/jellyfish/" + getName() + "_jellyfish.png");
     }
 }

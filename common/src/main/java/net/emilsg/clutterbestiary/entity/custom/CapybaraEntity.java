@@ -1,4 +1,6 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.animation_handling.AnimationPlayback;
 import net.emilsg.clutterbestiary.animation_handling.EntityAnimationController;
@@ -17,37 +19,44 @@ import net.emilsg.clutterbestiary.entity.custom.goal.CapybaraWanderGoal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
 import net.emilsg.clutterbestiary.util.ModAdvancements;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.FoodComponent;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.LocalDifficulty;
-import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -55,14 +64,14 @@ import java.util.List;
 public class CapybaraEntity extends ParentTameableEntity implements HandledEntityAnimations<CapybaraEntity, CapybaraEntityAnimationState> {
     private static final int LAY_DOWN_TICKS = 10;
     private static final int STAND_UP_TICKS = 10;
-    private static final TrackedData<Boolean> IS_SLEEPING = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Boolean> FORCE_SLEEPING = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Integer> SLEEPER = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Integer> ANIMATION_STATE = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Integer> ANIMATION_REVISION = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Long> ANIMATION_START = DataTracker.registerData(CapybaraEntity.class, TrackedDataHandlerRegistry.LONG);
+    private static final EntityDataAccessor<Boolean> IS_SLEEPING = SynchedEntityData.defineId(CapybaraEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> FORCE_SLEEPING = SynchedEntityData.defineId(CapybaraEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> SLEEPER = SynchedEntityData.defineId(CapybaraEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> ANIMATION_STATE = SynchedEntityData.defineId(CapybaraEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> ANIMATION_REVISION = SynchedEntityData.defineId(CapybaraEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Long> ANIMATION_START = SynchedEntityData.defineId(CapybaraEntity.class, EntityDataSerializers.LONG);
 
-    private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.MELON);
+    private static final Ingredient BREEDING_INGREDIENT = Ingredient.of(Items.MELON);
     private static final Item TAMING_ITEM = Items.MELON_SLICE;
     public final AnimationState earTwitchAnimationStateOne = new AnimationState();
     public final AnimationState earTwitchAnimationStateTwo = new AnimationState();
@@ -74,93 +83,93 @@ public class CapybaraEntity extends ParentTameableEntity implements HandledEntit
             .add(1, earTwitchAnimationStateOne)
             .add(1, earTwitchAnimationStateTwo);
 
-    public CapybaraEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
+    public CapybaraEntity(EntityType<? extends ParentTameableEntity> entityType, Level world) {
         super(entityType, world);
-        this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.WATER, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.WATER_BORDER, 16.0F);
+        this.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, -1.0F);
+        this.setPathfindingMalus(PathType.WATER, -1.0F);
+        this.setPathfindingMalus(PathType.WATER_BORDER, 16.0F);
         this.setupAnimationController();
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
-        int sleeperType = random.nextBetween(0, 1);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData entityData) {
+        int sleeperType = random.nextIntBetweenInclusive(0, 1);
         this.setSleeperType(sleeperType);
-        return super.initialize(world, difficulty, spawnReason, entityData);
+        return super.finalizeSpawn(world, difficulty, spawnReason, entityData);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(IS_SLEEPING, false);
-        builder.add(FORCE_SLEEPING, false);
-        builder.add(SLEEPER, 0);
-        builder.add(ANIMATION_STATE, CapybaraEntityAnimationState.IDLING.getIndex());
-        builder.add(ANIMATION_REVISION, 0);
-        builder.add(ANIMATION_START, -1L);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(IS_SLEEPING, false);
+        builder.define(FORCE_SLEEPING, false);
+        builder.define(SLEEPER, 0);
+        builder.define(ANIMATION_STATE, CapybaraEntityAnimationState.IDLING.getIndex());
+        builder.define(ANIMATION_REVISION, 0);
+        builder.define(ANIMATION_START, -1L);
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(1, new SwimGoal(this));
-        this.goalSelector.add(2, new CapybaraSitGoal(this));
-        this.goalSelector.add(3, new CapybaraEscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(4, new CapybaraMateGoal(this, 1));
-        this.goalSelector.add(5, new CapybaraFollowOwnerGoal(this, 1.2, 10.0F, 2.0F));
-        this.goalSelector.add(6, new CapybaraTemptGoal(this, 1.2, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(7, new FollowParentGoal(this, 1.2));
-        this.goalSelector.add(8, new CapybaraWanderGoal(this, 1.0, 0.3f));
-        this.goalSelector.add(9, new CapybaraLookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(10, new CapybaraLookAroundGoal(this));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(1, new FloatGoal(this));
+        this.goalSelector.addGoal(2, new CapybaraSitGoal(this));
+        this.goalSelector.addGoal(3, new CapybaraEscapeDangerGoal(this, 1.25));
+        this.goalSelector.addGoal(4, new CapybaraMateGoal(this, 1));
+        this.goalSelector.addGoal(5, new CapybaraFollowOwnerGoal(this, 1.2, 10.0F, 2.0F));
+        this.goalSelector.addGoal(6, new CapybaraTemptGoal(this, 1.2, BREEDING_INGREDIENT, false));
+        this.goalSelector.addGoal(7, new FollowParentGoal(this, 1.2));
+        this.goalSelector.addGoal(8, new CapybaraWanderGoal(this, 1.0, 0.3f));
+        this.goalSelector.addGoal(9, new CapybaraLookAtEntityGoal(this, Player.class, 6.0F));
+        this.goalSelector.addGoal(10, new CapybaraLookAroundGoal(this));
     }
 
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.setIsSleeping(nbt.getBoolean("IsSleeping"));
-        this.setIsForceSleeping(nbt.getBoolean("IsForceSleeping"));
-        this.setSleeperType(nbt.getInt("Sleeper"));
-        if (!this.isTamed()) this.setIsForceSleeping(false);
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.setIsSleeping(nbt.getBooleanOr("IsSleeping", false));
+        this.setIsForceSleeping(nbt.getBooleanOr("IsForceSleeping", false));
+        this.setSleeperType(nbt.getIntOr("Sleeper", 0));
+        if (!this.isTame()) this.setIsForceSleeping(false);
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putBoolean("IsSleeping", this.isSleeping());
         nbt.putBoolean("IsForceSleeping", this.isForceSleeping());
         nbt.putInt("Sleeper", this.sleeperType());
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return AnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 10.0D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.225f)
-                .add(EntityAttributes.GENERIC_ATTACK_SPEED, 1.0f)
-                .add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.1f)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 3.0f)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    public static AttributeSupplier.Builder setAttributes() {
+        return Animal.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 10.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.225f)
+                .add(Attributes.ATTACK_SPEED, 1.0f)
+                .add(Attributes.ATTACK_KNOCKBACK, 0.1f)
+                .add(Attributes.ATTACK_DAMAGE, 3.0f)
+                .add(Attributes.FOLLOW_RANGE, 16.0f);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.CAPYBARAS_SPAWN_ON);
+    public static boolean checkAnimalSpawnRules(EntityType<? extends Animal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos.below()).is(ModBlockTags.CAPYBARAS_SPAWN_ON);
     }
 
-    public boolean canEat() {
-        return super.canEat() && !this.isSleeping();
+    public boolean canFallInLove() {
+        return super.canFallInLove() && !this.isSleeping();
     }
 
     @Nullable
     @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.CAPYBARA.get().create(world);
+    public AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
+        return ModEntityTypes.CAPYBARA.get().create(world, EntitySpawnReason.BREEDING);
     }
 
     @Override
-    public boolean damage(DamageSource source, float amount) {
-        if (source.getSource() instanceof ProjectileEntity projectile && this.isSleeping()) {
-            if (!this.getWorld().isClient) projectile.setVelocity(projectile.getVelocity().multiply(-1));
+    public boolean hurtServer(ServerLevel serverLevel, DamageSource source, float amount) {
+        if (source.getDirectEntity() instanceof Projectile projectile && this.isSleeping()) {
+            if (!this.level().isClientSide()) projectile.setDeltaMovement(projectile.getDeltaMovement().scale(-1));
             return false;
         }
 
-        return super.damage(source, amount);
+        return super.hurtServer(serverLevel, source, amount);
     }
 
     @Override
@@ -169,15 +178,15 @@ public class CapybaraEntity extends ParentTameableEntity implements HandledEntit
     }
 
     public void healNearbyEntities(Entity centerEntity, double radius) {
-        if (this.getWorld().isClient) return;
+        if (this.level().isClientSide()) return;
         if (random.nextInt(1000) != 0) return;
 
-        Box area = new Box(
+        AABB area = new AABB(
                 centerEntity.getX() - radius, centerEntity.getY() - radius, centerEntity.getZ() - radius,
                 centerEntity.getX() + radius, centerEntity.getY() + radius, centerEntity.getZ() + radius
         );
 
-        List<LivingEntity> nearbyEntities = centerEntity.getWorld().getEntitiesByClass(LivingEntity.class, area, e -> e != centerEntity);
+        List<LivingEntity> nearbyEntities = centerEntity.level().getEntitiesOfClass(LivingEntity.class, area, e -> e != centerEntity);
 
         for (LivingEntity entity : nearbyEntities) {
             if (entity.getHealth() < entity.getMaxHealth()) {
@@ -186,93 +195,93 @@ public class CapybaraEntity extends ParentTameableEntity implements HandledEntit
         }
     }
 
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack stackInHand = player.getStackInHand(hand);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stackInHand = player.getItemInHand(hand);
         Item item = stackInHand.getItem();
 
         Item itemForTaming = this.getTamingItem();
 
         if (item == itemForTaming && this.getHealth() < this.getMaxHealth()) {
-            if (this.getWorld().isClient) return ActionResult.CONSUME;
-            if (!player.getAbilities().creativeMode) {
-                stackInHand.decrement(1);
+            if (this.level().isClientSide()) return InteractionResult.CONSUME;
+            if (!player.getAbilities().instabuild) {
+                stackInHand.shrink(1);
             }
 
-            FoodComponent foodComponent = stackInHand.get(DataComponentTypes.FOOD);
+            FoodProperties foodComponent = stackInHand.get(DataComponents.FOOD);
             float nutrition = foodComponent != null ? (float) foodComponent.nutrition() : 1.0F;
             this.heal(2.0F * nutrition);
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        if (item == itemForTaming && !isTamed()) {
-            this.playSound(SoundEvents.ENTITY_HORSE_EAT, 1.0F, 1.25F);
-            if (this.getWorld().isClient()) {
-                return ActionResult.CONSUME;
+        if (item == itemForTaming && !isTame()) {
+            this.playSound(SoundEvents.HORSE_EAT, 1.0F, 1.25F);
+            if (this.level().isClientSide()) {
+                return InteractionResult.CONSUME;
             } else {
-                if (!player.getAbilities().creativeMode) {
-                    stackInHand.decrement(1);
+                if (!player.getAbilities().instabuild) {
+                    stackInHand.shrink(1);
                 }
 
-                if (this.random.nextInt(3) == 0 && !this.getWorld().isClient()) {
-                    super.setOwner(player);
+                if (this.random.nextInt(3) == 0 && !this.level().isClientSide()) {
+                    super.tame(player);
                     ModAdvancements.grant(player, ModAdvancements.MELON_FRIENDS);
-                    this.navigation.recalculatePath();
+                    this.navigation.recomputePath();
                     this.setHealth(this.getMaxHealth());
                     this.setTarget(null);
-                    this.setTamed(true, true);
-                    this.getWorld().sendEntityStatus(this, (byte) 7);
+                    this.setTame(true, true);
+                    this.level().broadcastEntityEvent(this, (byte) 7);
                 } else {
-                    this.getWorld().sendEntityStatus(this, (byte) 6);
+                    this.level().broadcastEntityEvent(this, (byte) 6);
                 }
 
-                return ActionResult.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
         }
 
-        if (isTamed() && isOwner(player) && hand == Hand.MAIN_HAND
-                && !(stackInHand.isOf(Items.MELON_SLICE)) && !(stackInHand.isOf(Items.MELON))) {
+        if (isTame() && isOwnedBy(player) && hand == InteractionHand.MAIN_HAND
+                && !(stackInHand.is(Items.MELON_SLICE)) && !(stackInHand.is(Items.MELON))) {
             boolean next = !this.isForceSleeping();
             this.setIsForceSleeping(next);
             this.setIsSleeping(next);
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
         if (stackInHand.getItem() == itemForTaming) {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
 
-        return super.interactMob(player, hand);
+        return super.mobInteract(player, hand);
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return BREEDING_INGREDIENT.test(stack);
     }
 
     public boolean isForceSleeping() {
-        return this.dataTracker.get(FORCE_SLEEPING);
+        return this.entityData.get(FORCE_SLEEPING);
     }
 
     public boolean isSleeping() {
-        return this.dataTracker.get(IS_SLEEPING);
+        return this.entityData.get(IS_SLEEPING);
     }
 
-    public void onDeath(DamageSource damageSource) {
+    public void die(DamageSource damageSource) {
         this.startState(CapybaraEntityAnimationState.IDLING);
-        super.onDeath(damageSource);
+        super.die(damageSource);
     }
 
     public void setIsForceSleeping(boolean isForceSleeping) {
-        if (!this.isTamed()) isForceSleeping = false;
-        this.dataTracker.set(FORCE_SLEEPING, isForceSleeping);
+        if (!this.isTame()) isForceSleeping = false;
+        this.entityData.set(FORCE_SLEEPING, isForceSleeping);
     }
 
     public void setIsSleeping(boolean isSleeping) {
-        this.dataTracker.set(IS_SLEEPING, isSleeping);
+        this.entityData.set(IS_SLEEPING, isSleeping);
     }
 
     public void setSleeperType(int sleeperType) {
-        this.dataTracker.set(SLEEPER, sleeperType);
+        this.entityData.set(SLEEPER, sleeperType);
     }
 
     private void setupAnimationController() {
@@ -285,7 +294,7 @@ public class CapybaraEntity extends ParentTameableEntity implements HandledEntit
     }
 
     public int sleeperType() {
-        return this.dataTracker.get(SLEEPER);
+        return this.entityData.get(SLEEPER);
     }
 
     @Override
@@ -298,18 +307,18 @@ public class CapybaraEntity extends ParentTameableEntity implements HandledEntit
         super.tick();
         this.animationController.tick();
         this.idleAnimations.tick(this, this.isAlive());
-        AnimationPlayback.updateLoop(this, this.swimAnimationState, this.isAlive() && this.isTouchingWater());
+        AnimationPlayback.updateLoop(this, this.swimAnimationState, this.isAlive() && this.isInWater());
     }
 
     @Override
-    public void tickMovement() {
-        super.tickMovement();
+    public void aiStep() {
+        super.aiStep();
 
-        if (!this.getWorld().isClient) {
-            boolean night = this.getWorld().isNight();
+        if (!this.level().isClientSide()) {
+            boolean night = this.level().isDarkOutside();
             boolean shouldSleep;
 
-            if (this.isTamed()) {
+            if (this.isTame()) {
                 shouldSleep = this.isForceSleeping();
             } else {
                 shouldSleep = night;
@@ -322,20 +331,20 @@ public class CapybaraEntity extends ParentTameableEntity implements HandledEntit
             }
         }
 
-        if (!this.getWorld().isClient && this.isSleeping()) {
+        if (!this.level().isClientSide() && this.isSleeping()) {
             this.healNearbyEntities(this, 4);
         }
     }
 
-    protected void updateLimbs(float v) {
+    protected void updateWalkAnimation(float v) {
         float f;
-        if (this.getPose() == EntityPose.STANDING) {
+        if (this.getPose() == Pose.STANDING) {
             f = Math.min(v * 6.0F, 1.0F);
         } else {
             f = 0.0F;
         }
 
-        this.limbAnimator.updateLimbs(f * 2f, 0.3F);
+        this.walkAnimation.update(f * 2f, 0.3F, 1.0F);
     }
 
 }

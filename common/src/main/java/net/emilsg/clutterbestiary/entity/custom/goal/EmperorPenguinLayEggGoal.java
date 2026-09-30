@@ -1,9 +1,9 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.EmperorPenguinEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class EmperorPenguinLayEggGoal extends GroundNestLayEggGoal<EmperorPenguinEntity> {
     public EmperorPenguinLayEggGoal(EmperorPenguinEntity emperorPenguinEntity, double speed, BlockState eggState) {
@@ -12,6 +12,6 @@ public class EmperorPenguinLayEggGoal extends GroundNestLayEggGoal<EmperorPengui
 
     @Override
     protected boolean isValidNestBlock(BlockState state) {
-        return state.isIn(BlockTags.ICE) || state.isOf(Blocks.SNOW_BLOCK) || state.isIn(BlockTags.DIRT);
+        return state.is(BlockTags.ICE) || state.is(Blocks.SNOW_BLOCK) || state.is(BlockTags.DIRT);
     }
 }

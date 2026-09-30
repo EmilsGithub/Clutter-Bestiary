@@ -3,14 +3,13 @@ package net.emilsg.clutterbestiary.sound;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
 import java.util.function.Supplier;
 
 public class ModSoundEvents {
-    private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(ClutterBestiary.MOD_ID, RegistryKeys.SOUND_EVENT);
+    private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(ClutterBestiary.MOD_ID, Registries.SOUND_EVENT);
 
     public static final Supplier<SoundEvent> ENTITY_KIWI_CALL = registerSoundEvent("entity_kiwi_call");
     public static final Supplier<SoundEvent> ENTITY_NETHER_NEWT_HURT = registerSoundEvent("entity_nether_newt_hurt");
@@ -26,7 +25,7 @@ public class ModSoundEvents {
     public static final Supplier<SoundEvent> ENTITY_RIVER_TURTLE_HURT = registerSoundEvent("entity_river_turtle_hurt");
 
     public static RegistrySupplier<SoundEvent> registerSoundEvent(String name) {
-        return SOUNDS.register(name, () -> SoundEvent.of(Identifier.of(ClutterBestiary.MOD_ID, name)));
+        return SOUNDS.register(name, () -> SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, name)));
     }
 
     public static void register() {

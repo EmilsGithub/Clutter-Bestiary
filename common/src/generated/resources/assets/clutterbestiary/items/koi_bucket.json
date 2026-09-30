@@ -1,0 +1,41 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "cases": [
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/orange_koi_bucket"
+        },
+        "when": "clutterbestiary:orange"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/yellow_koi_bucket"
+        },
+        "when": "clutterbestiary:yellow"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/black_koi_bucket"
+        },
+        "when": "clutterbestiary:black"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/pearl_koi_bucket"
+        },
+        "when": "clutterbestiary:pearl"
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "clutterbestiary:item/koi_bucket"
+    },
+    "field": "BaseColor",
+    "property": "clutterbestiary:bucket_entity_variant"
+  }
+}

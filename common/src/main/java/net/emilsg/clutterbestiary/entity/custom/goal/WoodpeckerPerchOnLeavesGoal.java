@@ -1,11 +1,11 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.WoodpeckerEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -30,24 +30,24 @@ public class WoodpeckerPerchOnLeavesGoal extends Goal {
     public WoodpeckerPerchOnLeavesGoal(WoodpeckerEntity woodpecker, double speed) {
         this.woodpecker = woodpecker;
         this.speed = speed;
-        this.setControls(EnumSet.of(Control.MOVE));
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         if (!this.woodpecker.isAlive() || !this.woodpecker.isFlying()) return false;
-        if (this.woodpecker.isAttached() || this.woodpecker.isTouchingWater()) return false;
-        if (this.woodpecker.getRandom().nextInt(toGoalTicks(PERCH_CHANCE)) != 0) return false;
+        if (this.woodpecker.isAttached() || this.woodpecker.isInWater()) return false;
+        if (this.woodpecker.getRandom().nextInt(reducedTickDelay(PERCH_CHANCE)) != 0) return false;
         return this.findPerch();
     }
 
     @Override
-    public boolean shouldContinue() {
-        if (!this.woodpecker.isAlive() || this.woodpecker.isTouchingWater() || this.perchPos == null) return false;
+    public boolean canContinueToUse() {
+        if (!this.woodpecker.isAlive() || this.woodpecker.isInWater() || this.perchPos == null) return false;
         if (!this.isValidPerch(this.perchPos)) return false;
         if (!this.perched) return this.approachTicks < MAX_APPROACH_TICKS;
         return this.perchTicks > 0
-                && this.woodpecker.squaredDistanceTo(this.getPerchPosition(this.perchPos)) <= MAX_PERCHED_DISTANCE_SQUARED;
+                && this.woodpecker.distanceToSqr(this.getPerchPosition(this.perchPos)) <= MAX_PERCHED_DISTANCE_SQUARED;
     }
 
     @Override
@@ -66,13 +66,13 @@ public class WoodpeckerPerchOnLeavesGoal extends Goal {
         this.approachTicks = 0;
         this.perchTicks = 0;
         this.perched = false;
-        if (!this.woodpecker.isTouchingWater() && this.woodpecker.isAlive() && !this.woodpecker.isAttached()) {
+        if (!this.woodpecker.isInWater() && this.woodpecker.isAlive() && !this.woodpecker.isAttached()) {
             this.woodpecker.setFlying(true);
         }
     }
 
     @Override
-    public boolean shouldRunEveryTick() {
+    public boolean requiresUpdateEveryTick() {
         return true;
     }
 
@@ -85,19 +85,19 @@ public class WoodpeckerPerchOnLeavesGoal extends Goal {
         }
 
         this.approachTicks++;
-        Vec3d perchPosition = this.getPerchPosition(this.perchPos);
-        if (this.woodpecker.getBlockPos().equals(this.perchPos)
-                || this.woodpecker.squaredDistanceTo(perchPosition) <= ARRIVAL_DISTANCE_SQUARED) {
+        Vec3 perchPosition = this.getPerchPosition(this.perchPos);
+        if (this.woodpecker.blockPosition().equals(this.perchPos)
+                || this.woodpecker.distanceToSqr(perchPosition) <= ARRIVAL_DISTANCE_SQUARED) {
             this.landOnPerch(perchPosition);
             return;
         }
 
-        if (this.woodpecker.getNavigation().isIdle()) this.startMovingToPerch();
+        if (this.woodpecker.getNavigation().isDone()) this.startMovingToPerch();
     }
 
     private boolean findPerch() {
-        BlockPos origin = this.woodpecker.getBlockPos();
-        for (BlockPos pos : BlockPos.iterate(
+        BlockPos origin = this.woodpecker.blockPosition();
+        for (BlockPos pos : BlockPos.betweenClosed(
                 origin.getX() - HORIZONTAL_SEARCH_RANGE,
                 origin.getY() - VERTICAL_SEARCH_RANGE,
                 origin.getZ() - HORIZONTAL_SEARCH_RANGE,
@@ -106,7 +106,7 @@ public class WoodpeckerPerchOnLeavesGoal extends Goal {
                 origin.getZ() + HORIZONTAL_SEARCH_RANGE)) {
             if (origin.equals(pos)) continue;
             if (this.isValidPerch(pos)) {
-                this.perchPos = pos.toImmutable();
+                this.perchPos = pos.immutable();
                 return true;
             }
         }
@@ -114,31 +114,31 @@ public class WoodpeckerPerchOnLeavesGoal extends Goal {
     }
 
     private boolean isValidPerch(BlockPos pos) {
-        if (!this.woodpecker.getWorld().getBlockState(pos.down()).isIn(BlockTags.LEAVES)) return false;
-        if (!this.woodpecker.getWorld().getBlockState(pos).isAir()
-                || !this.woodpecker.getWorld().getBlockState(pos.up()).isAir()) return false;
+        if (!this.woodpecker.level().getBlockState(pos.below()).is(BlockTags.LEAVES)) return false;
+        if (!this.woodpecker.level().getBlockState(pos).isAir()
+                || !this.woodpecker.level().getBlockState(pos.above()).isAir()) return false;
 
-        Vec3d perchPosition = Vec3d.ofBottomCenter(pos);
-        Box perchBox = this.woodpecker.getBoundingBox().offset(perchPosition.subtract(this.woodpecker.getPos()));
-        return this.woodpecker.getWorld().isSpaceEmpty(this.woodpecker, perchBox);
+        Vec3 perchPosition = Vec3.atBottomCenterOf(pos);
+        AABB perchBox = this.woodpecker.getBoundingBox().move(perchPosition.subtract(this.woodpecker.position()));
+        return this.woodpecker.level().noCollision(this.woodpecker, perchBox);
     }
 
     private void startMovingToPerch() {
         if (this.perchPos == null) return;
-        Vec3d perchPosition = this.getPerchPosition(this.perchPos);
-        this.woodpecker.getNavigation().startMovingTo(perchPosition.x, perchPosition.y, perchPosition.z, this.speed);
+        Vec3 perchPosition = this.getPerchPosition(this.perchPos);
+        this.woodpecker.getNavigation().moveTo(perchPosition.x, perchPosition.y, perchPosition.z, this.speed);
     }
 
-    private void landOnPerch(Vec3d perchPosition) {
+    private void landOnPerch(Vec3 perchPosition) {
         this.woodpecker.getNavigation().stop();
-        this.woodpecker.setPosition(perchPosition);
-        this.woodpecker.setVelocity(Vec3d.ZERO);
+        this.woodpecker.setPos(perchPosition);
+        this.woodpecker.setDeltaMovement(Vec3.ZERO);
         this.woodpecker.setFlying(false);
-        this.perchTicks = this.woodpecker.getRandom().nextBetween(MIN_PERCH_TICKS, MAX_PERCH_TICKS);
+        this.perchTicks = this.woodpecker.getRandom().nextIntBetweenInclusive(MIN_PERCH_TICKS, MAX_PERCH_TICKS);
         this.perched = true;
     }
 
-    private Vec3d getPerchPosition(BlockPos pos) {
-        return Vec3d.ofBottomCenter(pos);
+    private Vec3 getPerchPosition(BlockPos pos) {
+        return Vec3.atBottomCenterOf(pos);
     }
 }

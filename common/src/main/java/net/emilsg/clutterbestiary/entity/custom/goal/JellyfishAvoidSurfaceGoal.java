@@ -1,9 +1,8 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.JellyfishEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.EnumSet;
 
 public class JellyfishAvoidSurfaceGoal extends Goal {
@@ -11,19 +10,19 @@ public class JellyfishAvoidSurfaceGoal extends Goal {
 
     public JellyfishAvoidSurfaceGoal(JellyfishEntity jellyfish) {
         this.jellyfish = jellyfish;
-        this.setControls(EnumSet.of(Control.MOVE));
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override
-    public boolean canStart() {
-        if (!jellyfish.isInsideWaterOrBubbleColumn()) return false;
+    public boolean canUse() {
+        if (!jellyfish.isInWater()) return false;
 
-        double surfaceY = jellyfish.getWorld().getTopY();
-        BlockPos pos = jellyfish.getBlockPos();
+        double surfaceY = jellyfish.level().getMaxY();
+        BlockPos pos = jellyfish.blockPosition();
 
         for (int i = 0; i < 3; i++) {
-            BlockPos check = pos.up(i);
-            if (jellyfish.getWorld().getBlockState(check).getFluidState().isEmpty()) {
+            BlockPos check = pos.above(i);
+            if (jellyfish.level().getBlockState(check).getFluidState().isEmpty()) {
                 surfaceY = check.getY();
                 break;
             }

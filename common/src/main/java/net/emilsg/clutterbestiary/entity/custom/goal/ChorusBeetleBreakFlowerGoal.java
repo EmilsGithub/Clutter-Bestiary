@@ -1,15 +1,15 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.ChorusBeetleEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.ChorusFlowerBlock;
-import net.minecraft.entity.ai.goal.MoveToTargetPosGoal;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.ai.goal.MoveToBlockGoal;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ChorusFlowerBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class ChorusBeetleBreakFlowerGoal extends MoveToTargetPosGoal {
+public class ChorusBeetleBreakFlowerGoal extends MoveToBlockGoal {
     private static final int MIN_NOTICE_DELAY_TICKS = 20;
     private static final int MAX_NOTICE_DELAY_TICKS = 40;
     private final ChorusBeetleEntity chorusBeetle;
@@ -22,23 +22,23 @@ public class ChorusBeetleBreakFlowerGoal extends MoveToTargetPosGoal {
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         return !this.chorusBeetle.isBaby() && !this.chorusBeetle.isFlying() && this.chorusBeetle.hasFlowerFetchRequest()
-                && this.chorusBeetle.hasFlowerRequester() && super.canStart();
+                && this.chorusBeetle.hasFlowerRequester() && super.canUse();
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         if (!this.chorusBeetle.hasFlowerRequester()) return false;
         if (this.chorusBeetle.isCarryingChorusFlower()) return false;
         if (this.waitingToNoticeMissingTarget) {
             return this.chorusBeetle.isAlive() && this.chorusBeetle.isFlying() && !this.chorusBeetle.isLanding();
         }
-        if (this.isTargetPos(this.chorusBeetle.getWorld(), this.targetPos)) return super.shouldContinue();
+        if (this.isValidTarget(this.chorusBeetle.level(), this.blockPos)) return super.canContinueToUse();
         if (!this.chorusBeetle.isFlying() || this.chorusBeetle.isPostBreakHovering() || this.chorusBeetle.isLanding()) return false;
 
         this.waitingToNoticeMissingTarget = true;
-        this.noticeDelayTicks = this.chorusBeetle.getRandom().nextBetween(MIN_NOTICE_DELAY_TICKS, MAX_NOTICE_DELAY_TICKS);
+        this.noticeDelayTicks = this.chorusBeetle.getRandom().nextIntBetweenInclusive(MIN_NOTICE_DELAY_TICKS, MAX_NOTICE_DELAY_TICKS);
         this.chorusBeetle.getNavigation().stop();
         return true;
     }
@@ -46,7 +46,7 @@ public class ChorusBeetleBreakFlowerGoal extends MoveToTargetPosGoal {
     @Override
     public void start() {
         this.waitingToNoticeMissingTarget = false;
-        this.cooldown = 0;
+        this.nextStartTick = 0;
         this.chorusBeetle.consumeFlowerFetchRequest();
         this.chorusBeetle.setFlying(true);
         super.start();
@@ -58,7 +58,7 @@ public class ChorusBeetleBreakFlowerGoal extends MoveToTargetPosGoal {
         this.chorusBeetle.getNavigation().stop();
         if (this.chorusBeetle.isFlying() && !this.chorusBeetle.isCarryingChorusFlower()
                 && !this.chorusBeetle.isPostBreakHovering() && !this.chorusBeetle.isLanding()) {
-            if (this.chorusBeetle.isOnGround()) {
+            if (this.chorusBeetle.onGround()) {
                 this.chorusBeetle.setFlying(false);
             } else {
                 this.chorusBeetle.beginLanding();
@@ -68,7 +68,7 @@ public class ChorusBeetleBreakFlowerGoal extends MoveToTargetPosGoal {
     }
 
     @Override
-    public double getDesiredDistanceToTarget() {
+    public double acceptedDistance() {
         return 1.5;
     }
 
@@ -84,19 +84,19 @@ public class ChorusBeetleBreakFlowerGoal extends MoveToTargetPosGoal {
         }
 
         super.tick();
-        if (!this.hasReached() || !(this.chorusBeetle.getWorld() instanceof ServerWorld serverWorld)) return;
+        if (!this.isReachedTarget() || !(this.chorusBeetle.level() instanceof ServerLevel serverWorld)) return;
 
-        if (this.isTargetPos(serverWorld, this.targetPos)) {
-            if (serverWorld.breakBlock(this.targetPos, false, this.chorusBeetle)) {
+        if (this.isValidTarget(serverWorld, this.blockPos)) {
+            if (serverWorld.destroyBlock(this.blockPos, false, this.chorusBeetle)) {
                 this.chorusBeetle.queueChorusFlowerDrop();
-                this.chorusBeetle.beginPostBreakHover(this.chorusBeetle.getRandom().nextBetween(0, 20));
+                this.chorusBeetle.beginPostBreakHover(this.chorusBeetle.getRandom().nextIntBetweenInclusive(0, 20));
             }
         }
     }
 
     @Override
-    protected boolean isTargetPos(WorldView world, BlockPos pos) {
+    protected boolean isValidTarget(LevelReader world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
-        return state.isOf(Blocks.CHORUS_FLOWER) && state.get(ChorusFlowerBlock.AGE) == ChorusFlowerBlock.MAX_AGE;
+        return state.is(Blocks.CHORUS_FLOWER) && state.getValue(ChorusFlowerBlock.AGE) == ChorusFlowerBlock.DEAD_AGE;
     }
 }

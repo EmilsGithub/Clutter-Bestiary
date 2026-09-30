@@ -1,16 +1,16 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.parent.IEggLayingAnimal;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.ai.goal.MoveToTargetPosGoal;
-import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldView;
-import net.minecraft.world.event.GameEvent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.goal.MoveToBlockGoal;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
 
-public abstract class GroundNestLayEggGoal<T extends PathAwareEntity & IEggLayingAnimal> extends MoveToTargetPosGoal {
+public abstract class GroundNestLayEggGoal<T extends PathfinderMob & IEggLayingAnimal> extends MoveToBlockGoal {
     private final T eggLayer;
     private final BlockState eggState;
 
@@ -21,40 +21,40 @@ public abstract class GroundNestLayEggGoal<T extends PathAwareEntity & IEggLayin
     }
 
     @Override
-    public boolean canStart() {
-        return this.eggLayer.isReadyToLayEgg() && super.canStart();
+    public boolean canUse() {
+        return this.eggLayer.isReadyToLayEgg() && super.canUse();
     }
 
     @Override
-    public boolean shouldContinue() {
-        return this.eggLayer.isReadyToLayEgg() && super.shouldContinue();
+    public boolean canContinueToUse() {
+        return this.eggLayer.isReadyToLayEgg() && super.canContinueToUse();
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (!this.hasReached() || !(this.eggLayer.getWorld() instanceof ServerWorld serverWorld)) return;
-        if (!this.isTargetPos(serverWorld, this.targetPos)) return;
+        if (!this.isReachedTarget() || !(this.eggLayer.level() instanceof ServerLevel serverWorld)) return;
+        if (!this.isValidTarget(serverWorld, this.blockPos)) return;
 
-        BlockPos eggPos = this.targetPos.up();
+        BlockPos eggPos = this.blockPos.above();
         BlockState placedEggState = this.getEggState(serverWorld);
-        if (serverWorld.setBlockState(eggPos, placedEggState, Block.NOTIFY_ALL)) {
-            serverWorld.emitGameEvent(GameEvent.BLOCK_PLACE, eggPos, GameEvent.Emitter.of(this.eggLayer, placedEggState));
-            this.cooldown = 0;
+        if (serverWorld.setBlock(eggPos, placedEggState, Block.UPDATE_ALL)) {
+            serverWorld.gameEvent(GameEvent.BLOCK_PLACE, eggPos, GameEvent.Context.of(this.eggLayer, placedEggState));
+            this.nextStartTick = 0;
             this.eggLayer.finishLayingEgg();
             this.eggLayer.getNavigation().stop();
         }
     }
 
     @Override
-    protected boolean isTargetPos(WorldView world, BlockPos pos) {
-        BlockPos eggPos = pos.up();
+    protected boolean isValidTarget(LevelReader world, BlockPos pos) {
+        BlockPos eggPos = pos.above();
         BlockState replacedState = world.getBlockState(eggPos);
-        return replacedState.isReplaceable() && world.getFluidState(eggPos).isEmpty()
-                && this.eggState.canPlaceAt(world, eggPos) && this.isValidNestBlock(world.getBlockState(pos));
+        return replacedState.canBeReplaced() && world.getFluidState(eggPos).isEmpty()
+                && this.eggState.canSurvive(world, eggPos) && this.isValidNestBlock(world.getBlockState(pos));
     }
 
-    protected BlockState getEggState(ServerWorld world) {
+    protected BlockState getEggState(ServerLevel world) {
         return this.eggState;
     }
 

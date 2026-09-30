@@ -4,22 +4,27 @@ import dev.architectury.registry.level.entity.SpawnPlacementsRegistry;
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.*;
-import net.minecraft.entity.SpawnLocationTypes;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.Heightmap;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.levelgen.Heightmap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class ModUtil {
@@ -30,16 +35,24 @@ public class ModUtil {
     public static void buildItemMapsAndLists() {
         STRIPPED_ITEM_MAP.clear();
         SAPLING_ITEM_MAP.clear();
-        for (Item item : Registries.ITEM) {
-            Identifier id = Registries.ITEM.getId(item);
+        for (Item item : BuiltInRegistries.ITEM) {
+            Identifier id = BuiltInRegistries.ITEM.getKey(item);
             String path = id.getPath();
 
             if (path.contains("sapling")) SAPLING_ITEM_MAP.add(item);
             if (path.startsWith("stripped_")) continue;
 
-            Identifier strippedId = Identifier.of(id.getNamespace(), "stripped_" + path);
-            if (Registries.ITEM.containsId(strippedId)) STRIPPED_ITEM_MAP.put(item, Registries.ITEM.get(strippedId));
+            Identifier strippedId = Identifier.fromNamespaceAndPath(id.getNamespace(), "stripped_" + path);
+            if (BuiltInRegistries.ITEM.containsKey(strippedId)) STRIPPED_ITEM_MAP.put(item, BuiltInRegistries.ITEM.getValue(strippedId));
         }
+    }
+
+    /**
+     * Reads a field from item component data without logging when the field is absent.
+     */
+    public static <T> Optional<T> readComponentData(CustomData data, MapCodec<T> codec) {
+        CompoundTag tag = data.copyTag();
+        return codec.decode(NbtOps.INSTANCE, NbtOps.INSTANCE.getMap(tag).getOrThrow()).result();
     }
 
     public static float lerp(float a, float b, float alpha) {
@@ -52,9 +65,9 @@ public class ModUtil {
         return STRIPPED_ITEM_MAP.get(stack.getItem());
     }
 
-    public static Text buildCyclicFormattedName(String translationKey, int[] colorCycle, int tickOffset, boolean reverse) {
-        MutableText finalText = Text.literal("");
-        String translated = Text.translatable(translationKey).getString();
+    public static Component buildCyclicFormattedName(String translationKey, int[] colorCycle, int tickOffset, boolean reverse) {
+        MutableComponent finalText = Component.literal("");
+        String translated = Component.translatable(translationKey).getString();
 
         int cycleLength = colorCycle.length;
 
@@ -72,56 +85,56 @@ public class ModUtil {
             }
 
             int rgb = colorCycle[colorIndex];
-            finalText.append(Text.literal(String.valueOf(translated.charAt(i)))
-                    .styled(style -> style.withColor(rgb)));
+            finalText.append(Component.literal(String.valueOf(translated.charAt(i)))
+                    .withStyle(style -> style.withColor(rgb)));
         }
 
         return finalText;
     }
 
-    public static void grantImpossibleAdvancement(String path, PlayerEntity player) {
-        if (player instanceof ServerPlayerEntity serverPlayer) {
+    public static void grantImpossibleAdvancement(String path, Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
             ModAdvancements.grant(serverPlayer, path);
         }
     }
 
-    public static boolean inEitherHand(PlayerEntity player, Item item) {
-        return player.getStackInHand(Hand.MAIN_HAND).isOf(item) || player.getStackInHand(Hand.OFF_HAND).isOf(item);
+    public static boolean inEitherHand(Player player, Item item) {
+        return player.getItemInHand(InteractionHand.MAIN_HAND).is(item) || player.getItemInHand(InteractionHand.OFF_HAND).is(item);
     }
 
-    public static boolean inBothHands(PlayerEntity player, Item item) {
-        return player.getStackInHand(Hand.MAIN_HAND).isOf(item) && player.getStackInHand(Hand.OFF_HAND).isOf(item);
+    public static boolean inBothHands(Player player, Item item) {
+        return player.getItemInHand(InteractionHand.MAIN_HAND).is(item) && player.getItemInHand(InteractionHand.OFF_HAND).is(item);
     }
 
     public static void registerSpawnRestrictions() {
-        SpawnPlacementsRegistry.register(ModEntityTypes.DRAGONFLY, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, DragonflyEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.MOSSBLOOM, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, MossbloomEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.CHAMELEON, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, ChameleonEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.KIWI_BIRD, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, KiwiBirdEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.EMPEROR_PENGUIN, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, EmperorPenguinEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.BEAVER, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, BeaverEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.CAPYBARA, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, CapybaraEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.BOOPLET, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, BoopletEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.POTION_WASP, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, PotionWaspEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.COATI, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, CoatiEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.RIVER_TURTLE, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, RiverTurtleEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.RED_PANDA, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, RedPandaEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.STOAT, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, StoatEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.CROCODILE, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, CrocodileEntity::isValidNaturalSpawn);
-          SpawnPlacementsRegistry.register(ModEntityTypes.CHORUS_BEETLE, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, ChorusBeetleEntity::isValidNaturalSpawn);
-          SpawnPlacementsRegistry.register(ModEntityTypes.WOODPECKER, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, WoodpeckerEntity::isValidNaturalSpawn);
+        SpawnPlacementsRegistry.register(ModEntityTypes.DRAGONFLY, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, DragonflyEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.MOSSBLOOM, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, MossbloomEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.CHAMELEON, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ChameleonEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.KIWI_BIRD, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, KiwiBirdEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.EMPEROR_PENGUIN, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EmperorPenguinEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.BEAVER, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BeaverEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.CAPYBARA, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, CapybaraEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.BOOPLET, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, BoopletEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.POTION_WASP, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, PotionWaspEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.COATI, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, CoatiEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.RIVER_TURTLE, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, RiverTurtleEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.RED_PANDA, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, RedPandaEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.STOAT, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, StoatEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.CROCODILE, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, CrocodileEntity::checkAnimalSpawnRules);
+          SpawnPlacementsRegistry.register(ModEntityTypes.CHORUS_BEETLE, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ChorusBeetleEntity::checkAnimalSpawnRules);
+          SpawnPlacementsRegistry.register(ModEntityTypes.WOODPECKER, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, WoodpeckerEntity::checkAnimalSpawnRules);
 
-        SpawnPlacementsRegistry.register(ModEntityTypes.JELLYFISH, SpawnLocationTypes.IN_WATER, Heightmap.Type.OCEAN_FLOOR, JellyfishEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.SEAHORSE, SpawnLocationTypes.IN_WATER, Heightmap.Type.OCEAN_FLOOR, SeahorseEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.MANTA_RAY, SpawnLocationTypes.IN_WATER, Heightmap.Type.OCEAN_FLOOR, MantaRayEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.KOI, SpawnLocationTypes.IN_WATER, Heightmap.Type.OCEAN_FLOOR, KoiEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.ARROWFISH, SpawnLocationTypes.IN_WATER, Heightmap.Type.OCEAN_FLOOR, ArrowfishEntity::isValidNaturalSpawn);
+        SpawnPlacementsRegistry.register(ModEntityTypes.JELLYFISH, SpawnPlacementTypes.IN_WATER, Heightmap.Types.OCEAN_FLOOR, JellyfishEntity::isValidNaturalSpawn);
+        SpawnPlacementsRegistry.register(ModEntityTypes.SEAHORSE, SpawnPlacementTypes.IN_WATER, Heightmap.Types.OCEAN_FLOOR, SeahorseEntity::isValidNaturalSpawn);
+        SpawnPlacementsRegistry.register(ModEntityTypes.MANTA_RAY, SpawnPlacementTypes.IN_WATER, Heightmap.Types.OCEAN_FLOOR, MantaRayEntity::isValidNaturalSpawn);
+        SpawnPlacementsRegistry.register(ModEntityTypes.KOI, SpawnPlacementTypes.IN_WATER, Heightmap.Types.OCEAN_FLOOR, KoiEntity::isValidNaturalSpawn);
+        SpawnPlacementsRegistry.register(ModEntityTypes.ARROWFISH, SpawnPlacementTypes.IN_WATER, Heightmap.Types.OCEAN_FLOOR, ArrowfishEntity::isValidNaturalSpawn);
 
-        SpawnPlacementsRegistry.register(ModEntityTypes.BUTTERFLY, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, ButterflyEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.CRIMSON_NEWT, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, CrimsonNewtEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.WARPED_NEWT, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, WarpedNewtEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.EMBER_TORTOISE, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, EmberTortoiseEntity::isValidNaturalSpawn);
-        SpawnPlacementsRegistry.register(ModEntityTypes.ECHOFIN, SpawnLocationTypes.ON_GROUND, Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, EchofinEntity::isValidNaturalSpawn);
+        SpawnPlacementsRegistry.register(ModEntityTypes.BUTTERFLY, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ButterflyEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.CRIMSON_NEWT, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, CrimsonNewtEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.WARPED_NEWT, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, WarpedNewtEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.EMBER_TORTOISE, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EmberTortoiseEntity::checkAnimalSpawnRules);
+        SpawnPlacementsRegistry.register(ModEntityTypes.ECHOFIN, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EchofinEntity::checkAnimalSpawnRules);
     }
 
 

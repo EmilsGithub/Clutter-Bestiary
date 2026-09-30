@@ -1,4 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.world.entity.EntityReference;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.goal.TamedEscapeDangerGoal;
@@ -7,38 +10,48 @@ import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
 import net.emilsg.clutterbestiary.item.ModItems;
 import net.emilsg.clutterbestiary.item.custom.ButterflyBottleItem;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.block.BlockState;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.FoodComponent;
-import net.minecraft.entity.AnimationState;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.FollowOwnerGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.ai.goal.LeapAtTargetGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.PathType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -47,11 +60,11 @@ public class ChameleonEntity extends ParentTameableEntity {
 
     private static final Ingredient BREEDING_INGREDIENT;
     private static final Item TAMING_ITEM = Items.APPLE;
-    private static final TrackedData<Boolean> SITTING = DataTracker.registerData(ChameleonEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Boolean> ATTACKING = DataTracker.registerData(ChameleonEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> SITTING = SynchedEntityData.defineId(ChameleonEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> ATTACKING = SynchedEntityData.defineId(ChameleonEntity.class, EntityDataSerializers.BOOLEAN);
 
     static {
-        BREEDING_INGREDIENT = Ingredient.ofItems(ModItems.BUTTERFLY_IN_A_BOTTLE.get());
+        BREEDING_INGREDIENT = Ingredient.of(ModItems.BUTTERFLY_IN_A_BOTTLE.get());
     }
 
     public final AnimationState tailIdleAnimationState = new AnimationState();
@@ -65,78 +78,78 @@ public class ChameleonEntity extends ParentTameableEntity {
     private int colorTicker = 0;
     private boolean hasNearbyEntity;
 
-    public ChameleonEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
+    public ChameleonEntity(EntityType<? extends ParentTameableEntity> entityType, Level world) {
         super(entityType, world);
-        this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.WATER, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.WATER_BORDER, 16.0F);
+        this.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, -1.0F);
+        this.setPathfindingMalus(PathType.WATER, -1.0F);
+        this.setPathfindingMalus(PathType.WATER_BORDER, 16.0F);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(SITTING, false);
-        builder.add(ATTACKING, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(SITTING, false);
+        builder.define(ATTACKING, false);
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(1, new SwimGoal(this));
-        this.goalSelector.add(2, new SitGoal(this));
-        this.goalSelector.add(3, new TamedEscapeDangerGoal(this, 1.5));
-        this.goalSelector.add(4, new FollowOwnerGoal(this, 1.2, 10.0F, 2.0F));
-        this.goalSelector.add(5, new AnimalMateGoal(this, 1));
-        this.goalSelector.add(6, new TemptGoal(this, 1.2, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(7, new FollowParentGoal(this, 1.2));
-        this.goalSelector.add(8, new PounceAtTargetGoal(this, 0.5f));
-        this.goalSelector.add(9, new MeleeAttackGoal(this, 1.0, true));
-        this.goalSelector.add(10, new WanderAroundFarOftenGoal(this, 1.0f));
-        this.goalSelector.add(11, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(12, new LookAroundGoal(this));
-        this.targetSelector.add(1, new ActiveTargetGoal<>(this, ButterflyEntity.class, true));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(1, new FloatGoal(this));
+        this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
+        this.goalSelector.addGoal(3, new TamedEscapeDangerGoal(this, 1.5));
+        this.goalSelector.addGoal(4, new FollowOwnerGoal(this, 1.2, 10.0F, 2.0F));
+        this.goalSelector.addGoal(5, new BreedGoal(this, 1));
+        this.goalSelector.addGoal(6, new TemptGoal(this, 1.2, BREEDING_INGREDIENT, false));
+        this.goalSelector.addGoal(7, new FollowParentGoal(this, 1.2));
+        this.goalSelector.addGoal(8, new LeapAtTargetGoal(this, 0.5f));
+        this.goalSelector.addGoal(9, new MeleeAttackGoal(this, 1.0, true));
+        this.goalSelector.addGoal(10, new WanderAroundFarOftenGoal(this, 1.0f));
+        this.goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 6.0F));
+        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this));
+        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, ButterflyEntity.class, true));
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.dataTracker.set(SITTING, nbt.getBoolean("isSitting"));
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.entityData.set(SITTING, nbt.getBooleanOr("isSitting", false));
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        nbt.putBoolean("isSitting", this.dataTracker.get(SITTING));
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
+        nbt.putBoolean("isSitting", this.entityData.get(SITTING));
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.CHAMELEONS_SPAWN_ON);
+    public static boolean checkAnimalSpawnRules(EntityType<? extends Animal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos.below()).is(ModBlockTags.CHAMELEONS_SPAWN_ON);
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return AnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 6.0D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.18f)
-                .add(EntityAttributes.GENERIC_ATTACK_SPEED, 1.0f)
-                .add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.1f)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 3.0f)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
-    }
-
-    @Override
-    public void breed(ServerWorld world, AnimalEntity other) {
-        super.breed(world, other);
+    public static AttributeSupplier.Builder setAttributes() {
+        return Animal.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 6.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.18f)
+                .add(Attributes.ATTACK_SPEED, 1.0f)
+                .add(Attributes.ATTACK_KNOCKBACK, 0.1f)
+                .add(Attributes.ATTACK_DAMAGE, 3.0f)
+                .add(Attributes.FOLLOW_RANGE, 16.0f);
     }
 
     @Override
-    public boolean canBreedWith(AnimalEntity other) {
+    public void spawnChildFromBreeding(ServerLevel world, Animal other) {
+        super.spawnChildFromBreeding(world, other);
+    }
+
+    @Override
+    public boolean canMate(Animal other) {
         if (other == this) {
             return false;
-        } else if (!this.isTamed()) {
+        } else if (!this.isTame()) {
             return false;
         } else if (!(other instanceof ChameleonEntity chameleonEntity)) {
             return false;
         } else {
-            if (!chameleonEntity.isTamed()) {
+            if (!chameleonEntity.isTame()) {
                 return false;
             } else if (chameleonEntity.isInSittingPose()) {
                 return false;
@@ -147,13 +160,13 @@ public class ChameleonEntity extends ParentTameableEntity {
     }
 
     @Nullable
-    public ChameleonEntity createChild(ServerWorld serverWorld, PassiveEntity passiveEntity) {
-        ChameleonEntity chameleonEntity = ModEntityTypes.CHAMELEON.get().create(serverWorld);
+    public ChameleonEntity getBreedOffspring(ServerLevel serverWorld, AgeableMob passiveEntity) {
+        ChameleonEntity chameleonEntity = ModEntityTypes.CHAMELEON.get().create(serverWorld, EntitySpawnReason.BREEDING);
         if (chameleonEntity != null) {
-            UUID uUID = this.getOwnerUuid();
-            if (uUID != null) {
-                chameleonEntity.setOwnerUuid(uUID);
-                chameleonEntity.setTamed(true, true);
+            EntityReference<LivingEntity> owner = this.getOwnerReference();
+            if (owner != null) {
+                chameleonEntity.setOwnerReference(owner);
+                chameleonEntity.setTame(true, true);
             }
         }
 
@@ -178,145 +191,145 @@ public class ChameleonEntity extends ParentTameableEntity {
     }
 
     @Override
-    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+    public boolean causeFallDamage(double fallDistance, float damageMultiplier, DamageSource damageSource) {
         return false;
     }
 
     @Override
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack stackInHand = player.getStackInHand(hand);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stackInHand = player.getItemInHand(hand);
         Item item = stackInHand.getItem();
 
         Item itemForTaming = this.getTamingItem();
 
-        if (this.isBreedingItem(stackInHand) && this.getHealth() < this.getMaxHealth()) {
-            if (this.getWorld().isClient) return ActionResult.CONSUME;
-            if (!player.getAbilities().creativeMode) {
-                stackInHand.decrement(1);
+        if (this.isFood(stackInHand) && this.getHealth() < this.getMaxHealth()) {
+            if (this.level().isClientSide()) return InteractionResult.CONSUME;
+            if (!player.getAbilities().instabuild) {
+                stackInHand.shrink(1);
             }
 
-            FoodComponent foodComponent = stackInHand.get(DataComponentTypes.FOOD);
+            FoodProperties foodComponent = stackInHand.get(DataComponents.FOOD);
             float nutrition = foodComponent != null ? (float) foodComponent.nutrition() : 1.0F;
             this.heal(2.0F * nutrition);
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        if (item == itemForTaming && !isTamed()) {
-            this.playSound(SoundEvents.ENTITY_FROG_EAT, 1.0F, 1.25F);
-            if (this.getWorld().isClient()) {
-                return ActionResult.CONSUME;
+        if (item == itemForTaming && !isTame()) {
+            this.playSound(SoundEvents.FROG_EAT, 1.0F, 1.25F);
+            if (this.level().isClientSide()) {
+                return InteractionResult.CONSUME;
             } else {
-                if (!player.getAbilities().creativeMode) {
-                    stackInHand.decrement(1);
+                if (!player.getAbilities().instabuild) {
+                    stackInHand.shrink(1);
                 }
 
-                if (this.random.nextInt(3) == 0 && !this.getWorld().isClient()) {
-                    super.setOwner(player);
-                    this.navigation.recalculatePath();
+                if (this.random.nextInt(3) == 0 && !this.level().isClientSide()) {
+                    super.tame(player);
+                    this.navigation.recomputePath();
                     this.setHealth(this.getMaxHealth());
                     this.setTarget(null);
-                    this.getWorld().sendEntityStatus(this, (byte) 7);
+                    this.level().broadcastEntityEvent(this, (byte) 7);
                     setSit(true);
                 } else {
-                    this.getWorld().sendEntityStatus(this, (byte) 6);
+                    this.level().broadcastEntityEvent(this, (byte) 6);
                 }
 
-                return ActionResult.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
         }
 
-        if (isTamed() && !this.getWorld().isClient() && hand == Hand.MAIN_HAND && !(stackInHand.getItem() instanceof ButterflyBottleItem) && isOwner(player)) {
-            setSit(!isSitting());
-            return ActionResult.SUCCESS;
+        if (isTame() && !this.level().isClientSide() && hand == InteractionHand.MAIN_HAND && !(stackInHand.getItem() instanceof ButterflyBottleItem) && isOwnedBy(player)) {
+            setSit(!isOrderedToSit());
+            return InteractionResult.SUCCESS;
         }
 
         if (stackInHand.getItem() == itemForTaming) {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
 
-        return super.interactMob(player, hand);
+        return super.mobInteract(player, hand);
     }
 
-    public boolean isAttacking() {
-        return this.dataTracker.get(ATTACKING);
+    public boolean isAggressive() {
+        return this.entityData.get(ATTACKING);
     }
 
-    public void setAttacking(boolean attacking) {
-        this.dataTracker.set(ATTACKING, attacking);
+    public void setAggressive(boolean attacking) {
+        this.entityData.set(ATTACKING, attacking);
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return BREEDING_INGREDIENT.test(stack);
     }
 
-    public boolean isSitting() {
-        return this.dataTracker.get(SITTING);
+    public boolean isOrderedToSit() {
+        return this.entityData.get(SITTING);
     }
 
     public void setSit(boolean sitting) {
-        this.dataTracker.set(SITTING, sitting);
-        super.setSitting(sitting);
+        this.entityData.set(SITTING, sitting);
+        super.setOrderedToSit(sitting);
     }
 
     @Override
     public void tick() {
         super.tick();
-        World world = this.getWorld();
+        Level world = this.level();
 
-        if (world.isClient) {
+        if (world.isClientSide()) {
             this.setupAnimationStates();
 
-            if (this.age % 10 == 0) {
-                this.hasNearbyEntity = !world.getEntitiesByClass(LivingEntity.class,
-                        this.getBoundingBox().expand(6.0),
+            if (this.tickCount % 10 == 0) {
+                this.hasNearbyEntity = !world.getEntitiesOfClass(LivingEntity.class,
+                        this.getBoundingBox().inflate(6.0),
                         entity -> entity != this && entity != this.getOwner()
-                                && !(entity instanceof ChameleonEntity) && !entity.isSneaking()).isEmpty();
-                this.setAttacking(this.hasNearbyEntity);
+                                && !(entity instanceof ChameleonEntity) && !entity.isShiftKeyDown()).isEmpty();
+                this.setAggressive(this.hasNearbyEntity);
             }
 
             this.updateColorTransition(this.hasNearbyEntity);
         }
     }
 
-    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
+    protected void checkFallDamage(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
     }
 
     @Override
-    protected void updateAttributesForTamed() {
-        getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH).setBaseValue(18.0D);
-        getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE).setBaseValue(6.0f);
+    protected void applyTamingSideEffects() {
+        getAttribute(Attributes.MAX_HEALTH).setBaseValue(18.0D);
+        getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(6.0f);
     }
 
-    protected void updateLimbs(float v) {
+    protected void updateWalkAnimation(float v) {
         float f;
-        if (this.getPose() == EntityPose.STANDING) {
+        if (this.getPose() == Pose.STANDING) {
             f = Math.min(v * 6.0F, 1.0F);
         } else {
             f = 0.0F;
         }
 
-        this.limbAnimator.updateLimbs(f * 2.75f, 0.2F);
+        this.walkAnimation.update(f * 2.75f, 0.2F, 1.0F);
     }
 
     private void setupAnimationStates() {
         if (this.tailIdleAnimationTimeout <= 0 && !this.isMoving()) {
             this.tailIdleAnimationTimeout = 40;
-            this.tailIdleAnimationState.start(this.age);
+            this.tailIdleAnimationState.start(this.tickCount);
         } else {
             --this.tailIdleAnimationTimeout;
         }
 
         if (this.toungeIdleAnimationTimeout <= 0) {
             this.toungeIdleAnimationTimeout = 20 + ((random.nextInt(5) + 3) * 100);
-            this.toungeIdleAnimationState.start(this.age);
+            this.toungeIdleAnimationState.start(this.tickCount);
         } else {
             --this.toungeIdleAnimationTimeout;
         }
 
-        if (this.isSitting() && !this.sittingAnimationState.isRunning()) {
-            this.sittingAnimationState.start(this.age);
-        } else if (!this.isSitting()) {
+        if (this.isOrderedToSit() && !this.sittingAnimationState.isStarted()) {
+            this.sittingAnimationState.start(this.tickCount);
+        } else if (!this.isOrderedToSit()) {
             this.sittingAnimationState.stop();
         }
     }

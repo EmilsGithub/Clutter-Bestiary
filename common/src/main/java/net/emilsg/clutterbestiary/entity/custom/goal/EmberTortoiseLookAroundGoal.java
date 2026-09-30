@@ -1,9 +1,9 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.EmberTortoiseEntity;
-import net.minecraft.entity.ai.goal.LookAroundGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 
-public class EmberTortoiseLookAroundGoal extends LookAroundGoal {
+public class EmberTortoiseLookAroundGoal extends RandomLookAroundGoal {
     EmberTortoiseEntity emberTortoise;
 
     public EmberTortoiseLookAroundGoal(EmberTortoiseEntity emberTortoise) {
@@ -12,8 +12,8 @@ public class EmberTortoiseLookAroundGoal extends LookAroundGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return !this.emberTortoise.isShielding() && super.canStart();
+    public boolean canUse() {
+        return !this.emberTortoise.isShielding() && super.canUse();
     }
 
     @Override

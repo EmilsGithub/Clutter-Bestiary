@@ -1,9 +1,9 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.KiwiBirdEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class KiwiBirdLayEggGoal extends GroundNestLayEggGoal<KiwiBirdEntity> {
     public KiwiBirdLayEggGoal(KiwiBirdEntity kiwiBird, double speed, BlockState eggState) {
@@ -12,6 +12,6 @@ public class KiwiBirdLayEggGoal extends GroundNestLayEggGoal<KiwiBirdEntity> {
 
     @Override
     protected boolean isValidNestBlock(BlockState state) {
-        return state.isIn(BlockTags.DIRT) || state.isOf(Blocks.HAY_BLOCK);
+        return state.is(BlockTags.DIRT) || state.is(Blocks.HAY_BLOCK);
     }
 }

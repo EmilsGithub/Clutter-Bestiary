@@ -2,29 +2,26 @@
   "criteria": {
     "exist": {
       "conditions": {
-        "player": [
-          {
-            "condition": "minecraft:entity_properties",
-            "entity": "this",
-            "predicate": {
-              "location": {
-                "dimension": "minecraft:overworld"
-              }
+        "player": {
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:location": {
+              "dimension": "minecraft:overworld"
             }
           }
-        ]
+        }
       },
       "trigger": "minecraft:location"
     }
   },
   "display": {
     "announce_to_chat": false,
-    "background": "minecraft:textures/gui/advancements/backgrounds/husbandry.png",
+    "background": "minecraft:gui/advancements/backgrounds/husbandry",
     "description": {
       "translate": "advancements.bestiary.root.description"
     },
     "icon": {
-      "count": 1,
       "id": "clutterbestiary:mossbloom_spawn_egg"
     },
     "show_toast": false,

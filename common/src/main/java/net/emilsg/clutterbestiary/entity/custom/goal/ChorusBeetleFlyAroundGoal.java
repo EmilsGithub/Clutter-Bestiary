@@ -1,10 +1,9 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.ChorusBeetleEntity;
-import net.minecraft.entity.ai.AboveGroundTargeting;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.util.math.Vec3d;
-
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.util.HoverRandomPos;
+import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
 public class ChorusBeetleFlyAroundGoal extends Goal {
@@ -26,28 +25,28 @@ public class ChorusBeetleFlyAroundGoal extends Goal {
     public ChorusBeetleFlyAroundGoal(ChorusBeetleEntity chorusBeetle, double speed) {
         this.chorusBeetle = chorusBeetle;
         this.speed = speed;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         this.scheduleNextFlight();
     }
 
     @Override
-    public boolean canStart() {
-        if (this.chorusBeetle.getWorld().getTime() < this.nextFlightTime) return false;
-        if (!this.chorusBeetle.isAlive() || !this.chorusBeetle.isOnGround() || this.chorusBeetle.isFlying()) return false;
-        if (this.chorusBeetle.isTouchingWater() || this.chorusBeetle.isInLove()) return false;
+    public boolean canUse() {
+        if (this.chorusBeetle.level().getGameTime() < this.nextFlightTime) return false;
+        if (!this.chorusBeetle.isAlive() || !this.chorusBeetle.onGround() || this.chorusBeetle.isFlying()) return false;
+        if (this.chorusBeetle.isInWater() || this.chorusBeetle.isInLove()) return false;
         if (this.chorusBeetle.hasFlowerFetchRequest() || this.chorusBeetle.isCarryingChorusFlower()) return false;
         return true;
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         return this.chorusBeetle.isAlive() && this.chorusBeetle.isFlying()
                 && !this.chorusBeetle.isLanding() && this.flightTicks > 0;
     }
 
     @Override
     public void start() {
-        this.flightTicks = this.chorusBeetle.getRandom().nextBetween(MIN_FLIGHT_TICKS, MAX_FLIGHT_TICKS);
+        this.flightTicks = this.chorusBeetle.getRandom().nextIntBetweenInclusive(MIN_FLIGHT_TICKS, MAX_FLIGHT_TICKS);
         this.chorusBeetle.setFlying(true);
         this.startMovingToNextPosition();
     }
@@ -62,7 +61,7 @@ public class ChorusBeetleFlyAroundGoal extends Goal {
     }
 
     @Override
-    public boolean shouldRunEveryTick() {
+    public boolean requiresUpdateEveryTick() {
         return true;
     }
 
@@ -73,20 +72,20 @@ public class ChorusBeetleFlyAroundGoal extends Goal {
             return;
         }
 
-        if (this.chorusBeetle.getNavigation().isIdle()) this.startMovingToNextPosition();
+        if (this.chorusBeetle.getNavigation().isDone()) this.startMovingToNextPosition();
     }
 
     private void startMovingToNextPosition() {
-        Vec3d direction = this.chorusBeetle.getRotationVec(0.0f);
-        Vec3d target = AboveGroundTargeting.find(this.chorusBeetle, HORIZONTAL_RANGE, VERTICAL_RANGE,
+        Vec3 direction = this.chorusBeetle.getViewVector(0.0f);
+        Vec3 target = HoverRandomPos.getPos(this.chorusBeetle, HORIZONTAL_RANGE, VERTICAL_RANGE,
                 direction.x, direction.z, DIRECTION_RANGE, MAX_HEIGHT_ABOVE_GROUND, MIN_HEIGHT_ABOVE_GROUND);
         if (target != null) {
-            this.chorusBeetle.getNavigation().startMovingTo(target.x, target.y, target.z, this.speed);
+            this.chorusBeetle.getNavigation().moveTo(target.x, target.y, target.z, this.speed);
         }
     }
 
     private void scheduleNextFlight() {
-        this.nextFlightTime = this.chorusBeetle.getWorld().getTime()
-                + this.chorusBeetle.getRandom().nextBetween(MIN_FLIGHT_DELAY_TICKS, MAX_FLIGHT_DELAY_TICKS);
+        this.nextFlightTime = this.chorusBeetle.level().getGameTime()
+                + this.chorusBeetle.getRandom().nextIntBetweenInclusive(MIN_FLIGHT_DELAY_TICKS, MAX_FLIGHT_DELAY_TICKS);
     }
 }

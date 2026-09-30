@@ -2,20 +2,20 @@ package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.BeaverEntity;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.PillarBlock;
-import net.minecraft.entity.ai.goal.MoveToTargetPosGoal;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.entity.ai.goal.MoveToBlockGoal;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class BeaverStripBottomLogGoal extends MoveToTargetPosGoal {
+public class BeaverStripBottomLogGoal extends MoveToBlockGoal {
     private final BeaverEntity beaverEntity;
     private Block targetBlock;
     private Block strippedTargetBlock;
@@ -27,25 +27,25 @@ public class BeaverStripBottomLogGoal extends MoveToTargetPosGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return this.mob.getRandom().nextInt(100) == 0 && super.canStart();
+    public boolean canUse() {
+        return this.mob.getRandom().nextInt(100) == 0 && super.canUse();
     }
 
     @Override
-    public double getDesiredDistanceToTarget() {
+    public double acceptedDistance() {
         return 2.0f;
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (this.hasReached()) {
-            World world = this.mob.getWorld();
+        if (this.isReachedTarget()) {
+            Level world = this.mob.level();
 
 
             if (targetBlock != null && strippedTargetBlock != null && strippedTargetState != null) {
-                this.mob.playSound(SoundEvents.BLOCK_WOOD_BREAK, 1.0f, this.mob.getSoundPitch());
-                if (world instanceof ServerWorld serverWorld && serverWorld.setBlockState(targetPos, strippedTargetState, Block.NOTIFY_ALL)) {
+                this.mob.playSound(SoundEvents.WOOD_BREAK, 1.0f, this.mob.getVoicePitch());
+                if (world instanceof ServerLevel serverWorld && serverWorld.setBlock(blockPos, strippedTargetState, Block.UPDATE_ALL)) {
                     this.beaverEntity.onWorldLogStripped();
                 }
                 this.stop();
@@ -54,29 +54,29 @@ public class BeaverStripBottomLogGoal extends MoveToTargetPosGoal {
     }
 
     @Override
-    protected boolean isTargetPos(WorldView world, BlockPos pos) {
+    protected boolean isValidTarget(LevelReader world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
 
-        boolean isStrippableBlock = !(String.valueOf(state.getBlock()).contains("stripped") || state.isIn(ModBlockTags.STRIPPED_LOGS) || state.isIn(ModBlockTags.STRIPPED_WOODS)) && (state.isIn(BlockTags.LOGS) || state.isIn(ModBlockTags.WOODS));
+        boolean isStrippableBlock = !(String.valueOf(state.getBlock()).contains("stripped") || state.is(ModBlockTags.STRIPPED_LOGS) || state.is(ModBlockTags.STRIPPED_WOODS)) && (state.is(BlockTags.LOGS) || state.is(ModBlockTags.WOODS));
 
-        if (world.getBlockState(pos.down()).isIn(BlockTags.LOGS) || !isStrippableBlock) return false;
+        if (world.getBlockState(pos.below()).is(BlockTags.LOGS) || !isStrippableBlock) return false;
 
         Block block = state.getBlock();
         if (block == null) return false;
 
         targetBlock = state.getBlock();
-        Identifier blockID = Registries.BLOCK.getId(block);
-        Identifier strippedID = Identifier.of(blockID.getNamespace(), "stripped_" + blockID.getPath());
-        if (!Registries.BLOCK.containsId(strippedID)) return false;
+        Identifier blockID = BuiltInRegistries.BLOCK.getKey(block);
+        Identifier strippedID = Identifier.fromNamespaceAndPath(blockID.getNamespace(), "stripped_" + blockID.getPath());
+        if (!BuiltInRegistries.BLOCK.containsKey(strippedID)) return false;
 
         targetBlock = state.getBlock();
-        strippedTargetBlock = Registries.BLOCK.get(strippedID);
+        strippedTargetBlock = BuiltInRegistries.BLOCK.getValue(strippedID);
 
-        strippedTargetState = strippedTargetBlock.getDefaultState();
-        if (targetBlock instanceof PillarBlock) {
-            strippedTargetState = strippedTargetState.with(PillarBlock.AXIS, state.get(PillarBlock.AXIS));
+        strippedTargetState = strippedTargetBlock.defaultBlockState();
+        if (targetBlock instanceof RotatedPillarBlock) {
+            strippedTargetState = strippedTargetState.setValue(RotatedPillarBlock.AXIS, state.getValue(RotatedPillarBlock.AXIS));
         }
 
-        return world.getBlockState(pos).isIn(BlockTags.LOGS);
+        return world.getBlockState(pos).is(BlockTags.LOGS);
     }
 }

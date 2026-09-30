@@ -1,62 +1,62 @@
 package net.emilsg.clutterbestiary.entity.custom.parent;
 
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.MovementType;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.passive.FishEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.animal.fish.AbstractFish;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
-public abstract class ParentFishEntity extends FishEntity {
-    private static final TrackedData<Boolean> MOVING = DataTracker.registerData(ParentFishEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+public abstract class ParentFishEntity extends AbstractFish {
+    private static final EntityDataAccessor<Boolean> MOVING = SynchedEntityData.defineId(ParentFishEntity.class, EntityDataSerializers.BOOLEAN);
 
-    protected ParentFishEntity(EntityType<? extends FishEntity> entityType, World world) {
+    protected ParentFishEntity(EntityType<? extends AbstractFish> entityType, Level world) {
         super(entityType, world);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(MOVING, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(MOVING, false);
     }
 
     @Override
-    public abstract ItemStack getBucketItem();
+    public abstract ItemStack getBucketItemStack();
 
     public boolean getHasSelfControl() {
-        return hasSelfControl();
+        return canRandomSwim();
     }
 
     public boolean isMoving() {
-        return this.dataTracker.get(MOVING);
+        return this.entityData.get(MOVING);
     }
 
     public void setMoving(boolean moving) {
-        this.dataTracker.set(MOVING, moving);
+        this.entityData.set(MOVING, moving);
     }
 
     @Override
-    public void tickMovement() {
-        if (!this.getWorld().isClient) {
-            Vec3d velocity = this.getVelocity();
-            boolean isMoving = velocity.lengthSquared() > 0.0005f;
+    public void aiStep() {
+        if (!this.level().isClientSide()) {
+            Vec3 velocity = this.getDeltaMovement();
+            boolean isMoving = velocity.lengthSqr() > 0.0005f;
             this.setMoving(isMoving);
         }
-        super.tickMovement();
+        super.aiStep();
     }
 
     @Override
-    public void travel(Vec3d movementInput) {
-        if (this.canMoveVoluntarily() && this.isTouchingWater()) {
-            this.updateVelocity(0.01F, movementInput);
-            this.move(MovementType.SELF, this.getVelocity());
-            this.setVelocity(this.getVelocity().multiply(0.7));
+    public void travel(Vec3 movementInput) {
+        if (this.isEffectiveAi() && this.isInWater()) {
+            this.moveRelative(0.01F, movementInput);
+            this.move(MoverType.SELF, this.getDeltaMovement());
+            this.setDeltaMovement(this.getDeltaMovement().scale(0.7));
             if (this.getTarget() == null) {
-                this.setVelocity(this.getVelocity().add(0.0, -0.005, 0.0));
+                this.setDeltaMovement(this.getDeltaMovement().add(0.0, -0.005, 0.0));
             }
         } else {
             super.travel(movementInput);

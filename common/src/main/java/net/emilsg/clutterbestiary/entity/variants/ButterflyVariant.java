@@ -1,13 +1,13 @@
 package net.emilsg.clutterbestiary.entity.variants;
 
+import net.minecraft.world.item.DyeColor;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -15,29 +15,29 @@ import java.util.Random;
 
 public enum ButterflyVariant {
 
-    WHITE("white", Formatting.WHITE, 0, Blocks.WHITE_CANDLE),
-    LIGHT_GRAY("light_gray", Formatting.GRAY, 1, Blocks.LIGHT_GRAY_CANDLE),
-    GRAY("gray", Formatting.DARK_GRAY, 2, Blocks.GRAY_CANDLE),
-    BLACK("black", Formatting.BLACK, 3, Blocks.BLACK_CANDLE),
-    BROWN("brown", Formatting.GOLD, 4, Blocks.BROWN_CANDLE),
-    RED("red", Formatting.DARK_RED, 5, Blocks.RED_CANDLE),
-    ORANGE("orange", Formatting.GOLD, 6, Blocks.ORANGE_CANDLE),
-    YELLOW("yellow", Formatting.YELLOW, 7, Blocks.YELLOW_CANDLE),
-    LIME("lime", Formatting.GREEN, 8, Blocks.LIME_CANDLE),
-    GREEN("green", Formatting.DARK_GREEN, 9, Blocks.GREEN_CANDLE),
-    LIGHT_BLUE("light_blue", Formatting.BLUE, 10, Blocks.LIGHT_BLUE_CANDLE),
-    CYAN("cyan", Formatting.DARK_AQUA, 11, Blocks.CYAN_CANDLE),
-    BLUE("blue", Formatting.DARK_BLUE, 12, Blocks.BLUE_CANDLE),
-    PURPLE("purple", Formatting.DARK_PURPLE, 13, Blocks.PURPLE_CANDLE),
-    MAGENTA("magenta", Formatting.LIGHT_PURPLE, 14, Blocks.MAGENTA_CANDLE),
-    PINK("pink", Formatting.RED, 15, Blocks.PINK_CANDLE),
-    WARPED("warped", Formatting.DARK_AQUA, 16, true, Blocks.WARPED_FUNGUS),
-    CRIMSON("crimson", Formatting.DARK_RED, 17, true, Blocks.CRIMSON_FUNGUS),
-    SOUL("soul", Formatting.WHITE, 18, true, Blocks.SOUL_LANTERN);
+    WHITE("white", ChatFormatting.WHITE, 0, Blocks.DYED_CANDLE.pick(DyeColor.WHITE)),
+    LIGHT_GRAY("light_gray", ChatFormatting.GRAY, 1, Blocks.DYED_CANDLE.pick(DyeColor.LIGHT_GRAY)),
+    GRAY("gray", ChatFormatting.DARK_GRAY, 2, Blocks.DYED_CANDLE.pick(DyeColor.GRAY)),
+    BLACK("black", ChatFormatting.BLACK, 3, Blocks.DYED_CANDLE.pick(DyeColor.BLACK)),
+    BROWN("brown", ChatFormatting.GOLD, 4, Blocks.DYED_CANDLE.pick(DyeColor.BROWN)),
+    RED("red", ChatFormatting.DARK_RED, 5, Blocks.DYED_CANDLE.pick(DyeColor.RED)),
+    ORANGE("orange", ChatFormatting.GOLD, 6, Blocks.DYED_CANDLE.pick(DyeColor.ORANGE)),
+    YELLOW("yellow", ChatFormatting.YELLOW, 7, Blocks.DYED_CANDLE.pick(DyeColor.YELLOW)),
+    LIME("lime", ChatFormatting.GREEN, 8, Blocks.DYED_CANDLE.pick(DyeColor.LIME)),
+    GREEN("green", ChatFormatting.DARK_GREEN, 9, Blocks.DYED_CANDLE.pick(DyeColor.GREEN)),
+    LIGHT_BLUE("light_blue", ChatFormatting.BLUE, 10, Blocks.DYED_CANDLE.pick(DyeColor.LIGHT_BLUE)),
+    CYAN("cyan", ChatFormatting.DARK_AQUA, 11, Blocks.DYED_CANDLE.pick(DyeColor.CYAN)),
+    BLUE("blue", ChatFormatting.DARK_BLUE, 12, Blocks.DYED_CANDLE.pick(DyeColor.BLUE)),
+    PURPLE("purple", ChatFormatting.DARK_PURPLE, 13, Blocks.DYED_CANDLE.pick(DyeColor.PURPLE)),
+    MAGENTA("magenta", ChatFormatting.LIGHT_PURPLE, 14, Blocks.DYED_CANDLE.pick(DyeColor.MAGENTA)),
+    PINK("pink", ChatFormatting.RED, 15, Blocks.DYED_CANDLE.pick(DyeColor.PINK)),
+    WARPED("warped", ChatFormatting.DARK_AQUA, 16, true, Blocks.WARPED_FUNGUS),
+    CRIMSON("crimson", ChatFormatting.DARK_RED, 17, true, Blocks.CRIMSON_FUNGUS),
+    SOUL("soul", ChatFormatting.WHITE, 18, true, Blocks.SOUL_LANTERN);
 
     private static final Map<Identifier, ButterflyVariant> BY_ID =
             Arrays.stream(values()).collect(java.util.stream.Collectors.toMap(
-                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName()),
+                    v -> Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, v.getName()),
                     v -> v
             ));
     public static final Codec<ButterflyVariant> CODEC =
@@ -48,15 +48,15 @@ public enum ButterflyVariant {
                                 ? DataResult.success(v)
                                 : DataResult.error(() -> "Unknown butterfly variant: " + id);
                     },
-                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName())
+                    v -> Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, v.getName())
             );
     private final String name;
-    private final Formatting colorFormatting;
+    private final ChatFormatting colorFormatting;
     private final boolean isFireImmune;
     private final int ID;
     private final Block variantDecider;
 
-    ButterflyVariant(String name, Formatting colorFormatting, int ID, boolean isFireImmune, Block variantDecider) {
+    ButterflyVariant(String name, ChatFormatting colorFormatting, int ID, boolean isFireImmune, Block variantDecider) {
         this.name = name;
         this.colorFormatting = colorFormatting;
         this.isFireImmune = isFireImmune;
@@ -64,7 +64,7 @@ public enum ButterflyVariant {
         this.variantDecider = variantDecider;
     }
 
-    ButterflyVariant(String name, Formatting colorFormatting, int ID, Block variantDecider) {
+    ButterflyVariant(String name, ChatFormatting colorFormatting, int ID, Block variantDecider) {
         this.name = name;
         this.colorFormatting = colorFormatting;
         this.isFireImmune = false;
@@ -89,7 +89,7 @@ public enum ButterflyVariant {
         return filtered.get(new Random().nextInt(filtered.size()));
     }
 
-    public Formatting getColorFormatting() {
+    public ChatFormatting getColorFormatting() {
         return this.colorFormatting;
     }
 
@@ -106,7 +106,7 @@ public enum ButterflyVariant {
     }
 
     public Identifier getTextureLocation() {
-        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/butterfly/" + getName() + "_butterfly.png");
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/butterfly/" + getName() + "_butterfly.png");
     }
 
     public Block getVariantDecider() {

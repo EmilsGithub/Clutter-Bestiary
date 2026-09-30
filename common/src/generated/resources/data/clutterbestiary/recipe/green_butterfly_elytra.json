@@ -1,16 +1,9 @@
 {
   "type": "minecraft:smithing_transform",
-  "addition": {
-    "item": "minecraft:green_dye"
-  },
-  "base": {
-    "tag": "c:elytra"
-  },
+  "addition": "minecraft:green_dye",
+  "base": "#c:elytra",
   "result": {
-    "count": 1,
     "id": "clutterbestiary:green_butterfly_elytra"
   },
-  "template": {
-    "item": "clutterbestiary:butterfly_elytra_smithing_template"
-  }
+  "template": "clutterbestiary:butterfly_elytra_smithing_template"
 }

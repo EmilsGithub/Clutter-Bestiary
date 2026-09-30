@@ -1,4 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.world.level.block.BonemealSource;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.animation_handling.EntityAnimationController;
 import net.emilsg.clutterbestiary.animation_handling.HandledEntityAnimations;
@@ -12,57 +15,83 @@ import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
 import net.emilsg.clutterbestiary.entity.variants.MossbloomVariant;
 import net.emilsg.clutterbestiary.sound.ModSoundEvents;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.advancement.criterion.Criteria;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.Fertilizable;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.*;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.stat.Stats;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.advancements.triggers.CriteriaTriggers;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.*;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityEvent;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.PlayerRideable;
+import net.minecraft.world.entity.PlayerRideableJumping;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.DismountHelper;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ShearsItem;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-public class MossbloomEntity extends ParentTameableEntity implements Mount, JumpingMount, HandledEntityAnimations<MossbloomEntity, MossbloomAnimationState> {
-    private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.BIG_DRIPLEAF);
+public class MossbloomEntity extends ParentTameableEntity implements PlayerRideable, PlayerRideableJumping, HandledEntityAnimations<MossbloomEntity, MossbloomAnimationState> {
+    private static final Ingredient BREEDING_INGREDIENT = Ingredient.of(Items.BIG_DRIPLEAF);
     private static final Item TAMING_ITEM = Items.SPORE_BLOSSOM;
     private static final int IDLE_GESTURE_CHANCE = 50;
     private static final int EAR_GESTURE_TICKS = 5;
     private static final int TAIL_GESTURE_TICKS = 10;
 
-    private static final TrackedData<String> VARIANT = DataTracker.registerData(MossbloomEntity.class, TrackedDataHandlerRegistry.STRING);
-    private static final TrackedData<Boolean> HAS_HORNS = DataTracker.registerData(MossbloomEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Boolean> IS_SPRINTING = DataTracker.registerData(MossbloomEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Boolean> IS_SADDLED = DataTracker.registerData(MossbloomEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Integer> ANIMATION_STATE = DataTracker.registerData(MossbloomEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Integer> ANIMATION_REVISION = DataTracker.registerData(MossbloomEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Long> ANIMATION_START = DataTracker.registerData(MossbloomEntity.class, TrackedDataHandlerRegistry.LONG);
+    private static final EntityDataAccessor<String> VARIANT = SynchedEntityData.defineId(MossbloomEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Boolean> HAS_HORNS = SynchedEntityData.defineId(MossbloomEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IS_SPRINTING = SynchedEntityData.defineId(MossbloomEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IS_SADDLED = SynchedEntityData.defineId(MossbloomEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> ANIMATION_STATE = SynchedEntityData.defineId(MossbloomEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> ANIMATION_REVISION = SynchedEntityData.defineId(MossbloomEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Long> ANIMATION_START = SynchedEntityData.defineId(MossbloomEntity.class, EntityDataSerializers.LONG);
 
     public static int SHOULD_DROP_HORNS_VALUE = 12000;
     public final AnimationState earTwitchAnimationStateLE = new AnimationState();
@@ -76,16 +105,16 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     protected float jumpStrength;
     private int hornDropTimer;
 
-    public MossbloomEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
+    public MossbloomEntity(EntityType<? extends ParentTameableEntity> entityType, Level world) {
         super(entityType, world);
-        this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.WATER, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.WATER_BORDER, 16.0F);
+        this.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, -1.0F);
+        this.setPathfindingMalus(PathType.WATER, -1.0F);
+        this.setPathfindingMalus(PathType.WATER_BORDER, 16.0F);
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
-        EntityData initializedData = super.initialize(world, difficulty, spawnReason, entityData);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData entityData) {
+        SpawnGroupData initializedData = super.finalizeSpawn(world, difficulty, spawnReason, entityData);
         MossbloomVariant variant = MossbloomVariant.getRandom(this.getRandom());
         this.setVariant(variant);
         this.setHasHorns(variant == MossbloomVariant.HORNED && !this.isBaby());
@@ -94,43 +123,43 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(VARIANT, MossbloomVariant.HORNED.getId());
-        builder.add(HAS_HORNS, true);
-        builder.add(IS_SPRINTING, false);
-        builder.add(IS_SADDLED, false);
-        builder.add(ANIMATION_STATE, MossbloomAnimationState.IDLING.getIndex());
-        builder.add(ANIMATION_REVISION, 0);
-        builder.add(ANIMATION_START, -1L);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(VARIANT, MossbloomVariant.HORNED.getId());
+        builder.define(HAS_HORNS, true);
+        builder.define(IS_SPRINTING, false);
+        builder.define(IS_SADDLED, false);
+        builder.define(ANIMATION_STATE, MossbloomAnimationState.IDLING.getIndex());
+        builder.define(ANIMATION_REVISION, 0);
+        builder.define(ANIMATION_START, -1L);
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new MossbloomDropHornsGoal(this));
-        this.goalSelector.add(1, new SwimGoal(this));
-        this.goalSelector.add(2, new TrackedFleeGoal(this, 2.5f));
-        this.goalSelector.add(3, new AnimalMateGoal(this, 1));
-        this.goalSelector.add(4, new TemptGoal(this, 1.25, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(5, new FollowParentGoal(this, 1.0));
-        this.goalSelector.add(6, new WanderAroundFarOftenGoal(this, 1.0f));
-        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(8, new LookAroundGoal(this));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new MossbloomDropHornsGoal(this));
+        this.goalSelector.addGoal(1, new FloatGoal(this));
+        this.goalSelector.addGoal(2, new TrackedFleeGoal(this, 2.5f));
+        this.goalSelector.addGoal(3, new BreedGoal(this, 1));
+        this.goalSelector.addGoal(4, new TemptGoal(this, 1.25, BREEDING_INGREDIENT, false));
+        this.goalSelector.addGoal(5, new FollowParentGoal(this, 1.0));
+        this.goalSelector.addGoal(6, new WanderAroundFarOftenGoal(this, 1.0f));
+        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 6.0F));
+        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
-        this.dataTracker.set(HAS_HORNS, nbt.getBoolean("HasHorns"));
-        this.setHornDropTimer(nbt.getInt("HornDropTimer"));
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.entityData.set(VARIANT, nbt.getStringOr("Variant", ""));
+        this.entityData.set(HAS_HORNS, nbt.getBooleanOr("HasHorns", false));
+        this.setHornDropTimer(nbt.getIntOr("HornDropTimer", 0));
         this.setIsShaking(false);
-        this.dataTracker.set(IS_SADDLED, nbt.getBoolean("IsSaddled"));
+        this.entityData.set(IS_SADDLED, nbt.getBooleanOr("IsSaddled", false));
         if (this.getVariant() == MossbloomVariant.FLOWERING) this.setHasHorns(false);
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putString("Variant", this.getTypeVariant());
         nbt.putBoolean("HasHorns", this.getHasHorns());
         nbt.putInt("HornDropTimer", this.getHornDropTimer());
@@ -138,40 +167,40 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         nbt.putBoolean("IsSaddled", this.getIsSaddled());
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentAnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 20D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.15f)
-                .add(EntityAttributes.GENERIC_ATTACK_SPEED, 1.0f)
-                .add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.5f)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 6.0f)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f)
-                .add(EntityAttributes.GENERIC_JUMP_STRENGTH, 0.75f)
-                .add(EntityAttributes.GENERIC_STEP_HEIGHT, 1.0f);
+    public static AttributeSupplier.Builder setAttributes() {
+        return ParentAnimalEntity.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 20D)
+                .add(Attributes.MOVEMENT_SPEED, 0.15f)
+                .add(Attributes.ATTACK_SPEED, 1.0f)
+                .add(Attributes.ATTACK_KNOCKBACK, 0.5f)
+                .add(Attributes.ATTACK_DAMAGE, 6.0f)
+                .add(Attributes.FOLLOW_RANGE, 16.0f)
+                .add(Attributes.JUMP_STRENGTH, 0.75f)
+                .add(Attributes.STEP_HEIGHT, 1.0f);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.MOSSBLOOMS_SPAWN_ON);
+    public static boolean checkAnimalSpawnRules(EntityType<? extends Animal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos.below()).is(ModBlockTags.MOSSBLOOMS_SPAWN_ON);
     }
 
     @Override
-    public void breed(ServerWorld world, AnimalEntity other) {
-        MossbloomEntity child = (MossbloomEntity) this.createChild(world, other);
+    public void spawnChildFromBreeding(ServerLevel world, Animal other) {
+        MossbloomEntity child = (MossbloomEntity) this.getBreedOffspring(world, other);
         if (child != null) {
-            ServerPlayerEntity serverPlayerEntity = this.getLovingPlayer();
-            if (serverPlayerEntity == null && other.getLovingPlayer() != null) {
-                serverPlayerEntity = other.getLovingPlayer();
+            ServerPlayer serverPlayerEntity = this.getLoveCause();
+            if (serverPlayerEntity == null && other.getLoveCause() != null) {
+                serverPlayerEntity = other.getLoveCause();
             }
 
             if (serverPlayerEntity != null) {
-                serverPlayerEntity.incrementStat(Stats.ANIMALS_BRED);
-                Criteria.BRED_ANIMALS.trigger(serverPlayerEntity, this, other, child);
+                serverPlayerEntity.awardStat(Stats.ANIMALS_BRED);
+                CriteriaTriggers.BRED_ANIMALS.trigger(serverPlayerEntity, this, other, child);
             }
 
-            this.setBreedingAge(6000);
-            other.setBreedingAge(6000);
-            this.resetLoveTicks();
-            other.resetLoveTicks();
+            this.setAge(6000);
+            other.setAge(6000);
+            this.resetLove();
+            other.resetLove();
             child.setBaby(true);
 
             boolean isVariantHorned = random.nextBoolean();
@@ -180,18 +209,18 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
             child.setHasHorns(isVariantHorned);
             if (isVariantHorned) child.setHornDropTimer(-SHOULD_DROP_HORNS_VALUE);
 
-            child.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
-            world.spawnEntityAndPassengers(child);
-            world.sendEntityStatus(this, EntityStatuses.ADD_BREEDING_PARTICLES);
-            if (world.getGameRules().getBoolean(GameRules.DO_MOB_LOOT)) {
-                world.spawnEntity(new ExperienceOrbEntity(world, this.getX(), this.getY(), this.getZ(), this.getRandom().nextInt(7) + 1));
+            child.snapTo(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
+            world.addFreshEntityWithPassengers(child);
+            world.broadcastEntityEvent(this, EntityEvent.IN_LOVE_HEARTS);
+            if (world.getGameRules().get(GameRules.MOB_DROPS)) {
+                world.addFreshEntity(new ExperienceOrb(world, this.getX(), this.getY(), this.getZ(), this.getRandom().nextInt(7) + 1));
             }
 
         }
     }
 
     @Override
-    public boolean canBreedWith(AnimalEntity other) {
+    public boolean canMate(Animal other) {
         if (other == this) {
             return false;
         } else if (other.getClass() != this.getClass()) {
@@ -208,16 +237,16 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         return this.getIsSaddled();
     }
 
-    public boolean canSpawn(WorldAccess world, SpawnReason spawnReason) {
-        BlockPos pos = this.getBlockPos();
-        BlockState blockState = world.getBlockState(pos.down());
-        return (blockState.isOf(Blocks.GRASS_BLOCK) || blockState.isOf(Blocks.STONE) || blockState.isOf(Blocks.MOSS_BLOCK) || blockState.isOf(Blocks.CLAY));
+    public boolean checkSpawnRules(LevelAccessor world, EntitySpawnReason spawnReason) {
+        BlockPos pos = this.blockPosition();
+        BlockState blockState = world.getBlockState(pos.below());
+        return (blockState.is(Blocks.GRASS_BLOCK) || blockState.is(Blocks.STONE) || blockState.is(Blocks.MOSS_BLOCK) || blockState.is(Blocks.CLAY));
     }
 
     @Nullable
     @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        MossbloomEntity child = ModEntityTypes.MOSSBLOOM.get().create(world);
+    public AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
+        MossbloomEntity child = ModEntityTypes.MOSSBLOOM.get().create(world, EntitySpawnReason.BREEDING);
         if (child != null) {
             MossbloomVariant variant = MossbloomVariant.getRandom(child.getRandom());
             child.setVariant(variant);
@@ -230,13 +259,13 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     @Nullable
     public LivingEntity getControllingPassenger() {
         Entity firstPassenger = this.getFirstPassenger();
-        if (firstPassenger instanceof MobEntity mobEntity) {
+        if (firstPassenger instanceof Mob mobEntity) {
             return mobEntity;
         } else {
             if (this.getIsSaddled()) {
                 firstPassenger = this.getFirstPassenger();
-                if (firstPassenger instanceof PlayerEntity) {
-                    return (PlayerEntity) firstPassenger;
+                if (firstPassenger instanceof Player) {
+                    return (Player) firstPassenger;
                 }
             }
 
@@ -245,11 +274,11 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     public boolean getHasHorns() {
-        return this.dataTracker.get(HAS_HORNS);
+        return this.entityData.get(HAS_HORNS);
     }
 
     public void setHasHorns(boolean hasHorns) {
-        this.dataTracker.set(HAS_HORNS, hasHorns);
+        this.entityData.set(HAS_HORNS, hasHorns);
     }
 
     public int getHornDropTimer() {
@@ -261,11 +290,11 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     public boolean getIsSaddled() {
-        return this.dataTracker.get(IS_SADDLED);
+        return this.entityData.get(IS_SADDLED);
     }
 
     public void setIsSaddled(boolean saddled) {
-        this.dataTracker.set(IS_SADDLED, saddled);
+        this.entityData.set(IS_SADDLED, saddled);
     }
 
     public boolean getIsShaking() {
@@ -283,11 +312,11 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     public double getJumpStrength() {
-        return this.getAttributeValue(EntityAttributes.GENERIC_JUMP_STRENGTH);
+        return this.getAttributeValue(Attributes.JUMP_STRENGTH);
     }
 
     @Override
-    public void setJumpStrength(int strength) {
+    public void onPlayerJump(int strength) {
         if (this.getIsSaddled()) {
             if (strength < 0) {
                 strength = 0;
@@ -305,12 +334,12 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     @Override
-    public int getLimitPerChunk() {
+    public int getMaxSpawnClusterSize() {
         return 2;
     }
 
     public boolean getSprinting() {
-        return this.dataTracker.get(IS_SPRINTING);
+        return this.entityData.get(IS_SPRINTING);
     }
 
     @Override
@@ -319,7 +348,7 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     public String getTypeVariant() {
-        return this.dataTracker.get(VARIANT);
+        return this.entityData.get(VARIANT);
     }
 
     public MossbloomVariant getVariant() {
@@ -327,23 +356,23 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     public void setVariant(MossbloomVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId());
+        this.entityData.set(VARIANT, variant.getId());
     }
 
-    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+    public boolean causeFallDamage(double fallDistance, float damageMultiplier, DamageSource damageSource) {
         if (fallDistance > 1.0F) {
-            this.playSound(SoundEvents.ENTITY_HORSE_LAND, 0.4F, 1.75F);
+            this.playSound(SoundEvents.HORSE_LAND, 0.4F, 1.75F);
         }
 
-        int i = this.computeFallDamage(fallDistance, damageMultiplier);
+        int i = this.calculateFallDamage(fallDistance, damageMultiplier);
         if (i <= 0) {
             return false;
         } else {
-            this.damage(damageSource, (float) i);
-            if (this.hasPassengers()) {
+            this.hurt(damageSource, (float) i);
+            if (this.isVehicle()) {
 
-                for (Entity entity : this.getPassengersDeep()) {
-                    entity.damage(damageSource, (float) i);
+                for (Entity entity : this.getIndirectPassengers()) {
+                    entity.hurt(damageSource, (float) i);
                 }
             }
 
@@ -353,60 +382,60 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     @Override
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack itemStack = player.getStackInHand(hand);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack itemStack = player.getItemInHand(hand);
         Item item = itemStack.getItem();
 
-        if (this.isTamed() && hand == Hand.MAIN_HAND) {
-            if (!player.isSneaking()) {
-                if (!this.getIsSaddled() && itemStack.isOf(Items.SADDLE)) {
-                    if (!player.getAbilities().creativeMode) itemStack.decrement(1);
+        if (this.isTame() && hand == InteractionHand.MAIN_HAND) {
+            if (!player.isShiftKeyDown()) {
+                if (!this.getIsSaddled() && itemStack.is(Items.SADDLE)) {
+                    if (!player.getAbilities().instabuild) itemStack.shrink(1);
                     this.setIsSaddled(true);
-                    this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_PIG_SADDLE, SoundCategory.NEUTRAL, 0.5f, 1.25f);
-                    return ActionResult.SUCCESS;
+                    this.level().playSound(null, this.blockPosition(), SoundEvents.PIG_SADDLE.value(), SoundSource.NEUTRAL, 0.5f, 1.25f);
+                    return InteractionResult.SUCCESS;
                 }
                 if (itemStack.isEmpty()) {
                     this.setRiding(player);
-                    return ActionResult.SUCCESS;
+                    return InteractionResult.SUCCESS;
                 }
             }
 
             if (item instanceof ShearsItem && this.getIsSaddled()) {
                 this.setIsSaddled(false);
-                itemStack.damage(1, player, LivingEntity.getSlotForHand(hand));
-                this.dropStack(new ItemStack(Items.SADDLE), 0.5F);
-                this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_MOOSHROOM_SHEAR, SoundCategory.NEUTRAL, 0.5f, 1.25f);
-                return ActionResult.SUCCESS;
+                itemStack.hurtAndBreak(1, player, hand.asEquipmentSlot());
+                this.spawnAtLocation((ServerLevel) this.level(), new ItemStack(Items.SADDLE), 0.5F);
+                this.level().playSound(null, this.blockPosition(), SoundEvents.MOOSHROOM_SHEAR, SoundSource.NEUTRAL, 0.5f, 1.25f);
+                return InteractionResult.SUCCESS;
             }
         }
 
-        if (!this.isTamed() && item == this.getTamingItem()) {
-            if (this.getWorld().isClient()) return ActionResult.CONSUME;
+        if (!this.isTame() && item == this.getTamingItem()) {
+            if (this.level().isClientSide()) return InteractionResult.CONSUME;
 
-            if (!player.getAbilities().creativeMode) itemStack.decrement(1);
-            this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_HORSE_EAT, SoundCategory.NEUTRAL, 0.5f, 1.75f);
+            if (!player.getAbilities().instabuild) itemStack.shrink(1);
+            this.level().playSound(null, this.blockPosition(), SoundEvents.HORSE_EAT, SoundSource.NEUTRAL, 0.5f, 1.75f);
 
             if (random.nextInt(8) == 0) {
-                super.setOwner(player);
-                this.navigation.recalculatePath();
+                super.tame(player);
+                this.navigation.recomputePath();
                 this.setTarget(null);
-                this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
+                this.level().broadcastEntityEvent(this, EntityEvent.TAMING_SUCCEEDED);
             } else {
-                this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_NEGATIVE_PLAYER_REACTION_PARTICLES);
+                this.level().broadcastEntityEvent(this, EntityEvent.TAMING_FAILED);
             }
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        return super.interactMob(player, hand);
+        return super.mobInteract(player, hand);
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return BREEDING_INGREDIENT.test(stack);
     }
 
     public boolean isImmobile() {
-        return super.isImmobile() && this.hasPassengers() && this.getIsSaddled();
+        return super.isImmobile() && this.isVehicle() && this.getIsSaddled();
     }
 
     public boolean isInAir() {
@@ -422,36 +451,36 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     public void setIsSprinting(boolean sprinting) {
-        this.dataTracker.set(IS_SPRINTING, sprinting);
+        this.entityData.set(IS_SPRINTING, sprinting);
     }
 
     @Override
-    public void startJumping(int height) {
+    public void handleStartJump(int height) {
         this.jumping = true;
     }
 
     @Override
-    public void stopJumping() {
+    public void handleStopJump() {
     }
 
     @Override
     public void tick() {
         super.tick();
-        World world = this.getWorld();
+        Level world = this.level();
 
-        if (world instanceof ServerWorld serverWorld && this.getVariant() == MossbloomVariant.FLOWERING && this.getRandom().nextInt(4800) == 0) {
+        if (world instanceof ServerLevel serverWorld && this.getVariant() == MossbloomVariant.FLOWERING && this.getRandom().nextInt(4800) == 0) {
             this.tickFertilize(serverWorld);
         }
 
         this.animationController.tick();
-        if (world.isClient) this.tickIdleGestures();
+        if (world.isClientSide()) this.tickIdleGestures();
 
-        if (!world.isClient && this.getVariant() == MossbloomVariant.HORNED && !this.isBaby()) {
+        if (!world.isClientSide() && this.getVariant() == MossbloomVariant.HORNED && !this.isBaby()) {
             if (!this.getHasHorns() && this.getHornDropTimer() >= (SHOULD_DROP_HORNS_VALUE / 3)) this.setHasHorns(true);
             this.setHornDropTimer(this.getHornDropTimer() + 1);
         }
 
-        if (!world.isClient && this.getVariant() == MossbloomVariant.HORNED && this.isBaby()) {
+        if (!world.isClientSide() && this.getVariant() == MossbloomVariant.HORNED && this.isBaby()) {
             this.setHasHorns(false);
         }
 
@@ -459,89 +488,89 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     @Override
-    public void tickMovement() {
-        super.tickMovement();
-        if (this.isSubmergedInWater() && this.getControllingPassenger() != null)
-            this.getControllingPassenger().dismountVehicle();
+    public void aiStep() {
+        super.aiStep();
+        if (this.isUnderWater() && this.getControllingPassenger() != null)
+            this.getControllingPassenger().removeVehicle();
     }
 
     @Override
-    public void travel(Vec3d movementInput) {
-        if (this.hasPassengers() && getControllingPassenger() instanceof PlayerEntity) {
+    public void travel(Vec3 movementInput) {
+        if (this.isVehicle() && getControllingPassenger() instanceof Player) {
             LivingEntity livingentity = this.getControllingPassenger();
-            this.setYaw(livingentity.getYaw());
-            this.prevYaw = this.getYaw();
-            this.setPitch(livingentity.getPitch() * 0.5F);
-            this.setRotation(this.getYaw(), this.getPitch());
-            this.bodyYaw = this.getYaw();
-            this.headYaw = this.bodyYaw;
-            float f = livingentity.sidewaysSpeed * 0.5F;
-            float f1 = livingentity.forwardSpeed;
+            this.setYRot(livingentity.getYRot());
+            this.yRotO = this.getYRot();
+            this.setXRot(livingentity.getXRot() * 0.5F);
+            this.setRot(this.getYRot(), this.getXRot());
+            this.yBodyRot = this.getYRot();
+            this.yHeadRot = this.yBodyRot;
+            float f = livingentity.xxa * 0.5F;
+            float f1 = livingentity.zza;
             if (f1 <= 0.0F) {
                 f1 *= 0.25F;
             }
 
-            if (this.isLogicalSideForUpdatingMovement()) {
-                float newSpeed = (float) this.getAttributeValue(EntityAttributes.GENERIC_MOVEMENT_SPEED);
+            if (this.isLocalInstanceAuthoritative()) {
+                float newSpeed = (float) this.getAttributeValue(Attributes.MOVEMENT_SPEED);
 
                 boolean sprinting = livingentity.isSprinting();
 
                 if (sprinting) newSpeed *= 1.4F;
                 this.setIsSprinting(sprinting);
 
-                this.setMovementSpeed(newSpeed);
-                super.travel(new Vec3d(f, movementInput.y, f1));
+                this.setSpeed(newSpeed);
+                super.travel(new Vec3(f, movementInput.y, f1));
             }
         } else {
-            if (!this.getWorld().isClient && this.getSprinting()) this.setIsSprinting(false);
+            if (!this.level().isClientSide() && this.getSprinting()) this.setIsSprinting(false);
             super.travel(movementInput);
         }
     }
 
     @Override
-    public Vec3d updatePassengerForDismount(LivingEntity passenger) {
-        Direction direction = this.getMovementDirection();
+    public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
+        Direction direction = this.getMotionDirection();
         if (direction.getAxis() == Direction.Axis.Y) {
-            return super.updatePassengerForDismount(passenger);
+            return super.getDismountLocationForPassenger(passenger);
         }
-        int[][] is = Dismounting.getDismountOffsets(direction);
-        BlockPos blockPos = this.getBlockPos();
-        BlockPos.Mutable mutable = new BlockPos.Mutable();
-        for (EntityPose entityPose : passenger.getPoses()) {
-            Box box = passenger.getBoundingBox(entityPose);
+        int[][] is = DismountHelper.offsetsForDirection(direction);
+        BlockPos blockPos = this.blockPosition();
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+        for (Pose entityPose : passenger.getDismountPoses()) {
+            AABB box = passenger.getLocalBoundsForPose(entityPose);
             for (int[] js : is) {
                 mutable.set(blockPos.getX() + js[0], blockPos.getY(), blockPos.getZ() + js[1]);
-                double d = this.getWorld().getDismountHeight(mutable);
-                if (!Dismounting.canDismountInBlock(d)) continue;
-                Vec3d vec3d = Vec3d.ofCenter(mutable, d);
-                if (!Dismounting.canPlaceEntityAt(this.getWorld(), passenger, box.offset(vec3d))) continue;
+                double d = this.level().getBlockFloorHeight(mutable);
+                if (!DismountHelper.isBlockFloorValid(d)) continue;
+                Vec3 vec3d = Vec3.upFromBottomCenterOf(mutable, d);
+                if (!DismountHelper.canDismountTo(this.level(), passenger, box.move(vec3d))) continue;
                 passenger.setPose(entityPose);
                 return vec3d;
             }
         }
-        return super.updatePassengerForDismount(passenger);
+        return super.getDismountLocationForPassenger(passenger);
     }
 
-    protected int computeFallDamage(float fallDistance, float damageMultiplier) {
-        return MathHelper.ceil((fallDistance * 0.5F - 3.0F) * damageMultiplier);
+    protected int calculateFallDamage(double fallDistance, float damageMultiplier) {
+        return Mth.ceil((fallDistance * 0.5F - 3.0F) * damageMultiplier);
     }
 
-    protected Vec3d getControlledMovementInput(PlayerEntity controllingPlayer, Vec3d movementInput) {
-        if (this.isOnGround() && this.jumpStrength == 0.0F && !this.jumping) {
-            return Vec3d.ZERO;
+    protected Vec3 getRiddenInput(Player controllingPlayer, Vec3 movementInput) {
+        if (this.onGround() && this.jumpStrength == 0.0F && !this.jumping) {
+            return Vec3.ZERO;
         } else {
-            float f = controllingPlayer.sidewaysSpeed * 0.5F;
-            float g = controllingPlayer.forwardSpeed;
+            float f = controllingPlayer.xxa * 0.5F;
+            float g = controllingPlayer.zza;
             if (g <= 0.0F) {
                 g *= 0.25F;
             }
 
-            return new Vec3d(f, 0.0, g);
+            return new Vec3(f, 0.0, g);
         }
     }
 
-    protected Vec2f getControlledRotation(LivingEntity controllingPassenger) {
-        return new Vec2f(controllingPassenger.getPitch() * 0.5F, controllingPassenger.getYaw());
+    protected Vec2 getControlledRotation(LivingEntity controllingPassenger) {
+        return new Vec2(controllingPassenger.getXRot() * 0.5F, controllingPassenger.getYRot());
     }
 
     @Override
@@ -549,24 +578,24 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         return ModSoundEvents.ENTITY_MOSSBLOOM_HURT.get();
     }
 
-    protected void jump(float strength, Vec3d movementInput) {
-        double d = this.getJumpStrength() * (double) strength * (double) this.getJumpVelocityMultiplier();
-        double e = d + (double) this.getJumpBoostVelocityModifier();
-        Vec3d vec3d = this.getVelocity();
-        this.setVelocity(vec3d.x, e, vec3d.z);
+    protected void jump(float strength, Vec3 movementInput) {
+        double d = this.getJumpStrength() * (double) strength * (double) this.getBlockJumpFactor();
+        double e = d + (double) this.getJumpBoostPower();
+        Vec3 vec3d = this.getDeltaMovement();
+        this.setDeltaMovement(vec3d.x, e, vec3d.z);
         this.setInAir(true);
-        this.velocityDirty = true;
+        this.needsSync = true;
         if (movementInput.z > 0.0) {
-            float f = MathHelper.sin(this.getYaw() * 0.017453292F);
-            float g = MathHelper.cos(this.getYaw() * 0.017453292F);
-            this.setVelocity(this.getVelocity().add((-0.4F * f * strength), 0.0, (0.4F * g * strength)));
+            float f = Mth.sin(this.getYRot() * 0.017453292F);
+            float g = Mth.cos(this.getYRot() * 0.017453292F);
+            this.setDeltaMovement(this.getDeltaMovement().add((-0.4F * f * strength), 0.0, (0.4F * g * strength)));
         }
 
     }
 
     @Override
-    protected void onGrowUp() {
-        super.onGrowUp();
+    protected void ageBoundaryReached() {
+        super.ageBoundaryReached();
 
         if (!this.isBaby() && this.getVariant() == MossbloomVariant.HORNED) {
             this.setHasHorns(true);
@@ -574,44 +603,44 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
     }
 
     protected void playStepSound(BlockPos pos, BlockState state) {
-        if (!state.isLiquid()) {
-            BlockState blockState = this.getWorld().getBlockState(pos.up());
-            BlockSoundGroup blockSoundGroup = state.getSoundGroup();
-            if (blockState.isOf(Blocks.SNOW)) {
-                blockSoundGroup = blockState.getSoundGroup();
+        if (!state.liquid()) {
+            BlockState blockState = this.level().getBlockState(pos.above());
+            SoundType blockSoundGroup = state.getSoundType();
+            if (blockState.is(Blocks.SNOW)) {
+                blockSoundGroup = blockState.getSoundType();
             }
 
-            if (this.hasPassengers()) {
+            if (this.isVehicle()) {
                 ++this.soundTicks;
                 if (this.soundTicks > 5 && this.soundTicks % 3 == 0) {
                     this.playWalkSound(blockSoundGroup);
                 } else if (this.soundTicks <= 5) {
-                    this.playSound(SoundEvents.ENTITY_HORSE_STEP_WOOD, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
+                    this.playSound(SoundEvents.HORSE_STEP_WOOD, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
                 }
             } else if (this.isWooden(blockSoundGroup)) {
-                this.playSound(SoundEvents.ENTITY_HORSE_STEP_WOOD, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
+                this.playSound(SoundEvents.HORSE_STEP_WOOD, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
             } else {
-                this.playSound(SoundEvents.ENTITY_HORSE_STEP, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
+                this.playSound(SoundEvents.HORSE_STEP, blockSoundGroup.getVolume() * 0.15F, blockSoundGroup.getPitch() + 0.5f);
             }
 
         }
     }
 
-    protected void playWalkSound(BlockSoundGroup group) {
-        this.playSound(SoundEvents.ENTITY_HORSE_GALLOP, group.getVolume() * 0.05F, group.getPitch() + 0.25f);
+    protected void playWalkSound(SoundType group) {
+        this.playSound(SoundEvents.HORSE_GALLOP, group.getVolume() * 0.05F, group.getPitch() + 0.25f);
         if (this.random.nextInt(10) == 0) {
-            this.playSound(SoundEvents.ENTITY_HORSE_BREATHE, group.getVolume() * 0.6F, group.getPitch() + 0.5f);
+            this.playSound(SoundEvents.HORSE_BREATHE, group.getVolume() * 0.6F, group.getPitch() + 0.5f);
         }
     }
 
-    protected void tickControlled(PlayerEntity controllingPlayer, Vec3d movementInput) {
-        super.tickControlled(controllingPlayer, movementInput);
-        Vec2f vec2f = this.getControlledRotation(controllingPlayer);
-        this.setRotation(vec2f.y, vec2f.x);
-        this.prevYaw = this.bodyYaw = this.headYaw = this.getYaw();
-        if (this.isLogicalSideForUpdatingMovement()) {
+    protected void tickRidden(Player controllingPlayer, Vec3 movementInput) {
+        super.tickRidden(controllingPlayer, movementInput);
+        Vec2 vec2f = this.getControlledRotation(controllingPlayer);
+        this.setRot(vec2f.y, vec2f.x);
+        this.yRotO = this.yBodyRot = this.yHeadRot = this.getYRot();
+        if (this.isLocalInstanceAuthoritative()) {
 
-            if (this.isOnGround()) {
+            if (this.onGround()) {
                 this.setInAir(false);
                 if (this.jumpStrength > 0.0F && !this.isInAir()) {
                     this.jump(this.jumpStrength, movementInput);
@@ -623,27 +652,27 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
 
     }
 
-    protected void updateLimbs(float v) {
+    protected void updateWalkAnimation(float v) {
         float f;
-        if (this.getPose() == EntityPose.STANDING) {
+        if (this.getPose() == Pose.STANDING) {
             f = Math.min(v * 6.0F, 1.0F);
         } else {
             f = 0.0F;
         }
 
-        this.limbAnimator.updateLimbs(f * 1.5f, 0.5F);
+        this.walkAnimation.update(f * 1.5f, 0.5F, 1.0F);
     }
 
-    private boolean isWooden(BlockSoundGroup soundGroup) {
-        return soundGroup == BlockSoundGroup.WOOD || soundGroup == BlockSoundGroup.NETHER_WOOD || soundGroup == BlockSoundGroup.NETHER_STEM || soundGroup == BlockSoundGroup.CHERRY_WOOD || soundGroup == BlockSoundGroup.BAMBOO_WOOD;
+    private boolean isWooden(SoundType soundGroup) {
+        return soundGroup == SoundType.WOOD || soundGroup == SoundType.NETHER_WOOD || soundGroup == SoundType.STEM || soundGroup == SoundType.CHERRY_WOOD || soundGroup == SoundType.BAMBOO_WOOD;
     }
 
     private void pickRandomIdleAnim(int i) {
         switch (i) {
-            case 1 -> this.earTwitchAnimationStateRE.start(this.age);
-            case 2 -> this.earTwitchAnimationStateLE.start(this.age);
-            case 3 -> this.wagTailAnimationStateBE.start(this.age);
-            default -> this.earTwitchAnimationStateBE.start(this.age);
+            case 1 -> this.earTwitchAnimationStateRE.start(this.tickCount);
+            case 2 -> this.earTwitchAnimationStateLE.start(this.tickCount);
+            case 3 -> this.wagTailAnimationStateBE.start(this.tickCount);
+            default -> this.earTwitchAnimationStateBE.start(this.tickCount);
         }
         this.idleGestureTicksRemaining = i == 3 ? TAIL_GESTURE_TICKS : EAR_GESTURE_TICKS;
     }
@@ -655,9 +684,9 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         this.wagTailAnimationStateBE.stop();
     }
 
-    private void setRiding(PlayerEntity pPlayer) {
-        pPlayer.setYaw(this.getYaw());
-        pPlayer.setPitch(this.getPitch());
+    private void setRiding(Player pPlayer) {
+        pPlayer.setYRot(this.getYRot());
+        pPlayer.setXRot(this.getXRot());
         pPlayer.startRiding(this);
     }
 
@@ -676,10 +705,10 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
         if (this.random.nextInt(IDLE_GESTURE_CHANCE) == 0) this.pickRandomIdleAnim(this.random.nextInt(4));
     }
 
-    private void tickFertilize(ServerWorld world) {
-        BlockPos origin = this.getBlockPos();
-        BlockPos.Mutable pos = new BlockPos.Mutable();
-        Random random = this.getRandom();
+    private void tickFertilize(ServerLevel world) {
+        BlockPos origin = this.blockPosition();
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        RandomSource random = this.getRandom();
 
         for (int i = 0; i < 32; i++) {
             pos.set(origin.getX() + random.nextInt(11) - 5,
@@ -690,10 +719,10 @@ public class MossbloomEntity extends ParentTameableEntity implements Mount, Jump
             if (state.isAir()) continue;
 
             Block block = state.getBlock();
-            if (state.isIn(BlockTags.BEE_GROWABLES) && block instanceof Fertilizable fertilizable
-                    && fertilizable.isFertilizable(world, pos, state) && fertilizable.canGrow(world, random, pos, state)) {
-                fertilizable.grow(world, random, pos, state);
-                world.spawnParticles(ParticleTypes.HAPPY_VILLAGER,
+            if (state.is(BlockTags.BEE_GROWABLES) && block instanceof BonemealableBlock fertilizable
+                    && fertilizable.isValidBonemealTarget(world, pos, state, BonemealSource.MOB) && fertilizable.isBonemealSuccess(world, random, pos, state, BonemealSource.MOB)) {
+                fertilizable.performBonemeal(world, random, pos, state, BonemealSource.MOB);
+                world.sendParticles(ParticleTypes.HAPPY_VILLAGER,
                         pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
                         15, 0.5, 0.5, 0.5, 0.0);
                 return;

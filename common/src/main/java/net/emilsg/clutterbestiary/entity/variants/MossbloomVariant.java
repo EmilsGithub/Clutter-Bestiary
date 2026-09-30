@@ -1,8 +1,8 @@
 package net.emilsg.clutterbestiary.entity.variants;
 
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -17,6 +17,7 @@ public enum MossbloomVariant {
     private final boolean shouldGlow;
     private final String id;
     private final Identifier textureLocation;
+    private final Identifier babyTextureLocation;
     @Nullable
     private final Identifier emissiveTextureLocation;
 
@@ -24,9 +25,10 @@ public enum MossbloomVariant {
         this.name = name;
         this.shouldGlow = shouldGlow;
         this.id = ClutterBestiary.MOD_ID + ":" + name;
-        this.textureLocation = Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/" + name + "_mossbloom.png");
+        this.textureLocation = Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/" + name + "_mossbloom.png");
+        this.babyTextureLocation = Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/baby_" + name + "_mossbloom.png");
         this.emissiveTextureLocation = shouldGlow
-                ? Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/" + name + "_mossbloom_emissive.png")
+                ? Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/mossbloom/" + name + "_mossbloom_emissive.png")
                 : null;
     }
 
@@ -37,7 +39,7 @@ public enum MossbloomVariant {
         return HORNED;
     }
 
-    public static MossbloomVariant getRandom(Random random) {
+    public static MossbloomVariant getRandom(RandomSource random) {
         return VARIANTS[random.nextInt(VARIANTS.length)];
     }
 
@@ -58,11 +60,11 @@ public enum MossbloomVariant {
         return name;
     }
 
-    public boolean getShouldGlow() {
-        return shouldGlow;
-    }
-
     public Identifier getTextureLocation() {
         return this.textureLocation;
+    }
+
+    public Identifier getBabyTextureLocation() {
+        return this.babyTextureLocation;
     }
 }

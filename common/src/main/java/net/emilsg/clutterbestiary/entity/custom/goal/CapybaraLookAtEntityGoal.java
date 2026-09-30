@@ -1,10 +1,10 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.CapybaraEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.ai.goal.LookAtEntityGoal;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 
-public class CapybaraLookAtEntityGoal extends LookAtEntityGoal {
+public class CapybaraLookAtEntityGoal extends LookAtPlayerGoal {
     private final CapybaraEntity capybara;
 
     public CapybaraLookAtEntityGoal(CapybaraEntity capybara, Class<? extends LivingEntity> targetType, float range) {
@@ -13,7 +13,7 @@ public class CapybaraLookAtEntityGoal extends LookAtEntityGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return super.canStart() && !this.capybara.isSleeping();
+    public boolean canUse() {
+        return super.canUse() && !this.capybara.isSleeping();
     }
 }

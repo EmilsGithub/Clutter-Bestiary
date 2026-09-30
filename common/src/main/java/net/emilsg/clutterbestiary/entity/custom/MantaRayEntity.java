@@ -1,59 +1,73 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.entity.custom.goal.MantaRayJumpGoal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentWaterEntity;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.control.AquaticMoveControl;
-import net.minecraft.entity.ai.control.YawAdjustingLookControl;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.ai.pathing.EntityNavigation;
-import net.minecraft.entity.ai.pathing.SwimNavigation;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.mob.WaterCreatureEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.LocalDifficulty;
-import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.SmoothSwimmingLookControl;
+import net.minecraft.world.entity.ai.control.SmoothSwimmingMoveControl;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
+import net.minecraft.world.entity.ai.goal.TryFindLiquidGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
+import net.minecraft.world.entity.animal.fish.WaterAnimal;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public class MantaRayEntity extends ParentWaterEntity {
-    private static final TrackedData<Float> SIZE = DataTracker.registerData(MantaRayEntity.class, TrackedDataHandlerRegistry.FLOAT);
+    private static final EntityDataAccessor<Float> SIZE = SynchedEntityData.defineId(MantaRayEntity.class, EntityDataSerializers.FLOAT);
 
     public final AnimationState flopAnimationState = new AnimationState();
     private int flopAnimationTimeout = 0;
 
-    public MantaRayEntity(EntityType<? extends WaterCreatureEntity> entityType, World world) {
+    public MantaRayEntity(EntityType<? extends WaterAnimal> entityType, Level world) {
         super(entityType, world);
-        this.moveControl = new AquaticMoveControl(this, 65, 10, 0.025F, 0.1F, true);
-        this.lookControl = new YawAdjustingLookControl(this, 10);
+        this.moveControl = new SmoothSwimmingMoveControl(this, 65, 10, 0.025F, 0.1F, true);
+        this.lookControl = new SmoothSwimmingLookControl(this, 10);
     }
 
-    protected void initGoals() {
-        this.goalSelector.add(0, new MoveIntoWaterGoal(this));
-        this.goalSelector.add(1, new SwimAroundGoal(this, 1.0, 10));
-        this.goalSelector.add(2, new LookAroundGoal(this));
-        this.goalSelector.add(4, new MantaRayJumpGoal(this, 10));
-        this.goalSelector.add(3, new MeleeAttackGoal(this, 1.2000000476837158, true));
-        this.targetSelector.add(1, new RevengeGoal(this));
-        this.targetSelector.add(2, new ActiveTargetGoal<>(this, JellyfishEntity.class, true));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new TryFindLiquidGoal(this, FluidTags.WATER));
+        this.goalSelector.addGoal(1, new RandomSwimmingGoal(this, 1.0, 10));
+        this.goalSelector.addGoal(2, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(4, new MantaRayJumpGoal(this, 10));
+        this.goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.2000000476837158, true));
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, JellyfishEntity.class, true));
     }
 
     @Override
-    public @Nullable EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
-        this.setPitch(0.0F);
+    public @Nullable SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData entityData) {
+        this.setXRot(0.0F);
         float scaledSize;
         float chance = random.nextFloat();
 
@@ -63,81 +77,81 @@ public class MantaRayEntity extends ParentWaterEntity {
         else scaledSize = 1.25f;
 
         this.setSize(scaledSize);
-        this.refreshPosition();
-        this.calculateDimensions();
+        this.reapplyPosition();
+        this.refreshDimensions();
 
-        return super.initialize(world, difficulty, spawnReason, entityData);
+        return super.finalizeSpawn(world, difficulty, spawnReason, entityData);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(SIZE, 0f);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(SIZE, 0f);
     }
 
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.setSize(nbt.getFloat("Size"));
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.setSize(nbt.getFloatOr("Size", 0.0F));
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putFloat("Size", this.getSize());
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
+    public static AttributeSupplier.Builder setAttributes() {
         return ParentWaterEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 16.0D)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2.0D);
+                .add(Attributes.MAX_HEALTH, 16.0D)
+                .add(Attributes.ATTACK_DAMAGE, 2.0D);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends WaterCreatureEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos).isIn(ModBlockTags.MANTA_RAYS_SPAWN_ON);
+    public static boolean isValidNaturalSpawn(EntityType<? extends WaterAnimal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos).is(ModBlockTags.MANTA_RAYS_SPAWN_ON);
     }
 
     public float getSize() {
-        return this.dataTracker.get(SIZE);
+        return this.entityData.get(SIZE);
     }
 
     public void setSize(float size) {
-        this.dataTracker.set(SIZE, size);
-        Objects.requireNonNull(getAttributeInstance(EntityAttributes.GENERIC_SCALE)).setBaseValue(size);
-        this.refreshPosition();
-        this.calculateDimensions();
+        this.entityData.set(SIZE, size);
+        Objects.requireNonNull(getAttribute(Attributes.SCALE)).setBaseValue(size);
+        this.reapplyPosition();
+        this.refreshDimensions();
     }
 
     @Override
-    public Vec3d getVehicleAttachmentPos(Entity vehicle) {
-        return super.getVehicleAttachmentPos(vehicle).add(0, -2.5f / 16f, 0);
+    public Vec3 getVehicleAttachmentPoint(Entity vehicle) {
+        return super.getVehicleAttachmentPoint(vehicle).add(0, -2.5f / 16f, 0);
     }
 
     @Override
     public void tick() {
         super.tick();
-        World world = this.getWorld();
-        if (world.isClient) {
+        Level world = this.level();
+        if (world.isClientSide()) {
             this.setupAnimationStates();
         }
     }
 
     @Override
-    public void tickMovement() {
-        if (!this.isTouchingWater() && this.isOnGround() && this.verticalCollision) {
-            this.setVelocity(this.getVelocity().add((this.random.nextFloat() * 2.0F - 1.0F) * 0.05F, 0.4000000059604645, (this.random.nextFloat() * 2.0F - 1.0F) * 0.05F));
+    public void aiStep() {
+        if (!this.isInWater() && this.onGround() && this.verticalCollision) {
+            this.setDeltaMovement(this.getDeltaMovement().add((this.random.nextFloat() * 2.0F - 1.0F) * 0.05F, 0.4000000059604645, (this.random.nextFloat() * 2.0F - 1.0F) * 0.05F));
             this.setOnGround(false);
-            this.velocityDirty = true;
-            this.playSound(this.getFlopSound(), this.getSoundVolume(), this.getSoundPitch());
+            this.needsSync = true;
+            this.playSound(this.getFlopSound(), this.getSoundVolume(), this.getVoicePitch());
         }
-        super.tickMovement();
+        super.aiStep();
     }
 
-    public void travel(Vec3d movementInput) {
-        if (this.canMoveVoluntarily() && this.isTouchingWater()) {
-            this.updateVelocity(this.getMovementSpeed(), movementInput);
-            this.move(MovementType.SELF, this.getVelocity());
-            this.setVelocity(this.getVelocity().multiply(0.9));
+    public void travel(Vec3 movementInput) {
+        if (this.isEffectiveAi() && this.isInWater()) {
+            this.moveRelative(this.getSpeed(), movementInput);
+            this.move(MoverType.SELF, this.getDeltaMovement());
+            this.setDeltaMovement(this.getDeltaMovement().scale(0.9));
             if (this.getTarget() == null) {
-                this.setVelocity(this.getVelocity().add(0.0, -0.005, 0.0));
+                this.setDeltaMovement(this.getDeltaMovement().add(0.0, -0.005, 0.0));
             }
         } else {
             super.travel(movementInput);
@@ -145,29 +159,29 @@ public class MantaRayEntity extends ParentWaterEntity {
 
     }
 
-    protected EntityNavigation createNavigation(World world) {
-        return new SwimNavigation(this, world);
+    protected PathNavigation createNavigation(Level world) {
+        return new WaterBoundPathNavigation(this, world);
     }
 
-    protected void updateLimbs(float v) {
+    protected void updateWalkAnimation(float v) {
         float f;
-        if (this.getPose() == EntityPose.STANDING) {
+        if (this.getPose() == Pose.STANDING) {
             f = Math.min(v * 6.0F, 1.0F);
         } else {
             f = 0.0F;
         }
 
-        this.limbAnimator.updateLimbs(f * 1.5f, 0.7F);
+        this.walkAnimation.update(f * 1.5f, 0.7F, 1.0F);
     }
 
     private SoundEvent getFlopSound() {
-        return SoundEvents.ENTITY_GUARDIAN_FLOP;
+        return SoundEvents.GUARDIAN_FLOP;
     }
 
     private void setupAnimationStates() {
         if (this.flopAnimationTimeout <= 0) {
             this.flopAnimationTimeout = 10;
-            this.flopAnimationState.startIfNotRunning(this.age);
+            this.flopAnimationState.startIfStopped(this.tickCount);
         } else {
             --this.flopAnimationTimeout;
         }

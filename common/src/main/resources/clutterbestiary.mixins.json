@@ -1,16 +1,17 @@
 {
   "required": true,
   "package": "net.emilsg.clutterbestiary.mixin",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_25",
   "minVersion": "0.8",
   "client": [
     "ClientCommonNetworkHandlerAccessor",
     "ClientPlayNetworkHandlerMixin",
-    "ItemRendererMixin"
+    "ItemModelResolverMixin"
   ],
   "mixins": [
     "BlockMixin",
     "BoatEntityMixin",
+    "EntityDataFixSchemaMixin",
     "ChorusFlowerBlockMixin",
     "CrossbowItemMixin",
     "FarmlandBlockMixin",

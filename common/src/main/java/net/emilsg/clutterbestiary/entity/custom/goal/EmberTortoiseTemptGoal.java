@@ -1,8 +1,8 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.EmberTortoiseEntity;
-import net.minecraft.entity.ai.goal.TemptGoal;
-import net.minecraft.recipe.Ingredient;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class EmberTortoiseTemptGoal extends TemptGoal {
     EmberTortoiseEntity emberTortoise;
@@ -13,8 +13,8 @@ public class EmberTortoiseTemptGoal extends TemptGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return !this.emberTortoise.isShielding() && super.canStart();
+    public boolean canUse() {
+        return !this.emberTortoise.isShielding() && super.canUse();
     }
 
     @Override

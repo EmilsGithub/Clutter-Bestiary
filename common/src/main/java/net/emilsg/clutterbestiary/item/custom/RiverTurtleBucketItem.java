@@ -1,19 +1,21 @@
 package net.emilsg.clutterbestiary.item.custom;
 
+import net.emilsg.clutterbestiary.util.ModUtil;
+import net.minecraft.world.item.component.TooltipDisplay;
+import java.util.function.Consumer;
 import com.mojang.serialization.MapCodec;
 import net.emilsg.clutterbestiary.entity.variants.RiverTurtleVariant;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.EntityType;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.material.Fluid;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -21,24 +23,24 @@ import java.util.function.Supplier;
 public class RiverTurtleBucketItem extends BestiaryEntityBucketItem {
     public static final MapCodec<RiverTurtleVariant> RIVER_TURTLE_VARIANT_MAP_CODEC = RiverTurtleVariant.CODEC.fieldOf("Variant");
 
-    public RiverTurtleBucketItem(Supplier<? extends EntityType<?>> type, Fluid fluid, SoundEvent emptyingSound, Settings settings) {
+    public RiverTurtleBucketItem(Supplier<? extends EntityType<?>> type, Fluid fluid, SoundEvent emptyingSound, Properties settings) {
         super(type, fluid, emptyingSound, settings);
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
-        NbtComponent nbtComponent = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
+        CustomData nbtComponent = stack.getOrDefault(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY);
         if (nbtComponent.isEmpty()) return;
 
-        Optional<RiverTurtleVariant> optional = nbtComponent.get(RIVER_TURTLE_VARIANT_MAP_CODEC).result();
+        Optional<RiverTurtleVariant> optional = ModUtil.readComponentData(nbtComponent, RIVER_TURTLE_VARIANT_MAP_CODEC);
         if (optional.isEmpty()) return;
 
         RiverTurtleVariant variant = optional.get();
-        Formatting formatting = variant.getFormatting();
+        ChatFormatting formatting = variant.getFormatting();
         String key = "clutterbestiary." + variant.getName() + ".river_turtle";
 
-        MutableText text = Text.translatable(key);
-        text.formatted(formatting);
-        tooltip.add(text);
+        MutableComponent text = Component.translatable(key);
+        text.withStyle(formatting);
+        tooltip.accept(text);
     }
 }

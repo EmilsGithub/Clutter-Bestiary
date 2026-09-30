@@ -1,8 +1,7 @@
 package net.emilsg.clutterbestiary.entity.variants;
 
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.Identifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -35,10 +34,10 @@ public enum StoatVariant {
     }
 
     public Identifier getSleepingTextureLocation() {
-        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/stoat/" + getName() + "_stoat_sleeping.png");
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/stoat/" + getName() + "_stoat_sleeping.png");
     }
 
     public Identifier getTextureLocation() {
-        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/stoat/" + getName() + "_stoat.png");
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/stoat/" + getName() + "_stoat.png");
     }
 }

@@ -1,45 +1,30 @@
 package net.emilsg.clutterbestiary.entity.client.model.parent;
 
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.entity.model.SinglePartEntityModel;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.math.MathHelper;
-import org.joml.Vector3f;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 
-public abstract class ParentTameableModel<T extends ParentTameableEntity> extends SinglePartEntityModel<T> {
+public abstract class ParentTameableModel<T extends ParentTameableEntity> extends BestiaryEntityModel<T> {
+    // Shared baby look: half-size body with an enlarged head (formerly setBabyHeadSizeAndRender).
+    protected static final float DEFAULT_BABY_SCALE = 0.5F;
+    protected static final float DEFAULT_BABY_Y_OFFSET = 1.5F;
 
-    public Vector3f createVec3f(float scale) {
-        return new Vector3f(scale, scale, scale);
+    protected ParentTameableModel(ModelPart root) {
+        super(root);
     }
 
     @Override
-    public abstract void setAngles(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch);
+    public abstract void setupAnim(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch);
 
     protected abstract ModelPart getHeadPart();
 
-    protected void setBabyHeadSizeAndRender(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        matrices.push();
-
-        if (this.child) {
-            float babyScale = 0.5f;
-            matrices.scale(babyScale, babyScale, babyScale);
-            matrices.translate(0.0D, 1.5D, 0D);
-            this.getHeadPart().scale(createVec3f(0.6f));
-        }
-
-        this.getPart().render(matrices, vertices, light, overlay, color);
-        matrices.pop();
-    }
-
     protected void setHeadAngles(LivingEntity entity, float headYaw, float headPitch, float animationProgress) {
         if (getHeadPart() == null) return;
-        headYaw = MathHelper.clamp(headYaw, -30.0F, 30.0F);
-        headPitch = MathHelper.clamp(headPitch, -25.0F, 45.0F);
+        headYaw = Mth.clamp(headYaw, -30.0F, 30.0F);
+        headPitch = Mth.clamp(headPitch, -25.0F, 45.0F);
 
-        getHeadPart().yaw = headYaw * 0.017453292F;
-        getHeadPart().pitch = headPitch * 0.017453292F;
+        getHeadPart().yRot = headYaw * 0.017453292F;
+        getHeadPart().xRot = headPitch * 0.017453292F;
     }
 }

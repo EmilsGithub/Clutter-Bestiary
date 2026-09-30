@@ -2,11 +2,11 @@ package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
-import net.minecraft.entity.ai.NoPenaltyTargeting;
-import net.minecraft.entity.ai.goal.EscapeDangerGoal;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.util.DefaultRandomPos;
+import net.minecraft.world.phys.Vec3;
 
-public class TrackedFleeGoal extends EscapeDangerGoal {
+public class TrackedFleeGoal extends PanicGoal {
     private static final int MAX_EXTRA_FLEES = 4;
 
     private ParentAnimalEntity animalEntity;
@@ -25,8 +25,8 @@ public class TrackedFleeGoal extends EscapeDangerGoal {
     }
 
     @Override
-    public boolean shouldContinue() {
-        if (!this.mob.getNavigation().isIdle()) {
+    public boolean canContinueToUse() {
+        if (!this.mob.getNavigation().isDone()) {
             return true;
         }
 
@@ -34,11 +34,11 @@ public class TrackedFleeGoal extends EscapeDangerGoal {
             return false;
         }
 
-        if (!this.findTarget()) {
+        if (!this.findRandomPosition()) {
             return false;
         }
 
-        this.mob.getNavigation().startMovingTo(this.targetX, this.targetY, this.targetZ, this.speed);
+        this.mob.getNavigation().moveTo(this.posX, this.posY, this.posZ, this.speedModifier);
         this.extraFleesDone++;
         return true;
     }
@@ -61,15 +61,15 @@ public class TrackedFleeGoal extends EscapeDangerGoal {
     }
 
     @Override
-    protected boolean findTarget() {
-        Vec3d vec3d = NoPenaltyTargeting.find(this.mob, 24, 6);
+    protected boolean findRandomPosition() {
+        Vec3 vec3d = DefaultRandomPos.getPos(this.mob, 24, 6);
         if (vec3d == null) {
             return false;
         }
 
-        this.targetX = vec3d.x;
-        this.targetY = vec3d.y;
-        this.targetZ = vec3d.z;
+        this.posX = vec3d.x;
+        this.posY = vec3d.y;
+        this.posZ = vec3d.z;
         return true;
     }
 }

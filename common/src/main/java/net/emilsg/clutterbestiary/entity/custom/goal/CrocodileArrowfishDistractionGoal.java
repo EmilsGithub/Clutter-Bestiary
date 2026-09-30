@@ -2,8 +2,8 @@ package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.ArrowfishProjectileEntity;
 import net.emilsg.clutterbestiary.entity.custom.CrocodileEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.sound.SoundEvents;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.ai.goal.Goal;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -28,28 +28,28 @@ public class CrocodileArrowfishDistractionGoal extends Goal {
 
     public CrocodileArrowfishDistractionGoal(CrocodileEntity crocodileEntity) {
         this.crocodileEntity = crocodileEntity;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
-    public boolean canStart() {
-        if (!this.crocodileEntity.isAlive() || this.crocodileEntity.isTamed() || this.crocodileEntity.isBaby()) return false;
-        if (this.crocodileEntity.getWorld().getTime() < this.nextSearchTime) return false;
+    public boolean canUse() {
+        if (!this.crocodileEntity.isAlive() || this.crocodileEntity.isTame() || this.crocodileEntity.isBaby()) return false;
+        if (this.crocodileEntity.level().getGameTime() < this.nextSearchTime) return false;
 
-        List<ArrowfishProjectileEntity> projectiles = this.crocodileEntity.getWorld().getEntitiesByClass(
+        List<ArrowfishProjectileEntity> projectiles = this.crocodileEntity.level().getEntitiesOfClass(
                 ArrowfishProjectileEntity.class,
-                this.crocodileEntity.getBoundingBox().expand(SEARCH_RANGE, SEARCH_RANGE / 2.0, SEARCH_RANGE),
+                this.crocodileEntity.getBoundingBox().inflate(SEARCH_RANGE, SEARCH_RANGE / 2.0, SEARCH_RANGE),
                 ArrowfishProjectileEntity::isStuckInGround
         );
         this.arrowfishProjectile = projectiles.stream()
-                .min(Comparator.comparingDouble(this.crocodileEntity::squaredDistanceTo))
+                .min(Comparator.comparingDouble(this.crocodileEntity::distanceToSqr))
                 .orElse(null);
         return this.arrowfishProjectile != null;
     }
 
     @Override
-    public boolean shouldContinue() {
-        if (!this.crocodileEntity.isAlive() || this.crocodileEntity.isTamed() || !this.isProjectileValid()) return false;
+    public boolean canContinueToUse() {
+        if (!this.crocodileEntity.isAlive() || this.crocodileEntity.isTame() || !this.isProjectileValid()) return false;
         if (this.distractionStarted) {
             return this.crocodileEntity.isDistracted() && this.distractionTicks < DISTRACTION_DURATION_TICKS;
         }
@@ -64,7 +64,7 @@ public class CrocodileArrowfishDistractionGoal extends Goal {
         this.crocodileEntity.setTarget(null);
         this.crocodileEntity.setDistracted(false);
         if (this.arrowfishProjectile != null) {
-            this.crocodileEntity.getNavigation().startMovingTo(this.arrowfishProjectile, APPROACH_SPEED);
+            this.crocodileEntity.getNavigation().moveTo(this.arrowfishProjectile, APPROACH_SPEED);
         }
     }
 
@@ -73,7 +73,7 @@ public class CrocodileArrowfishDistractionGoal extends Goal {
         boolean fed = this.distractionStarted && !this.crocodileEntity.isDistracted();
         this.crocodileEntity.setDistracted(false);
         this.crocodileEntity.getNavigation().stop();
-        this.nextSearchTime = this.crocodileEntity.getWorld().getTime() + (fed ? FED_COOLDOWN_TICKS : 20);
+        this.nextSearchTime = this.crocodileEntity.level().getGameTime() + (fed ? FED_COOLDOWN_TICKS : 20);
         this.arrowfishProjectile = null;
         this.distractionStarted = false;
         this.distractionTicks = 0;
@@ -81,20 +81,20 @@ public class CrocodileArrowfishDistractionGoal extends Goal {
     }
 
     @Override
-    public boolean shouldRunEveryTick() {
+    public boolean requiresUpdateEveryTick() {
         return true;
     }
 
     @Override
     public void tick() {
-        if (!this.shouldContinue()) return;
+        if (!this.canContinueToUse()) return;
 
-        this.crocodileEntity.getLookControl().lookAt(this.arrowfishProjectile, 20.0f, this.crocodileEntity.getMaxLookPitchChange());
+        this.crocodileEntity.getLookControl().setLookAt(this.arrowfishProjectile, 20.0f, this.crocodileEntity.getMaxHeadXRot());
         if (!this.distractionStarted) {
             this.pursuitTicks++;
-            if (this.crocodileEntity.squaredDistanceTo(this.arrowfishProjectile) > DISTRACTION_DISTANCE * DISTRACTION_DISTANCE) {
-                if (this.crocodileEntity.getNavigation().isIdle()) {
-                    this.crocodileEntity.getNavigation().startMovingTo(this.arrowfishProjectile, APPROACH_SPEED);
+            if (this.crocodileEntity.distanceToSqr(this.arrowfishProjectile) > DISTRACTION_DISTANCE * DISTRACTION_DISTANCE) {
+                if (this.crocodileEntity.getNavigation().isDone()) {
+                    this.crocodileEntity.getNavigation().moveTo(this.arrowfishProjectile, APPROACH_SPEED);
                 }
                 return;
             }
@@ -106,7 +106,7 @@ public class CrocodileArrowfishDistractionGoal extends Goal {
 
         this.distractionTicks++;
         if (this.distractionTicks >= DISTRACTION_DURATION_TICKS) {
-            this.crocodileEntity.playSound(SoundEvents.ENTITY_GENERIC_EAT, 1.0f, 0.8f + this.crocodileEntity.getRandom().nextFloat() * 0.4f);
+            this.crocodileEntity.playSound(SoundEvents.GENERIC_EAT.value(), 1.0f, 0.8f + this.crocodileEntity.getRandom().nextFloat() * 0.4f);
             this.arrowfishProjectile.discard();
         }
     }

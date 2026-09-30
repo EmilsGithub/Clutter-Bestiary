@@ -1,9 +1,9 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.CapybaraEntity;
-import net.minecraft.entity.ai.goal.AnimalMateGoal;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
 
-public class CapybaraMateGoal extends AnimalMateGoal {
+public class CapybaraMateGoal extends BreedGoal {
     private final CapybaraEntity capybara;
 
     public CapybaraMateGoal(CapybaraEntity capybara, double speed) {
@@ -12,7 +12,7 @@ public class CapybaraMateGoal extends AnimalMateGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return super.canStart() && !this.capybara.isSleeping();
+    public boolean canUse() {
+        return super.canUse() && !this.capybara.isSleeping();
     }
 }

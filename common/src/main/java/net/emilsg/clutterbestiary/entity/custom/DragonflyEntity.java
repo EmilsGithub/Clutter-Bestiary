@@ -1,4 +1,6 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.animation_handling.AnimationPlayback;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
@@ -10,104 +12,108 @@ import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.entity.variants.DragonflyVariant;
 import net.emilsg.clutterbestiary.entity.variants.SeahorseVariant;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.AnimationState;
-import net.minecraft.entity.EntityData;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.ai.control.LookControl;
-import net.minecraft.entity.ai.control.MoveControl;
-import net.minecraft.entity.ai.goal.FleeEntityGoal;
-import net.minecraft.entity.ai.pathing.BirdNavigation;
-import net.minecraft.entity.ai.pathing.EntityNavigation;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.*;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.LookControl;
+import net.minecraft.world.entity.ai.control.MoveControl;
+import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 public class DragonflyEntity extends ParentAnimalEntity {
-    private static final TrackedData<String> VARIANT = DataTracker.registerData(DragonflyEntity.class, TrackedDataHandlerRegistry.STRING);
+    private static final EntityDataAccessor<String> VARIANT = SynchedEntityData.defineId(DragonflyEntity.class, EntityDataSerializers.STRING);
     public final AnimationState flyingAnimState = new AnimationState();
 
-    public DragonflyEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
+    public DragonflyEntity(EntityType<? extends ParentAnimalEntity> entityType, Level world) {
         super(entityType, world);
         this.moveControl = new SnappyFlightMoveControl(this);
         this.lookControl = new DragonflyLookControl(this);
         this.setNoGravity(true);
-        this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.WATER, -2.0F);
-        this.setPathfindingPenalty(PathNodeType.WATER_BORDER, 16.0F);
-        this.setPathfindingPenalty(PathNodeType.COCOA, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.FENCE, -1.0F);
+        this.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, -1.0F);
+        this.setPathfindingMalus(PathType.WATER, -2.0F);
+        this.setPathfindingMalus(PathType.WATER_BORDER, 16.0F);
+        this.setPathfindingMalus(PathType.COCOA, -1.0F);
+        this.setPathfindingMalus(PathType.FENCE, -1.0F);
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData entityData) {
         DragonflyVariant variant = DragonflyVariant.getRandom();
         this.setVariant(variant);
-        return super.initialize(world, difficulty, spawnReason, entityData);
+        return super.finalizeSpawn(world, difficulty, spawnReason, entityData);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(VARIANT, SeahorseVariant.YELLOW.getID());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(VARIANT, SeahorseVariant.YELLOW.getID());
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new EscapeWaterGoal(this));
-        this.goalSelector.add(1, new FleeEntityGoal<>(this, PlayerEntity.class, 8.0f, 1.0f, 1.2f));
-        this.goalSelector.add(2, new DragonflyHoverLilypadGoal(this));
-        this.goalSelector.add(3, new HoverGoal(this));
-        this.goalSelector.add(3, new DragonflyFastWanderGoal(this));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new EscapeWaterGoal(this));
+        this.goalSelector.addGoal(1, new AvoidEntityGoal<>(this, Player.class, 8.0f, 1.0f, 1.2f));
+        this.goalSelector.addGoal(2, new DragonflyHoverLilypadGoal(this));
+        this.goalSelector.addGoal(3, new HoverGoal(this));
+        this.goalSelector.addGoal(3, new DragonflyFastWanderGoal(this));
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.entityData.set(VARIANT, nbt.getStringOr("Variant", ""));
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putString("Variant", this.getTypeVariant());
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentAnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 8D)
-                .add(EntityAttributes.GENERIC_FLYING_SPEED, 3f)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.1f)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    public static AttributeSupplier.Builder setAttributes() {
+        return ParentAnimalEntity.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 8D)
+                .add(Attributes.FLYING_SPEED, 3f)
+                .add(Attributes.MOVEMENT_SPEED, 0.1f)
+                .add(Attributes.FOLLOW_RANGE, 16.0f);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.DRAGONFLIES_SPAWN_ON);
+    public static boolean checkAnimalSpawnRules(EntityType<? extends Animal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos.below()).is(ModBlockTags.DRAGONFLIES_SPAWN_ON);
     }
 
     @Override
-    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.DRAGONFLY.get().create(world);
+    public @Nullable AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
+        return ModEntityTypes.DRAGONFLY.get().create(world, EntitySpawnReason.BREEDING);
     }
 
-    public float getPathfindingFavor(BlockPos pos, WorldView world) {
+    public float getWalkTargetValue(BlockPos pos, LevelReader world) {
         return world.getBlockState(pos).isAir() ? 10.0F : 0.0F;
     }
 
@@ -116,49 +122,48 @@ public class DragonflyEntity extends ParentAnimalEntity {
     }
 
     public void setVariant(DragonflyVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId());
+        this.entityData.set(VARIANT, variant.getId());
     }
 
     @Override
-    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+    public boolean causeFallDamage(double fallDistance, float damageMultiplier, DamageSource damageSource) {
         return false;
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return false;
     }
 
     @Override
-    public boolean shouldSpawnSprintingParticles() {
+    public boolean canSpawnSprintParticle() {
         return false;
     }
 
     @Override
     public void tick() {
         super.tick();
-        World world = this.getWorld();
+        Level world = this.level();
 
-        if (world.isClient) {
+        if (world.isClientSide()) {
             AnimationPlayback.updateLoop(this, this.flyingAnimState, this.isAlive());
         }
     }
 
-    protected EntityNavigation createNavigation(World world) {
+    protected PathNavigation createNavigation(Level world) {
 
-        BirdNavigation birdNavigation = new BirdNavigation(this, world) {
-            public boolean isValidPosition(BlockPos pos) {
-                return this.world.getBlockState(pos.down()).isAir();
+        FlyingPathNavigation birdNavigation = new FlyingPathNavigation(this, world) {
+            public boolean isStableDestination(BlockPos pos) {
+                return this.level.getBlockState(pos.below()).isAir();
             }
         };
 
-        birdNavigation.setCanPathThroughDoors(false);
-        birdNavigation.setCanSwim(false);
-        birdNavigation.setCanEnterOpenDoors(true);
+        birdNavigation.setCanOpenDoors(false);
+        birdNavigation.setCanFloat(false);
         return birdNavigation;
     }
 
-    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
+    protected void checkFallDamage(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
     }
 
     @Override
@@ -166,11 +171,11 @@ public class DragonflyEntity extends ParentAnimalEntity {
     }
 
     private String getTypeVariant() {
-        return this.dataTracker.get(VARIANT);
+        return this.entityData.get(VARIANT);
     }
 
     private static class DragonflyLookControl extends LookControl {
-        DragonflyLookControl(MobEntity entity) {
+        DragonflyLookControl(Mob entity) {
             super(entity);
         }
 
@@ -178,36 +183,36 @@ public class DragonflyEntity extends ParentAnimalEntity {
             super.tick();
         }
 
-        protected boolean shouldStayHorizontal() {
+        protected boolean resetXRotOnTick() {
             return true;
         }
 
     }
 
     public static class SnappyFlightMoveControl extends MoveControl {
-        private final MobEntity mob;
+        private final Mob mob;
         private final float multiplier = 0.05f;
 
-        public SnappyFlightMoveControl(MobEntity mob) {
+        public SnappyFlightMoveControl(Mob mob) {
             super(mob);
             this.mob = mob;
         }
 
         @Override
         public void tick() {
-            if (state != State.MOVE_TO) return;
+            if (operation != Operation.MOVE_TO) return;
 
-            Vec3d to = new Vec3d(targetX - mob.getX(), targetY - mob.getY(), targetZ - mob.getZ());
-            if (to.lengthSquared() < 0.01) {
-                state = State.WAIT;
+            Vec3 to = new Vec3(wantedX - mob.getX(), wantedY - mob.getY(), wantedZ - mob.getZ());
+            if (to.lengthSqr() < 0.01) {
+                operation = Operation.WAIT;
                 return;
             }
 
-            Vec3d dir = to.normalize();
-            double boost = this.speed * multiplier;
-            mob.setVelocity(mob.getVelocity().multiply(0.6).add(dir.multiply(boost)));
-            mob.setYaw((float) (MathHelper.atan2(dir.z, dir.x) * (180f / Math.PI)) - 90f);
-            mob.bodyYaw = mob.getYaw();
+            Vec3 dir = to.normalize();
+            double boost = this.speedModifier * multiplier;
+            mob.setDeltaMovement(mob.getDeltaMovement().scale(0.6).add(dir.scale(boost)));
+            mob.setYRot((float) (Mth.atan2(dir.z, dir.x) * (180f / Math.PI)) - 90f);
+            mob.yBodyRot = mob.getYRot();
         }
     }
 

@@ -1,8 +1,8 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.CapybaraEntity;
-import net.minecraft.entity.ai.goal.TemptGoal;
-import net.minecraft.recipe.Ingredient;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class CapybaraTemptGoal extends TemptGoal {
     private final CapybaraEntity capybara;
@@ -13,7 +13,7 @@ public class CapybaraTemptGoal extends TemptGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return super.canStart() && !this.capybara.isSleeping();
+    public boolean canUse() {
+        return super.canUse() && !this.capybara.isSleeping();
     }
 }

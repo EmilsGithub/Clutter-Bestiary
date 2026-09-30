@@ -1,4 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.item.component.SwingAnimation;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import net.emilsg.clutterbestiary.entity.custom.goal.BoopletWanderGoal;
 import net.emilsg.clutterbestiary.entity.custom.goal.TrackedFleeGoal;
@@ -6,37 +9,43 @@ import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.sound.ModSoundEvents;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
 import net.emilsg.clutterbestiary.util.ModUtil;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.goal.LookAroundGoal;
-import net.minecraft.entity.ai.goal.LookAtEntityGoal;
-import net.minecraft.entity.ai.goal.SwimGoal;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
-import net.minecraft.world.event.GameEvent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.Shearable;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.pathfinder.PathType;
 import org.jetbrains.annotations.Nullable;
 
 public class BoopletEntity extends ParentAnimalEntity implements Shearable {
-    private static final TrackedData<Boolean> IS_FLUFFY = DataTracker.registerData(BoopletEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Integer> BOOP_ACTION = DataTracker.registerData(BoopletEntity.class, TrackedDataHandlerRegistry.INTEGER);
+    private static final EntityDataAccessor<Boolean> IS_FLUFFY = SynchedEntityData.defineId(BoopletEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> BOOP_ACTION = SynchedEntityData.defineId(BoopletEntity.class, EntityDataSerializers.INT);
 
     public final AnimationState happyAnimationState = new AnimationState();
     public final AnimationState boopAnimationState = new AnimationState();
@@ -49,62 +58,62 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     private boolean isHappy = false;
     private int fluffTimer;
 
-    public BoopletEntity(EntityType<? extends AnimalEntity> entityType, World world) {
+    public BoopletEntity(EntityType<? extends Animal> entityType, Level world) {
         super(entityType, world);
-        this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.WATER, -2.0F);
-        this.setPathfindingPenalty(PathNodeType.WATER_BORDER, 16.0F);
-        this.setPathfindingPenalty(PathNodeType.COCOA, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.FENCE, -1.0F);
+        this.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, -1.0F);
+        this.setPathfindingMalus(PathType.WATER, -2.0F);
+        this.setPathfindingMalus(PathType.WATER_BORDER, 16.0F);
+        this.setPathfindingMalus(PathType.COCOA, -1.0F);
+        this.setPathfindingMalus(PathType.FENCE, -1.0F);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(IS_FLUFFY, true);
-        builder.add(BOOP_ACTION, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(IS_FLUFFY, true);
+        builder.define(BOOP_ACTION, 0);
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new TrackedFleeGoal(this, 1.5f));
-        this.goalSelector.add(2, new LookAroundGoal(this));
-        this.goalSelector.add(3, new LookAtEntityGoal(this, PlayerEntity.class, 4));
-        this.goalSelector.add(4, new BoopletWanderGoal(this, 1.0f));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new TrackedFleeGoal(this, 1.5f));
+        this.goalSelector.addGoal(2, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 4));
+        this.goalSelector.addGoal(4, new BoopletWanderGoal(this, 1.0f));
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
-        this.setIsFluffy(nbt.getBoolean("IsFluffy"));
-        this.setFluffTimer(nbt.getInt("FluffTimer"));
+    protected void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.setIsFluffy(nbt.getBooleanOr("IsFluffy", false));
+        this.setFluffTimer(nbt.getIntOr("FluffTimer", 0));
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putBoolean("IsFluffy", this.isFluffy());
         nbt.putInt("FluffTimer", this.getFluffTimer());
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentAnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 8D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.18f)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    public static AttributeSupplier.Builder setAttributes() {
+        return ParentAnimalEntity.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 8D)
+                .add(Attributes.MOVEMENT_SPEED, 0.18f)
+                .add(Attributes.FOLLOW_RANGE, 16.0f);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.BOOPLETS_SPAWN_ON);
+    public static boolean checkAnimalSpawnRules(EntityType<? extends Animal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos.below()).is(ModBlockTags.BOOPLETS_SPAWN_ON);
     }
 
     public boolean canBeHappy() {
-        return this.hurtTime <= 0 && this.random.nextInt(20) == 0 && this.happyDanceTimer <= 0 && !this.isTouchingWaterOrRain();
+        return this.hurtTime <= 0 && this.random.nextInt(20) == 0 && this.happyDanceTimer <= 0 && !this.isInWaterOrRain();
     }
 
     @Override
-    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+    public @Nullable AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
         return null;
     }
 
@@ -121,79 +130,80 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     }
 
     @Override
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack itemStack = player.getStackInHand(hand);
-        if (itemStack.isOf(Items.SHEARS)) {
-            if (!this.getWorld().isClient && this.isFluffy()) {
-                this.sheared(SoundCategory.PLAYERS);
-                this.emitGameEvent(GameEvent.SHEAR, player);
-                itemStack.damage(1, player, LivingEntity.getSlotForHand(hand));
-                return ActionResult.SUCCESS;
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack itemStack = player.getItemInHand(hand);
+        if (itemStack.is(Items.SHEARS)) {
+            if (this.level() instanceof ServerLevel serverLevel && this.isFluffy()) {
+                this.shear(serverLevel, SoundSource.PLAYERS, itemStack);
+                this.gameEvent(GameEvent.SHEAR, player);
+                itemStack.hurtAndBreak(1, player, hand.asEquipmentSlot());
+                return InteractionResult.SUCCESS;
             } else {
-                return ActionResult.CONSUME;
+                return InteractionResult.CONSUME;
             }
-        } else if (player.getStackInHand(Hand.MAIN_HAND).isEmpty()) {
-            player.swingHand(Hand.MAIN_HAND);
+        } else if (player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+            player.swing(InteractionHand.MAIN_HAND, SwingAnimation.DEFAULT, false);
 
-            if (!player.getWorld().isClient) {
-                this.playSound(ModSoundEvents.ENTITY_BOOPLET_SQUEAK.get(), this.getSoundVolume() / 2, this.getSoundPitch());
+            if (!player.level().isClientSide()) {
+                this.playSound(ModSoundEvents.ENTITY_BOOPLET_SQUEAK.get(), this.getSoundVolume() / 2, this.getVoicePitch());
 
-                if (this.getWorld() instanceof ServerWorld) {
+                if (this.level() instanceof ServerLevel) {
                     ModUtil.grantImpossibleAdvancement("bestiary/boop", player);
                 }
                 boolean happy = this.canBeHappy();
                 if (happy) {
                     this.happyDanceTimer = 600;
-                    this.getLookControl().lookAt(player);
+                    this.getLookControl().setLookAt(player);
                 }
-                int nextAction = (this.dataTracker.get(BOOP_ACTION) / 2 + 1) * 2;
-                this.dataTracker.set(BOOP_ACTION, nextAction + (happy ? 1 : 0));
+                int nextAction = (this.entityData.get(BOOP_ACTION) / 2 + 1) * 2;
+                this.entityData.set(BOOP_ACTION, nextAction + (happy ? 1 : 0));
                 this.timeSinceBoop = 0;
                 this.getNavigation().stop();
             }
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
-        return super.interactMob(player, hand);
+        return super.mobInteract(player, hand);
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return false;
     }
 
     public boolean isFluffy() {
-        return this.dataTracker.get(IS_FLUFFY);
+        return this.entityData.get(IS_FLUFFY);
     }
 
     @Override
-    public boolean isShearable() {
+    public boolean readyForShearing() {
         return isFluffy();
     }
 
     public void setIsFluffy(boolean fluffy) {
-        this.dataTracker.set(IS_FLUFFY, fluffy);
+        this.entityData.set(IS_FLUFFY, fluffy);
     }
 
     @Override
-    public void onTrackedDataSet(TrackedData<?> data) {
-        super.onTrackedDataSet(data);
-        if (BOOP_ACTION.equals(data) && this.getWorld().isClient) {
-            this.isHappy = (this.dataTracker.get(BOOP_ACTION) & 1) != 0;
+    public void onSyncedDataUpdated(EntityDataAccessor<?> data) {
+        super.onSyncedDataUpdated(data);
+        if (BOOP_ACTION.equals(data) && this.level().isClientSide()) {
+            this.isHappy = (this.entityData.get(BOOP_ACTION) & 1) != 0;
             this.isBooped = !this.isHappy;
             this.timeSinceBoop = 0;
         }
     }
 
-    public void sheared(SoundCategory shearedSoundCategory) {
-        this.getWorld().playSoundFromEntity(null, this, SoundEvents.ENTITY_SHEEP_SHEAR, shearedSoundCategory, 1.0F, 1.25F);
+    @Override
+    public void shear(ServerLevel serverLevel, SoundSource shearedSoundCategory, ItemStack tool) {
+        serverLevel.playSound(null, this, SoundEvents.SHEEP_SHEAR, shearedSoundCategory, 1.0F, 1.25F);
         this.setIsFluffy(false);
         this.setFluffTimer(0);
         int droppedAmount = 1 + this.random.nextInt(3);
 
         for (int j = 0; j < droppedAmount; ++j) {
-            ItemEntity itemEntity = this.dropItem(Items.STRING, 0);
+            ItemEntity itemEntity = this.spawnAtLocation(serverLevel, new ItemStack(Items.STRING), 0);
             if (itemEntity != null) {
-                itemEntity.setVelocity(itemEntity.getVelocity().add(((this.random.nextFloat() - this.random.nextFloat()) * 0.1F), (this.random.nextFloat() * 0.05F), ((this.random.nextFloat() - this.random.nextFloat()) * 0.1F)));
+                itemEntity.setDeltaMovement(itemEntity.getDeltaMovement().add(((this.random.nextFloat() - this.random.nextFloat()) * 0.1F), (this.random.nextFloat() * 0.05F), ((this.random.nextFloat() - this.random.nextFloat()) * 0.1F)));
             }
         }
 
@@ -202,20 +212,20 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     @Override
     public void tick() {
         super.tick();
-        World world = this.getWorld();
+        Level world = this.level();
         if (timeSinceBoop <= 10) timeSinceBoop++;
         if (happyDanceTimer > 0) happyDanceTimer--;
 
         if (this.happyAnimationTimer > 0) this.getNavigation().stop();
 
-        if (world.isClient) {
+        if (world.isClientSide()) {
             this.setupAnimationStates();
             if (this.isBooped && !this.isHappy) {
                 this.stopAndOrRestartBoopAnimation(true);
             } else if (this.isHappy) {
                 this.stopAndOrRestartBoopAnimation(false);
                 this.happyDanceTimer = 600;
-                this.happyAnimationState.start(this.age);
+                this.happyAnimationState.start(this.tickCount);
                 this.happyAnimationTimer = 80;
                 this.isHappy = false;
             }
@@ -226,24 +236,24 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
         }
     }
 
-    protected void updateLimbs(float v) {
+    protected void updateWalkAnimation(float v) {
         float f;
-        if (this.getPose() == EntityPose.STANDING) {
+        if (this.getPose() == Pose.STANDING) {
             f = Math.min(v * 6.0F, 1.0F);
         } else {
             f = 0.0F;
         }
 
-        this.limbAnimator.updateLimbs(f * 2.5f, 0.2F);
+        this.walkAnimation.update(f * 2.5f, 0.2F, 1.0F);
     }
 
     private void setupAnimationStates() {
         if (happyAnimationTimer > 0) happyAnimationTimer--;
         if (happyAnimationTimer <= 0 || this.hurtTime > 0) this.happyAnimationState.stop();
 
-        if (swimAnimationTimeout <= 0 && this.isTouchingWater()) {
+        if (swimAnimationTimeout <= 0 && this.isInWater()) {
             this.swimAnimationTimeout = 20;
-            this.swimAnimationState.start(this.age);
+            this.swimAnimationState.start(this.tickCount);
         } else {
             --this.swimAnimationTimeout;
         }
@@ -252,7 +262,7 @@ public class BoopletEntity extends ParentAnimalEntity implements Shearable {
     private void stopAndOrRestartBoopAnimation(boolean restart) {
         this.boopAnimationState.stop();
         if (restart) {
-            this.boopAnimationState.start(this.age);
+            this.boopAnimationState.start(this.tickCount);
             this.isBooped = false;
         }
     }

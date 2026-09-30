@@ -1,26 +1,26 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
-import net.minecraft.entity.ai.goal.MoveToTargetPosGoal;
-import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.goal.MoveToBlockGoal;
+import net.minecraft.world.level.LevelReader;
 
-public class LeaveWaterGoal extends MoveToTargetPosGoal {
-    private final PathAwareEntity mob;
+public class LeaveWaterGoal extends MoveToBlockGoal {
+    private final PathfinderMob mob;
 
-    public LeaveWaterGoal(PathAwareEntity mob, double speed) {
+    public LeaveWaterGoal(PathfinderMob mob, double speed) {
         super(mob, speed, 12, 2);
         this.mob = mob;
     }
 
     @Override
-    public boolean canStart() {
-        return super.canStart() && this.mob.isTouchingWater() && this.mob.getY() >= this.mob.getWorld().getSeaLevel() - 3 && this.mob.getRandom().nextInt(200) == 0;
+    public boolean canUse() {
+        return super.canUse() && this.mob.isInWater() && this.mob.getY() >= this.mob.level().getSeaLevel() - 3 && this.mob.getRandom().nextInt(200) == 0;
     }
 
     @Override
-    public boolean shouldContinue() {
-        return super.shouldContinue();
+    public boolean canContinueToUse() {
+        return super.canContinueToUse();
     }
 
     @Override
@@ -29,8 +29,8 @@ public class LeaveWaterGoal extends MoveToTargetPosGoal {
     }
 
     @Override
-    protected boolean isTargetPos(WorldView world, BlockPos pos) {
-        BlockPos blockPos = pos.up();
-        return world.isAir(blockPos) && world.isAir(blockPos.up()) && world.getBlockState(pos).hasSolidTopSurface(world, pos, this.mob);
+    protected boolean isValidTarget(LevelReader world, BlockPos pos) {
+        BlockPos blockPos = pos.above();
+        return world.isEmptyBlock(blockPos) && world.isEmptyBlock(blockPos.above()) && world.getBlockState(pos).entityCanStandOn(world, pos, this.mob);
     }
 }

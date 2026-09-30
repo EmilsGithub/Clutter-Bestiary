@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "cases": [
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/coconut_river_turtle_bucket"
+        },
+        "when": "clutterbestiary:coconut"
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "clutterbestiary:item/river_turtle_bucket"
+    },
+    "property": "clutterbestiary:bucket_entity_variant"
+  }
+}

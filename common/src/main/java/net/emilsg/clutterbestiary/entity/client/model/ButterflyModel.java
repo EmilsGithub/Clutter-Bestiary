@@ -1,52 +1,53 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.emilsg.clutterbestiary.entity.client.animation.ButterflyEntityAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutterbestiary.entity.custom.ButterflyEntity;
+import net.minecraft.client.animation.AnimationDefinition;
 import net.minecraft.client.model.*;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.entity.animation.Animation;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
 public class ButterflyModel<T extends ButterflyEntity> extends BestiaryModel<T> {
     private final ModelPart all;
-    private final ModelPart root;
     private final ModelPart body;
     private final ModelPart leftWing;
     private final ModelPart rightWing;
 
     public ButterflyModel(ModelPart root) {
-        this.root = root;
+        super(root);
         this.all = root.getChild("all");
         this.body = all.getChild("body");
         this.leftWing = body.getChild("leftWing");
         this.rightWing = body.getChild("rightWing");
     }
 
-    public static TexturedModelData getTexturedModelData() {
-        ModelData modelData = new ModelData();
-        ModelPartData modelPartData = modelData.getRoot();
-        ModelPartData all = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.of(0.0F, 20.0F, 0.0F, 0.3927F, 0.0F, 0.0F));
+    public static LayerDefinition getTexturedModelData() {
+        MeshDefinition modelData = new MeshDefinition();
+        PartDefinition modelPartData = modelData.getRoot();
+        PartDefinition all = modelPartData.addOrReplaceChild("all", CubeListBuilder.create(), PartPose.offsetAndRotation(0.0F, 20.0F, 0.0F, 0.3927F, 0.0F, 0.0F));
 
-        ModelPartData body = all.addChild("body", ModelPartBuilder.create().uv(3, 2).cuboid(0.25F, -1.8848F, -0.3293F, 0.5F, 4.0F, 0.5F, new Dilation(0.0F)), ModelTransform.pivot(-0.5F, -0.1152F, -0.4207F));
+        PartDefinition body = all.addOrReplaceChild("body", CubeListBuilder.create().texOffs(3, 2).addBox(0.25F, -1.8848F, -0.3293F, 0.5F, 4.0F, 0.5F, new CubeDeformation(0.0F)), PartPose.offset(-0.5F, -0.1152F, -0.4207F));
 
-        ModelPartData cube_r1 = body.addChild("cube_r1", ModelPartBuilder.create().uv(4, 3).cuboid(0.0F, -1.0F, 0.0F, 0.25F, 1.0F, 0.0F, new Dilation(0.0F)), ModelTransform.of(0.25F, -1.75F, -0.25F, 0.2182F, 0.0F, -0.2182F));
+        PartDefinition cube_r1 = body.addOrReplaceChild("cube_r1", CubeListBuilder.create().texOffs(4, 3).addBox(0.0F, -1.0F, 0.0F, 0.25F, 1.0F, 0.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.25F, -1.75F, -0.25F, 0.2182F, 0.0F, -0.2182F));
 
-        ModelPartData cube_r2 = body.addChild("cube_r2", ModelPartBuilder.create().uv(4, 3).cuboid(-0.25F, -1.0F, 0.0F, 0.25F, 1.0F, 0.0F, new Dilation(0.0F)), ModelTransform.of(0.75F, -1.75F, -0.25F, 0.2182F, 0.0F, 0.2182F));
+        PartDefinition cube_r2 = body.addOrReplaceChild("cube_r2", CubeListBuilder.create().texOffs(4, 3).addBox(-0.25F, -1.0F, 0.0F, 0.25F, 1.0F, 0.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.75F, -1.75F, -0.25F, 0.2182F, 0.0F, 0.2182F));
 
-        ModelPartData leftWing = body.addChild("leftWing", ModelPartBuilder.create().uv(0, 8).mirrored().cuboid(0.0F, -3.8848F, -0.0793F, 4.0F, 8.0F, 0.0F, new Dilation(0.0F)).mirrored(false), ModelTransform.pivot(0.75F, 0.0F, 0.0F));
+        PartDefinition leftWing = body.addOrReplaceChild("leftWing", CubeListBuilder.create().texOffs(0, 8).mirror().addBox(0.0F, -3.8848F, -0.0793F, 4.0F, 8.0F, 0.0F, new CubeDeformation(0.0F)).mirror(false), PartPose.offset(0.75F, 0.0F, 0.0F));
 
-        ModelPartData rightWing = body.addChild("rightWing", ModelPartBuilder.create().uv(0, 8).cuboid(-4.0F, -3.8848F, -0.0793F, 4.0F, 8.0F, 0.0F, new Dilation(0.0F)), ModelTransform.pivot(0.25F, 0.0F, 0.0F));
-        return TexturedModelData.of(modelData, 16, 16);
+        PartDefinition rightWing = body.addOrReplaceChild("rightWing", CubeListBuilder.create().texOffs(0, 8).addBox(-4.0F, -3.8848F, -0.0793F, 4.0F, 8.0F, 0.0F, new CubeDeformation(0.0F)), PartPose.offset(0.25F, 0.0F, 0.0F));
+        return LayerDefinition.create(modelData, 16, 16);
     }
 
     public ModelPart getLeftWing() {
         return leftWing;
-    }
-
-    @Override
-    public ModelPart getPart() {
-        return root;
     }
 
     public ModelPart getRightWing() {
@@ -54,14 +55,9 @@ public class ButterflyModel<T extends ButterflyEntity> extends BestiaryModel<T> 
     }
 
     @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        this.getPart().render(matrices, vertices, light, overlay, color);
-    }
-
-    @Override
-    public void setAngles(ButterflyEntity entity, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        Animation flightAnim;
+    public void setupAnim(ButterflyEntity entity, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
+        this.root().getAllParts().forEach(ModelPart::resetPose);
+        AnimationDefinition flightAnim;
 
         switch (entity.getFlyingTypeVariant()) {
             case 1 -> flightAnim = ButterflyEntityAnimations.BUTTERFLY_FLYING_TWO;
@@ -69,7 +65,7 @@ public class ButterflyModel<T extends ButterflyEntity> extends BestiaryModel<T> 
             default -> flightAnim = ButterflyEntityAnimations.BUTTERFLY_FLYING_ONE;
         }
 
-        this.updateAnimation(entity.flyingAnimState, flightAnim, animationProgress, 1f);
+        this.animate(entity.flyingAnimState, flightAnim, animationProgress, 1f);
     }
 
     @Override

@@ -1,13 +1,12 @@
 package net.emilsg.clutterbestiary.entity.variants;
 
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.potion.Potion;
-import net.minecraft.potion.Potions;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.core.Holder;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.item.alchemy.Potion;
+import net.minecraft.world.item.alchemy.Potions;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -19,18 +18,18 @@ public enum PotionWaspVariant {
     SWIFTNESS("swiftness", Potions.SWIFTNESS),
     WEAKNESS("weakness", Potions.WEAKNESS);
 
-    private static final List<RegistryEntry<StatusEffect>> ALL_STATUS_EFFECTS = Arrays.stream(values())
+    private static final List<Holder<MobEffect>> ALL_STATUS_EFFECTS = Arrays.stream(values())
             .map(PotionWaspVariant::getPotionEffect)
-            .map(RegistryEntry::value)
+            .map(Holder::value)
             .flatMap(potion -> potion.getEffects().stream())
-            .map(StatusEffectInstance::getEffectType)
+            .map(MobEffectInstance::getEffect)
             .distinct()
             .toList();
 
     private final String name;
-    private final RegistryEntry<Potion> effect;
+    private final Holder<Potion> effect;
 
-    PotionWaspVariant(String name, RegistryEntry<Potion> effect) {
+    PotionWaspVariant(String name, Holder<Potion> effect) {
         this.name = name;
         this.effect = effect;
     }
@@ -44,7 +43,7 @@ public enum PotionWaspVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
-    public static List<RegistryEntry<StatusEffect>> getAllStatusEffects() {
+    public static List<Holder<MobEffect>> getAllStatusEffects() {
         return ALL_STATUS_EFFECTS;
     }
 
@@ -57,11 +56,11 @@ public enum PotionWaspVariant {
         return name;
     }
 
-    public RegistryEntry<Potion> getPotionEffect() {
+    public Holder<Potion> getPotionEffect() {
         return effect;
     }
 
     public Identifier getTextureLocation() {
-        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/potion_wasp/" + getName() + "_potion_wasp.png");
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/potion_wasp/" + getName() + "_potion_wasp.png");
     }
 }

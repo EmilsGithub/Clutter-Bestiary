@@ -1,37 +1,38 @@
 package net.emilsg.clutterbestiary.item.custom;
 
+import net.minecraft.world.item.component.TooltipDisplay;
+import java.util.function.Consumer;
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
 import net.minecraft.util.Util;
-
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import java.util.List;
 
 public class ButterflyElytraSmithingTemplateItem extends Item {
-    private final Text ELYTRA_UPGRADE_TEXT = Text.translatable(Util.createTranslationKey("item", Identifier.of(ClutterBestiary.MOD_ID, "smithing_template.elytra_upgrade"))).formatted(Formatting.GRAY);
-    private final Text ELYTRAS_TEXT = Text.translatable(Util.createTranslationKey("item", Identifier.of(ClutterBestiary.MOD_ID, "smithing_template.elytras"))).formatted(Formatting.BLUE);
-    private final Text APPLIES_TO_TEXT = Text.translatable(Util.createTranslationKey("item", Identifier.of(ClutterBestiary.MOD_ID, "smithing_template.applies_to"))).formatted(Formatting.GRAY);
-    private final Text INGREDIENTS_TEXT = Text.translatable(Util.createTranslationKey("item", Identifier.of(ClutterBestiary.MOD_ID, "smithing_template.ingredients"))).formatted(Formatting.GRAY);
-    private final Text INGREDIENTS_USED_TEXT = Text.translatable(Util.createTranslationKey("item", Identifier.of(ClutterBestiary.MOD_ID, "smithing_template.ingredients_used"))).formatted(Formatting.BLUE);
+    private final Component ELYTRA_UPGRADE_TEXT = Component.translatable(Util.makeDescriptionId("item", Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "smithing_template.elytra_upgrade"))).withStyle(ChatFormatting.GRAY);
+    private final Component ELYTRAS_TEXT = Component.translatable(Util.makeDescriptionId("item", Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "smithing_template.elytras"))).withStyle(ChatFormatting.BLUE);
+    private final Component APPLIES_TO_TEXT = Component.translatable(Util.makeDescriptionId("item", Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "smithing_template.applies_to"))).withStyle(ChatFormatting.GRAY);
+    private final Component INGREDIENTS_TEXT = Component.translatable(Util.makeDescriptionId("item", Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "smithing_template.ingredients"))).withStyle(ChatFormatting.GRAY);
+    private final Component INGREDIENTS_USED_TEXT = Component.translatable(Util.makeDescriptionId("item", Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "smithing_template.ingredients_used"))).withStyle(ChatFormatting.BLUE);
 
 
-    public ButterflyElytraSmithingTemplateItem(Settings settings) {
+    public ButterflyElytraSmithingTemplateItem(Properties settings) {
         super(settings);
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
-        super.appendTooltip(stack, context, tooltip, type);
-        tooltip.add(ELYTRA_UPGRADE_TEXT);
-        tooltip.add(ScreenTexts.EMPTY);
-        tooltip.add(APPLIES_TO_TEXT);
-        tooltip.add(ScreenTexts.space().append(ELYTRAS_TEXT));
-        tooltip.add(INGREDIENTS_TEXT);
-        tooltip.add(ScreenTexts.space().append(INGREDIENTS_USED_TEXT));
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
+        super.appendHoverText(stack, context, display, tooltip, type);
+        tooltip.accept(ELYTRA_UPGRADE_TEXT);
+        tooltip.accept(CommonComponents.EMPTY);
+        tooltip.accept(APPLIES_TO_TEXT);
+        tooltip.accept(CommonComponents.space().append(ELYTRAS_TEXT));
+        tooltip.accept(INGREDIENTS_TEXT);
+        tooltip.accept(CommonComponents.space().append(INGREDIENTS_USED_TEXT));
     }
 }

@@ -13,7 +13,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "clutterbestiary:cooked_venison_from_smoking_raw_venison"
+        "recipes": "clutterbestiary:cooked_venison_from_smoking_raw_venison"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

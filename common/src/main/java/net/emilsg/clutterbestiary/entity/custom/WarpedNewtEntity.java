@@ -3,37 +3,37 @@ package net.emilsg.clutterbestiary.entity.custom;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import org.jetbrains.annotations.Nullable;
 
 public class WarpedNewtEntity extends AbstractNetherNewtEntity {
     private static final Item BREEDING_ITEM = Items.WARPED_ROOTS;
     private static final Item TAMING_ITEM = Items.TWISTING_VINES;
 
-    public WarpedNewtEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
+    public WarpedNewtEntity(EntityType<? extends ParentTameableEntity> entityType, Level world) {
         super(entityType, world);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.WARPED_NEWTS_SPAWN_ON);
+    public static boolean checkAnimalSpawnRules(EntityType<? extends Animal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos.below()).is(ModBlockTags.WARPED_NEWTS_SPAWN_ON);
     }
 
     @Override
-    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.WARPED_NEWT.get().create(world);
+    public @Nullable AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
+        return ModEntityTypes.WARPED_NEWT.get().create(world, EntitySpawnReason.BREEDING);
     }
 
     @Override
@@ -42,8 +42,8 @@ public class WarpedNewtEntity extends AbstractNetherNewtEntity {
     }
 
     @Override
-    public RegistryEntry<StatusEffect> getOnAttackEffect() {
-        return StatusEffects.POISON;
+    public Holder<MobEffect> getOnAttackEffect() {
+        return MobEffects.POISON;
     }
 
     @Override

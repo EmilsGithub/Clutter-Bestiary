@@ -3,15 +3,13 @@
   "criteria": {
     "breed_stoats": {
       "conditions": {
-        "child": [
-          {
-            "condition": "minecraft:entity_properties",
-            "entity": "this",
-            "predicate": {
-              "type": "clutterbestiary:stoat"
-            }
+        "child": {
+          "type": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "minecraft:entity_type": "clutterbestiary:stoat"
           }
-        ]
+        }
       },
       "trigger": "minecraft:bred_animals"
     }
@@ -21,7 +19,6 @@
       "translate": "advancements.bestiary.stoat_of_affairs.description"
     },
     "icon": {
-      "count": 1,
       "id": "minecraft:rabbit"
     },
     "title": {

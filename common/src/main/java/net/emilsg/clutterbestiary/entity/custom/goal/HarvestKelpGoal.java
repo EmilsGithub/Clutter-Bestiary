@@ -1,13 +1,13 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.RiverTurtleEntity;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.ai.goal.MoveToTargetPosGoal;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.goal.MoveToBlockGoal;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Blocks;
 
-public class HarvestKelpGoal extends MoveToTargetPosGoal {
+public class HarvestKelpGoal extends MoveToBlockGoal {
     private final RiverTurtleEntity riverTurtleEntity;
     private final float chancePerTick;
 
@@ -18,27 +18,27 @@ public class HarvestKelpGoal extends MoveToTargetPosGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return this.riverTurtleEntity.getWorld().isDay()
+    public boolean canUse() {
+        return this.riverTurtleEntity.level().isBrightOutside()
                 && this.riverTurtleEntity.getRandom().nextFloat() <= this.chancePerTick
-                && this.findTargetPos();
+                && this.findNearestBlock();
     }
 
     @Override
     public void tick() {
         super.tick();
 
-        World world = this.riverTurtleEntity.getWorld();
-        if (!world.isClient) {
-            if (this.hasReached()) {
-                world.breakBlock(targetPos, true, this.riverTurtleEntity);
+        Level world = this.riverTurtleEntity.level();
+        if (!world.isClientSide()) {
+            if (this.isReachedTarget()) {
+                world.destroyBlock(blockPos, true, this.riverTurtleEntity);
                 this.stop();
             }
         }
     }
 
     @Override
-    protected boolean isTargetPos(WorldView world, BlockPos pos) {
-        return (world.getBlockState(pos).isOf(Blocks.KELP) || world.getBlockState(pos).isOf(Blocks.KELP_PLANT)) && world.getBlockState(pos.down()).isOf(Blocks.KELP_PLANT);
+    protected boolean isValidTarget(LevelReader world, BlockPos pos) {
+        return (world.getBlockState(pos).is(Blocks.KELP) || world.getBlockState(pos).is(Blocks.KELP_PLANT)) && world.getBlockState(pos.below()).is(Blocks.KELP_PLANT);
     }
 }

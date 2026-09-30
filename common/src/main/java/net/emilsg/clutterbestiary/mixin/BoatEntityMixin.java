@@ -1,14 +1,14 @@
 package net.emilsg.clutterbestiary.mixin;
 
 import net.emilsg.clutterbestiary.entity.custom.CrocodileEntity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.vehicle.BoatEntity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
-@Mixin(BoatEntity.class)
+@Mixin(AbstractBoat.class)
 public abstract class BoatEntityMixin {
     @Unique
     private static final float CROCODILE_SPEED_MULTIPLIER = 1.25f;
@@ -23,9 +23,9 @@ public abstract class BoatEntityMixin {
     @Unique
     private int clutterbestiary$crocodileCheckCooldown;
 
-    @ModifyConstant(method = "updatePaddles", constant = @Constant(floatValue = 0.04f))
+    @ModifyConstant(method = "controlBoat", constant = @Constant(floatValue = 0.04f))
     private float clutterbestiary$boostBoatWithFollowingCrocodile(float originalSpeed) {
-        BoatEntity boat = (BoatEntity) (Object) this;
+        AbstractBoat boat = (AbstractBoat) (Object) this;
         LivingEntity owner = boat.getControllingPassenger();
         if (owner == null) {
             this.clutterbestiary$cachedOwner = null;
@@ -37,9 +37,9 @@ public abstract class BoatEntityMixin {
         if (owner != this.clutterbestiary$cachedOwner || --this.clutterbestiary$crocodileCheckCooldown <= 0) {
             this.clutterbestiary$cachedOwner = owner;
             this.clutterbestiary$crocodileCheckCooldown = CROCODILE_CHECK_INTERVAL_TICKS;
-            this.clutterbestiary$hasFollowingCrocodile = !boat.getWorld().getEntitiesByClass(CrocodileEntity.class,
-                    boat.getBoundingBox().expand(CROCODILE_RANGE),
-                    crocodile -> crocodile.isFollowingOwner() && crocodile.isOwner(owner)).isEmpty();
+            this.clutterbestiary$hasFollowingCrocodile = !boat.level().getEntitiesOfClass(CrocodileEntity.class,
+                    boat.getBoundingBox().inflate(CROCODILE_RANGE),
+                    crocodile -> crocodile.isFollowingOwner() && crocodile.isOwnedBy(owner)).isEmpty();
         }
 
         return this.clutterbestiary$hasFollowingCrocodile ? originalSpeed * CROCODILE_SPEED_MULTIPLIER : originalSpeed;

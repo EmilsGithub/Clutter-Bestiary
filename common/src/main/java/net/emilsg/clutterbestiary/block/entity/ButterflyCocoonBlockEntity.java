@@ -1,11 +1,11 @@
 package net.emilsg.clutterbestiary.block.entity;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.entity.variants.ButterflyVariant;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 public class ButterflyCocoonBlockEntity extends BlockEntity {
@@ -17,14 +17,14 @@ public class ButterflyCocoonBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
-        super.readNbt(nbt, registryLookup);
-        this.parentVariant = nbt.contains("ParentVariant") ? ButterflyVariant.fromId(nbt.getString("ParentVariant")) : null;
+    protected void loadAdditional(ValueInput nbt) {
+        super.loadAdditional(nbt);
+        this.parentVariant = nbt.getString("ParentVariant").map(ButterflyVariant::fromId).orElse(null);
     }
 
     @Override
-    protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
-        super.writeNbt(nbt, registryLookup);
+    protected void saveAdditional(ValueOutput nbt) {
+        super.saveAdditional(nbt);
         if (this.parentVariant != null) nbt.putString("ParentVariant", this.parentVariant.getId());
     }
 
@@ -35,6 +35,6 @@ public class ButterflyCocoonBlockEntity extends BlockEntity {
 
     public void setParentVariant(ButterflyVariant variant) {
         this.parentVariant = variant;
-        this.markDirty();
+        this.setChanged();
     }
 }

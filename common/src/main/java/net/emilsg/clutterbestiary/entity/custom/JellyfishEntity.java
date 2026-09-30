@@ -1,4 +1,6 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.animation_handling.AnimationPlayback;
 import net.emilsg.clutterbestiary.entity.custom.goal.JellyfishAvoidSurfaceGoal;
@@ -6,53 +8,60 @@ import net.emilsg.clutterbestiary.entity.custom.goal.JellyfishSwimGoal;
 import net.emilsg.clutterbestiary.entity.variants.JellyfishVariant;
 import net.emilsg.clutterbestiary.item.ModItems;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.TargetPredicate;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.mob.WaterCreatureEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.tag.EntityTypeTags;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.LocalDifficulty;
-import net.minecraft.world.ServerWorldAccess;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.EntityTypeTags;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.Bucketable;
+import net.minecraft.world.entity.animal.fish.WaterAnimal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Predicate;
 
-public class JellyfishEntity extends WaterCreatureEntity implements Bucketable {
+public class JellyfishEntity extends WaterAnimal implements Bucketable {
 
-    private static final TrackedData<String> VARIANT = DataTracker.registerData(JellyfishEntity.class, TrackedDataHandlerRegistry.STRING);
-    private static final TrackedData<Boolean> FROM_BUCKET = DataTracker.registerData(JellyfishEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final EntityDataAccessor<String> VARIANT = SynchedEntityData.defineId(JellyfishEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Boolean> FROM_BUCKET = SynchedEntityData.defineId(JellyfishEntity.class, EntityDataSerializers.BOOLEAN);
 
-    private static final Predicate<LivingEntity> TARGET_FILTER = entity -> {
-        if (entity instanceof PlayerEntity && ((PlayerEntity) entity).isCreative()) {
+    private static final TargetingConditions.Selector TARGET_FILTER = (entity, level) -> {
+        if (entity instanceof Player && ((Player) entity).isCreative()) {
             return false;
         }
-        return !entity.getType().isIn(EntityTypeTags.AQUATIC);
+        return !entity.is(EntityTypeTags.AQUATIC);
     };
-    private static final TargetPredicate TARGET_PREDICATE = TargetPredicate.createNonAttackable().ignoreDistanceScalingFactor().ignoreVisibility().setPredicate(TARGET_FILTER);
+    private static final TargetingConditions TARGET_PREDICATE = TargetingConditions.forNonCombat().ignoreInvisibilityTesting().ignoreLineOfSight().selector(TARGET_FILTER);
     public final AnimationState swimmingAnimationState = new AnimationState();
     public float tiltAngle;
     public float prevTiltAngle;
@@ -67,108 +76,107 @@ public class JellyfishEntity extends WaterCreatureEntity implements Bucketable {
     private float swimY;
     private float swimZ;
 
-    public JellyfishEntity(EntityType<? extends WaterCreatureEntity> entityType, World world) {
+    public JellyfishEntity(EntityType<? extends WaterAnimal> entityType, Level world) {
         super(entityType, world);
-        this.random.setSeed(this.getId());
         this.thrustTimerSpeed = 0.25f / (this.random.nextFloat() + 1.0f) * 0.2f;
     }
 
     @Override
-    public @Nullable EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+    public @Nullable SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData entityData) {
         this.setVariant(JellyfishVariant.getRandom());
-        return super.initialize(world, difficulty, spawnReason, entityData);
+        return super.finalizeSpawn(world, difficulty, spawnReason, entityData);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(VARIANT, JellyfishVariant.GREEN.getId());
-        builder.add(FROM_BUCKET, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(VARIANT, JellyfishVariant.GREEN.getId());
+        builder.define(FROM_BUCKET, false);
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new JellyfishSwimGoal(this));
-        this.goalSelector.add(1, new JellyfishAvoidSurfaceGoal(this));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new JellyfishSwimGoal(this));
+        this.goalSelector.addGoal(1, new JellyfishAvoidSurfaceGoal(this));
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
-        this.setFromBucket(nbt.getBoolean("FromBucket"));
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.entityData.set(VARIANT, nbt.getStringOr("Variant", ""));
+        this.setFromBucket(nbt.getBooleanOr("FromBucket", false));
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putString("Variant", this.getTypeVariant());
-        nbt.putBoolean("FromBucket", this.isFromBucket());
+        nbt.putBoolean("FromBucket", this.fromBucket());
     }
 
     @Override
-    public void copyDataFromNbt(NbtCompound nbt) {
-        Bucketable.copyDataFromNbt(this, nbt);
+    public void loadFromBucketTag(CompoundTag nbt) {
+        Bucketable.loadDefaultDataFromBucketTag(this, nbt);
         if (nbt.contains("Variant")) {
-            this.setVariant(JellyfishVariant.fromId(nbt.getString("Variant")));
+            this.setVariant(JellyfishVariant.fromId(nbt.getStringOr("Variant", "")));
         }
     }
 
     @Override
-    public void copyDataToStack(ItemStack stack) {
-        Bucketable.copyDataToStack(this, stack);
-        NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, nbt -> nbt.putString("Variant", this.getTypeVariant()));
+    public void saveToBucketTag(ItemStack stack) {
+        Bucketable.saveDefaultDataToBucketTag(this, stack);
+        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, nbt -> nbt.putString("Variant", this.getTypeVariant()));
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return WaterCreatureEntity.createMobAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 4.0D);
+    public static AttributeSupplier.Builder setAttributes() {
+        return WaterAnimal.createMobAttributes().add(Attributes.MAX_HEALTH, 4.0D);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends WaterCreatureEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos).isIn(ModBlockTags.JELLYFISHES_SPAWN_ON);
-    }
-
-    @Override
-    public boolean canImmediatelyDespawn(double distanceSquared) {
-        return !this.isFromBucket() && !this.hasCustomName();
+    public static boolean isValidNaturalSpawn(EntityType<? extends WaterAnimal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos).is(ModBlockTags.JELLYFISHES_SPAWN_ON);
     }
 
     @Override
-    public boolean cannotDespawn() {
-        return super.cannotDespawn() || this.isFromBucket();
+    public boolean removeWhenFarAway(double distanceSquared) {
+        return !this.fromBucket() && !this.hasCustomName();
     }
 
     @Override
-    public boolean isFromBucket() {
-        return this.dataTracker.get(FROM_BUCKET);
+    public boolean requiresCustomPersistence() {
+        return super.requiresCustomPersistence() || this.fromBucket();
+    }
+
+    @Override
+    public boolean fromBucket() {
+        return this.entityData.get(FROM_BUCKET);
     }
 
     @Override
     public void setFromBucket(boolean fromBucket) {
-        this.dataTracker.set(FROM_BUCKET, fromBucket);
+        this.entityData.set(FROM_BUCKET, fromBucket);
     }
 
     @Override
-    public ItemStack getBucketItem() {
+    public ItemStack getBucketItemStack() {
         return new ItemStack(ModItems.JELLYFISH_BUCKET.get());
     }
 
     @Override
-    public SoundEvent getBucketFillSound() {
-        return SoundEvents.ITEM_BUCKET_FILL_FISH;
+    public SoundEvent getPickupSound() {
+        return SoundEvents.BUCKET_FILL_FISH;
     }
 
     @Override
-    protected ActionResult interactMob(PlayerEntity player, Hand hand) {
-        return Bucketable.tryBucket(player, hand, this).orElseGet(() -> super.interactMob(player, hand));
+    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        return Bucketable.bucketMobPickup(player, hand, this).orElseGet(() -> super.mobInteract(player, hand));
     }
 
     @Override
-    public boolean damage(DamageSource source, float amount) {
-        boolean damaged = super.damage(source, amount);
-        if (damaged && source.getAttacker() instanceof LivingEntity attacker
-                && attacker.getWorld() instanceof ServerWorld && !attacker.getType().isIn(EntityTypeTags.AQUATIC)) {
+    public boolean hurtServer(ServerLevel serverLevel, DamageSource source, float amount) {
+        boolean damaged = super.hurtServer(serverLevel, source, amount);
+        if (damaged && source.getEntity() instanceof LivingEntity attacker
+                && attacker.level() instanceof ServerLevel && !attacker.is(EntityTypeTags.AQUATIC)) {
             if (random.nextInt(3) == 0) {
-                attacker.addStatusEffect(new StatusEffectInstance(StatusEffects.POISON, 100, 1), this);
+                attacker.addEffect(new MobEffectInstance(MobEffects.POISON, 100, 1), this);
             }
         }
         return damaged;
@@ -183,7 +191,7 @@ public class JellyfishEntity extends WaterCreatureEntity implements Bucketable {
     }
 
     public String getTypeVariant() {
-        return this.dataTracker.get(VARIANT);
+        return this.entityData.get(VARIANT);
     }
 
     public JellyfishVariant getVariant() {
@@ -191,7 +199,7 @@ public class JellyfishEntity extends WaterCreatureEntity implements Bucketable {
     }
 
     public void setVariant(JellyfishVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId());
+        this.entityData.set(VARIANT, variant.getId());
     }
 
     public boolean hasSwimmingVector() {
@@ -207,18 +215,18 @@ public class JellyfishEntity extends WaterCreatureEntity implements Bucketable {
     @Override
     public void tick() {
         super.tick();
-        World world = this.getWorld();
-        if (world.isClient) {
+        Level world = this.level();
+        if (world.isClientSide()) {
             AnimationPlayback.updateLoop(this, this.swimmingAnimationState, this.isAlive());
         }
     }
 
     @Override
-    public void tickMovement() {
-        super.tickMovement();
+    public void aiStep() {
+        super.aiStep();
 
-        if (this.isAlive() && !this.getWorld().isClient) {
-            List<LivingEntity> list = this.getWorld().getEntitiesByClass(LivingEntity.class, this.getBoundingBox().expand(0.3), entity -> TARGET_PREDICATE.test(this, entity));
+        if (this.isAlive() && !this.level().isClientSide()) {
+            List<LivingEntity> list = this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(0.3), entity -> this.level() instanceof ServerLevel serverLevel && TARGET_PREDICATE.test(serverLevel, this, entity));
             for (LivingEntity mobEntity : list) {
                 if (!mobEntity.isAlive()) continue;
                 this.sting(mobEntity);
@@ -229,7 +237,7 @@ public class JellyfishEntity extends WaterCreatureEntity implements Bucketable {
         this.prevThrustTimer = this.thrustTimer;
         this.thrustTimer += this.thrustTimerSpeed;
         if ((double) this.thrustTimer > Math.PI * 2) {
-            if (this.getWorld().isClient) {
+            if (this.level().isClientSide()) {
                 this.thrustTimer = (float) Math.PI * 2;
             } else {
                 this.thrustTimer -= (float) Math.PI * 2;
@@ -238,7 +246,7 @@ public class JellyfishEntity extends WaterCreatureEntity implements Bucketable {
                 }
             }
         }
-        if (this.isInsideWaterOrBubbleColumn()) {
+        if (this.isInWater()) {
             if (this.thrustTimer < (float) Math.PI) {
                 float f = this.thrustTimer / (float) Math.PI;
                 if ((double) f > 0.75) {
@@ -251,48 +259,48 @@ public class JellyfishEntity extends WaterCreatureEntity implements Bucketable {
                 this.swimVelocityScale *= 0.9f;
                 this.turningSpeed *= 0.99f;
             }
-            if (!this.getWorld().isClient) {
-                this.setVelocity(this.swimX * this.swimVelocityScale * 0.3f,
+            if (!this.level().isClientSide()) {
+                this.setDeltaMovement(this.swimX * this.swimVelocityScale * 0.3f,
                         this.swimY * this.swimVelocityScale * 0.3f,
                         this.swimZ * this.swimVelocityScale * 0.3f);
             }
-            Vec3d vec3d = this.getVelocity();
-            double d = vec3d.horizontalLength();
-            float targetYaw = (float) (-MathHelper.atan2(vec3d.x, vec3d.z) * 57.295776f); // Target yaw from direction vector
-            float deltaYaw = MathHelper.wrapDegrees(targetYaw - this.getYaw()); // Shortest direction to rotate
-            this.setYaw(this.getYaw() + deltaYaw * 0.1f); // Gradual yaw update (smooth rotation)
-            float targetPitch = (float) -Math.toDegrees(MathHelper.atan2(vec3d.y, vec3d.horizontalLength())); // Target pitch
-            float deltaPitch = MathHelper.wrapDegrees(targetPitch - this.getPitch()); // Shortest vertical rotation
-            this.setPitch(this.getPitch() + deltaPitch * 0.1f); // Gradual pitch update
+            Vec3 vec3d = this.getDeltaMovement();
+            double d = vec3d.horizontalDistance();
+            float targetYaw = (float) (-Mth.atan2(vec3d.x, vec3d.z) * 57.295776f); // Target yaw from direction vector
+            float deltaYaw = Mth.wrapDegrees(targetYaw - this.getYRot()); // Shortest direction to rotate
+            this.setYRot(this.getYRot() + deltaYaw * 0.1f); // Gradual yaw update (smooth rotation)
+            float targetPitch = (float) -Math.toDegrees(Mth.atan2(vec3d.y, vec3d.horizontalDistance())); // Target pitch
+            float deltaPitch = Mth.wrapDegrees(targetPitch - this.getXRot()); // Shortest vertical rotation
+            this.setXRot(this.getXRot() + deltaPitch * 0.1f); // Gradual pitch update
             this.rollAngle += (float) Math.PI * this.turningSpeed * 1.5f;
-            this.tiltAngle += (-((float) MathHelper.atan2(d, vec3d.y)) * 57.295776f - this.tiltAngle) * 0.05f; // Reduce tilt speed
+            this.tiltAngle += (-((float) Mth.atan2(d, vec3d.y)) * 57.295776f - this.tiltAngle) * 0.05f; // Reduce tilt speed
             if (Math.abs(this.tiltAngle) > 30.0f) {
                 this.tiltAngle *= 0.9f; // Dampen large tilt oscillations
             }
 
         } else {
-            if (!this.getWorld().isClient) {
-                double e = this.getVelocity().y;
-                StatusEffectInstance levitation = this.getStatusEffect(StatusEffects.LEVITATION);
+            if (!this.level().isClientSide()) {
+                double e = this.getDeltaMovement().y;
+                MobEffectInstance levitation = this.getEffect(MobEffects.LEVITATION);
                 if (levitation != null) {
                     e = 0.05 * (double) (levitation.getAmplifier() + 1);
-                } else if (!this.hasNoGravity()) {
+                } else if (!this.isNoGravity()) {
                     e -= 0.08;
                 }
-                this.setVelocity(0.0, e * (double) 0.49f, 0.0);
+                this.setDeltaMovement(0.0, e * (double) 0.49f, 0.0);
             }
             this.tiltAngle += (-90.0f - this.tiltAngle) * 0.02f;
         }
     }
 
     @Override
-    public void travel(Vec3d movementInput) {
-        this.move(MovementType.SELF, this.getVelocity());
+    public void travel(Vec3 movementInput) {
+        this.move(MoverType.SELF, this.getDeltaMovement());
     }
 
     @Override
     protected @Nullable SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.ENTITY_SLIME_HURT;
+        return SoundEvents.SLIME_HURT;
     }
 
     @Override
@@ -300,21 +308,21 @@ public class JellyfishEntity extends WaterCreatureEntity implements Bucketable {
         return 0.4f;
     }
 
-    protected void updateLimbs(float v) {
+    protected void updateWalkAnimation(float v) {
         float f;
-        if (this.getPose() == EntityPose.STANDING) {
+        if (this.getPose() == Pose.STANDING) {
             f = Math.min(v * 6.0f, 1.0f);
         } else {
             f = 0.0f;
         }
 
-        this.limbAnimator.updateLimbs(f * 1.25f, 0.5F);
+        this.walkAnimation.update(f * 1.25f, 0.5F, 1.0F);
     }
 
     private void sting(LivingEntity mob) {
-        if (mob.damage(this.getDamageSources().mobAttack(this), 2)) {
-            mob.addStatusEffect(new StatusEffectInstance(StatusEffects.POISON, 60 * 2, 1), this);
-            this.playSound(SoundEvents.ENTITY_SLIME_ATTACK, 1.0f, 1.0f);
+        if (this.level() instanceof ServerLevel serverLevel && mob.hurtServer(serverLevel, this.damageSources().mobAttack(this), 2)) {
+            mob.addEffect(new MobEffectInstance(MobEffects.POISON, 60 * 2, 1), this);
+            this.playSound(SoundEvents.SLIME_ATTACK, 1.0f, 1.0f);
         }
     }
 

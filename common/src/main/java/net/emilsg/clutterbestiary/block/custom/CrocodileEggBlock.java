@@ -1,44 +1,43 @@
 package net.emilsg.clutterbestiary.block.custom;
 
 import net.emilsg.clutterbestiary.item.ModItems;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.IntProperty;
-
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import java.util.function.Supplier;
 
 public class CrocodileEggBlock extends HatchingEggBlock {
-    public static final IntProperty EGGS = IntProperty.of("eggs", 1, 3);
+    public static final IntegerProperty EGGS = IntegerProperty.create("eggs", 1, 3);
 
-    public CrocodileEggBlock(Settings settings, Supplier<? extends EntityType<?>> type, float averageHatchTimeInMinutes, TagKey<Block> hatchBoostTag, double height, double width) {
+    public CrocodileEggBlock(Properties settings, Supplier<? extends EntityType<?>> type, float averageHatchTimeInMinutes, TagKey<Block> hatchBoostTag, double height, double width) {
         super(settings, type, averageHatchTimeInMinutes, hatchBoostTag, height, width);
-        this.setDefaultState(this.getDefaultState().with(EGGS, 1));
+        this.registerDefaultState(this.defaultBlockState().setValue(EGGS, 1));
     }
 
     @Override
     protected int getHatchlingCount(BlockState state) {
-        return state.get(EGGS);
+        return state.getValue(EGGS);
     }
 
     @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        super.appendProperties(builder);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(EGGS);
     }
 
     @Override
-    protected boolean canReplace(BlockState state, ItemPlacementContext context) {
-        return (!context.shouldCancelInteraction() && context.getStack().isOf(this.asItem()) && state.get(EGGS) < 3) || super.canReplace(state, context);
+    protected boolean canBeReplaced(BlockState state, BlockPlaceContext context) {
+        return (!context.isSecondaryUseActive() && context.getItemInHand().is(this.asItem()) && state.getValue(EGGS) < 3) || super.canBeReplaced(state, context);
     }
 
     @Override
-    public BlockState getPlacementState(ItemPlacementContext context) {
-        BlockState state = context.getWorld().getBlockState(context.getBlockPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockState state = context.getLevel().getBlockState(context.getClickedPos());
 
-        return state.isOf(this) ? state.with(EGGS, Math.min(3, state.get(EGGS) + 1)) : super.getPlacementState(context);
+        return state.is(this) ? state.setValue(EGGS, Math.min(3, state.getValue(EGGS) + 1)) : super.getStateForPlacement(context);
     }
 }

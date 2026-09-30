@@ -1,10 +1,10 @@
 package net.emilsg.clutterbestiary.util;
 
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.biome.Biome;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.biome.Biome;
 
 public class ModBiomeTags {
 
@@ -36,6 +36,6 @@ public class ModBiomeTags {
     public static final TagKey<Biome> SPAWNS_ARROWFISH = create(ClutterBestiary.MOD_ID, "spawns_arrowfish");
 
     private static TagKey<Biome> create(String namespace, String path) {
-        return TagKey.of(RegistryKeys.BIOME, Identifier.of(namespace, path));
+        return TagKey.create(Registries.BIOME, Identifier.fromNamespaceAndPath(namespace, path));
     }
 }

@@ -1,85 +1,88 @@
 package net.emilsg.clutterbestiary.item.custom;
 
+import net.emilsg.clutterbestiary.util.ModUtil;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.TooltipDisplay;
+import java.util.function.Consumer;
 import com.mojang.serialization.MapCodec;
 import net.emilsg.clutterbestiary.block.entity.ButterflyBottleBlockEntity;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.ButterflyEntity;
 import net.emilsg.clutterbestiary.entity.variants.ButterflyVariant;
-import net.minecraft.block.Block;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.Items;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.event.GameEvent;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.gameevent.GameEvent;
 import java.util.List;
 import java.util.Optional;
 
 public class ButterflyBottleItem extends NonDecrementingBlockItem {
     public static final MapCodec<ButterflyVariant> BUTTERFLY_VARIANT_MAP_CODEC = ButterflyVariant.CODEC.fieldOf("Variant");
 
-    public ButterflyBottleItem(Block block, Settings settings) {
+    public ButterflyBottleItem(Block block, Properties settings) {
         super(block, settings);
     }
 
-    public static ItemStack getEmptiedStack(ItemStack stack, PlayerEntity player) {
-        return !player.getAbilities().creativeMode ? new ItemStack(Items.GLASS_BOTTLE) : stack;
+    public static ItemStack getEmptiedStack(ItemStack stack, Player player) {
+        return !player.getAbilities().instabuild ? new ItemStack(Items.GLASS_BOTTLE) : stack;
     }
 
-    public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
-        NbtComponent nbtComponent = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
-        Optional<ButterflyVariant> optional = nbtComponent.get(BUTTERFLY_VARIANT_MAP_CODEC).result();
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
+        CustomData nbtComponent = stack.getOrDefault(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY);
+        Optional<ButterflyVariant> optional = ModUtil.readComponentData(nbtComponent, BUTTERFLY_VARIANT_MAP_CODEC);
 
         if (optional.isPresent()) {
             ButterflyVariant variant = optional.get();
 
-            Formatting formatting = variant.getColorFormatting();
+            ChatFormatting formatting = variant.getColorFormatting();
 
             String string = "clutterbestiary." + variant.getName() + ".butterfly";
 
-            MutableText mutableText = Text.translatable(string);
-            mutableText.formatted(formatting);
+            MutableComponent mutableText = Component.translatable(string);
+            mutableText.withStyle(formatting);
 
-            MutableText placeableSneak = Text.translatable("tooltip.clutterbestiary.place_sneak");
-            placeableSneak.formatted(Formatting.BLUE, Formatting.ITALIC);
+            MutableComponent placeableSneak = Component.translatable("tooltip.clutterbestiary.place_sneak");
+            placeableSneak.withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC);
 
-            tooltip.add(mutableText);
-            tooltip.add(placeableSneak);
+            tooltip.accept(mutableText);
+            tooltip.accept(placeableSneak);
         }
     }
 
     @Override
-    public ActionResult place(ItemPlacementContext context) {
-        ActionResult result = super.place(context);
-        if (!result.isAccepted()) return result;
+    public InteractionResult place(BlockPlaceContext context) {
+        InteractionResult result = super.place(context);
+        if (!result.consumesAction()) return result;
 
-        World world = context.getWorld();
-        BlockPos pos = context.getBlockPos();
-        ItemStack stack = context.getStack();
+        Level world = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        ItemStack stack = context.getItemInHand();
 
-        if (!world.isClient) {
+        if (!world.isClientSide()) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             if (blockEntity instanceof ButterflyBottleBlockEntity bottleBe) {
 
-                NbtComponent comp = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
-                NbtCompound nbt = comp.copyNbt();
+                CustomData comp = stack.getOrDefault(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY);
+                CompoundTag nbt = comp.copyTag();
 
                 if (nbt.isEmpty()) {
                     ButterflyVariant def = ButterflyVariant.WHITE;
@@ -90,40 +93,40 @@ public class ButterflyBottleItem extends NonDecrementingBlockItem {
                 }
 
                 bottleBe.setButterflyData(nbt);
-                stack.decrementUnlessCreative(1, context.getPlayer());
+                stack.consume(1, context.getPlayer());
             }
         }
 
         return result;
     }
 
-    public ActionResult useOnBlock(ItemUsageContext context) {
-        PlayerEntity playerEntity = context.getPlayer();
+    public InteractionResult useOn(UseOnContext context) {
+        Player playerEntity = context.getPlayer();
 
-        if (playerEntity != null && playerEntity.isSneaking()) {
-            return super.useOnBlock(context);
+        if (playerEntity != null && playerEntity.isShiftKeyDown()) {
+            return super.useOn(context);
         }
 
-        World world = context.getWorld();
-        ItemStack stack = context.getStack();
-        BlockPos pos = context.getBlockPos();
-        PlayerEntity player = context.getPlayer();
-        Hand hand = context.getHand();
+        Level world = context.getLevel();
+        ItemStack stack = context.getItemInHand();
+        BlockPos pos = context.getClickedPos();
+        Player player = context.getPlayer();
+        InteractionHand hand = context.getHand();
 
-        if (player == null) return ActionResult.FAIL;
+        if (player == null) return InteractionResult.FAIL;
 
-        if (world instanceof ServerWorld) {
-            this.spawnEntity((ServerWorld) world, stack, pos);
-            world.emitGameEvent(player, GameEvent.ENTITY_PLACE, pos);
-            world.playSound(null, pos, SoundEvents.BLOCK_WOOL_PLACE, SoundCategory.NEUTRAL);
-            player.setStackInHand(hand, getEmptiedStack(stack, player));
+        if (world instanceof ServerLevel) {
+            this.spawnEntity((ServerLevel) world, stack, pos);
+            world.gameEvent(player, GameEvent.ENTITY_PLACE, pos);
+            world.playSound(null, pos, SoundEvents.WOOL_PLACE, SoundSource.NEUTRAL);
+            player.setItemInHand(hand, getEmptiedStack(stack, player));
         }
-        return ActionResult.success(world.isClient);
+        return InteractionResult.SUCCESS;
     }
 
-    private void spawnEntity(ServerWorld world, ItemStack stack, BlockPos pos) {
-        ButterflyEntity butterfly = ModEntityTypes.BUTTERFLY.get().spawnFromItemStack(world, stack, null, pos, SpawnReason.BUCKET, true, false);
-        NbtComponent nbtComponent = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
-        if (butterfly != null) butterfly.copyDataFromNbt(nbtComponent.copyNbt());
+    private void spawnEntity(ServerLevel world, ItemStack stack, BlockPos pos) {
+        ButterflyEntity butterfly = ModEntityTypes.BUTTERFLY.get().spawn(world, stack, null, pos, EntitySpawnReason.BUCKET, true, false);
+        CustomData nbtComponent = stack.getOrDefault(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY);
+        if (butterfly != null) butterfly.copyDataFromNbt(nbtComponent.copyTag());
     }
 }

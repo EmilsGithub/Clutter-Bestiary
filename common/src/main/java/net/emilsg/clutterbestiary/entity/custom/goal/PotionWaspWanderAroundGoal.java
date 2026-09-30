@@ -1,11 +1,11 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.PotionWaspEntity;
-import net.minecraft.entity.ai.AboveGroundTargeting;
-import net.minecraft.entity.ai.NoPenaltySolidTargeting;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.util.AirAndWaterRandomPos;
+import net.minecraft.world.entity.ai.util.HoverRandomPos;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -15,31 +15,31 @@ public class PotionWaspWanderAroundGoal extends Goal {
 
     public PotionWaspWanderAroundGoal(PotionWaspEntity potionWasp) {
         this.potionWasp = potionWasp;
-        this.setControls(EnumSet.of(Control.MOVE));
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override
-    public boolean canStart() {
-        return this.potionWasp.getNavigation().isIdle() && this.potionWasp.getRandom().nextInt(4) == 0;
+    public boolean canUse() {
+        return this.potionWasp.getNavigation().isDone() && this.potionWasp.getRandom().nextInt(4) == 0;
     }
 
     @Override
-    public boolean shouldContinue() {
-        return this.potionWasp.getNavigation().isFollowingPath();
+    public boolean canContinueToUse() {
+        return this.potionWasp.getNavigation().isInProgress();
     }
 
     @Override
     public void start() {
-        Vec3d vec3d = this.getRandomLocation();
+        Vec3 vec3d = this.getRandomLocation();
         if (vec3d != null) {
-            this.potionWasp.getNavigation().startMovingAlong(this.potionWasp.getNavigation().findPathTo(BlockPos.ofFloored(vec3d), 1), 1.0F);
+            this.potionWasp.getNavigation().moveTo(this.potionWasp.getNavigation().createPath(BlockPos.containing(vec3d), 1), 1.0F);
         }
     }
 
     @Nullable
-    private Vec3d getRandomLocation() {
-        Vec3d vec3d2 = this.potionWasp.getRotationVec(0.0F);
-        Vec3d vec3d3 = AboveGroundTargeting.find(this.potionWasp, 8, 7, vec3d2.x, vec3d2.z, ((float) Math.PI / 2F), 3, 1);
-        return vec3d3 != null ? vec3d3 : NoPenaltySolidTargeting.find(this.potionWasp, 8, 4, -2, vec3d2.x, vec3d2.z, (float) Math.PI / 2F);
+    private Vec3 getRandomLocation() {
+        Vec3 vec3d2 = this.potionWasp.getViewVector(0.0F);
+        Vec3 vec3d3 = HoverRandomPos.getPos(this.potionWasp, 8, 7, vec3d2.x, vec3d2.z, ((float) Math.PI / 2F), 3, 1);
+        return vec3d3 != null ? vec3d3 : AirAndWaterRandomPos.getPos(this.potionWasp, 8, 4, -2, vec3d2.x, vec3d2.z, (float) Math.PI / 2F);
     }
 }

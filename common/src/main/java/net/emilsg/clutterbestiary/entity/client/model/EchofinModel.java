@@ -1,68 +1,64 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.emilsg.clutterbestiary.entity.client.animation.EchofinEntityAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutterbestiary.entity.custom.EchofinEntity;
 import net.minecraft.client.model.*;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
 public class EchofinModel<T extends EchofinEntity> extends BestiaryModel<T> {
     private final ModelPart all;
-    private final ModelPart root;
 
 
     public EchofinModel(ModelPart root) {
-        this.root = root;
+        super(root);
         this.all = root.getChild("all");
     }
 
-    public static TexturedModelData getTexturedModelData() {
-        ModelData modelData = new ModelData();
-        ModelPartData modelPartData = modelData.getRoot();
-        ModelPartData all = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 23.0F, -2.0F));
+    public static LayerDefinition getTexturedModelData() {
+        MeshDefinition modelData = new MeshDefinition();
+        PartDefinition modelPartData = modelData.getRoot();
+        PartDefinition all = modelPartData.addOrReplaceChild("all", CubeListBuilder.create(), PartPose.offset(0.0F, 23.0F, -2.0F));
 
-        ModelPartData bodyOne = all.addChild("bodyOne", ModelPartBuilder.create().uv(0, 14).cuboid(0.0F, -5.5F, -4.0F, 0.0F, 3.0F, 8.0F, new Dilation(0.0F))
-                .uv(0, 30).cuboid(0.0F, 2.5F, -4.0F, 0.0F, 3.0F, 8.0F, new Dilation(0.0F))
-                .uv(0, 25).cuboid(-1.0F, -2.5F, -4.0F, 2.0F, 5.0F, 8.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -5.5F, -5.0F));
+        PartDefinition bodyOne = all.addOrReplaceChild("bodyOne", CubeListBuilder.create().texOffs(0, 14).addBox(0.0F, -5.5F, -4.0F, 0.0F, 3.0F, 8.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 30).addBox(0.0F, 2.5F, -4.0F, 0.0F, 3.0F, 8.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 25).addBox(-1.0F, -2.5F, -4.0F, 2.0F, 5.0F, 8.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -5.5F, -5.0F));
 
-        ModelPartData bodyTwo = bodyOne.addChild("bodyTwo", ModelPartBuilder.create().uv(20, 28).cuboid(-1.0F, -1.5F, 0.0F, 2.0F, 3.0F, 7.0F, new Dilation(0.0F))
-                .uv(20, 16).cuboid(0.0F, -6.5F, 0.0F, 0.0F, 5.0F, 7.0F, new Dilation(0.0F))
-                .uv(20, 31).cuboid(0.0F, 1.5F, 0.0F, 0.0F, 5.0F, 7.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, 4.0F));
+        PartDefinition bodyTwo = bodyOne.addOrReplaceChild("bodyTwo", CubeListBuilder.create().texOffs(20, 28).addBox(-1.0F, -1.5F, 0.0F, 2.0F, 3.0F, 7.0F, new CubeDeformation(0.0F))
+                .texOffs(20, 16).addBox(0.0F, -6.5F, 0.0F, 0.0F, 5.0F, 7.0F, new CubeDeformation(0.0F))
+                .texOffs(20, 31).addBox(0.0F, 1.5F, 0.0F, 0.0F, 5.0F, 7.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 4.0F));
 
-        ModelPartData tailOne = bodyTwo.addChild("tailOne", ModelPartBuilder.create().uv(28, 19).cuboid(-4.5F, 0.0F, 0.0F, 9.0F, 0.0F, 8.0F, new Dilation(0.0F))
-                .uv(24, -1).cuboid(0.0F, -4.5F, 0.0F, 0.0F, 9.0F, 8.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, 7.0F));
+        PartDefinition tailOne = bodyTwo.addOrReplaceChild("tailOne", CubeListBuilder.create().texOffs(28, 19).addBox(-4.5F, 0.0F, 0.0F, 9.0F, 0.0F, 8.0F, new CubeDeformation(0.0F))
+                .texOffs(24, -1).addBox(0.0F, -4.5F, 0.0F, 0.0F, 9.0F, 8.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 7.0F));
 
-        ModelPartData rightWingOne = bodyOne.addChild("rightWingOne", ModelPartBuilder.create().uv(0, 18).cuboid(-2.0F, -0.5F, -0.75F, 2.0F, 1.0F, 3.0F, new Dilation(0.0F))
-                .uv(4, 16).cuboid(-2.0F, 0.0F, 2.25F, 2.0F, 0.0F, 6.0F, new Dilation(0.0F)), ModelTransform.pivot(-1.0F, 0.0F, 0.75F));
+        PartDefinition rightWingOne = bodyOne.addOrReplaceChild("rightWingOne", CubeListBuilder.create().texOffs(0, 18).addBox(-2.0F, -0.5F, -0.75F, 2.0F, 1.0F, 3.0F, new CubeDeformation(0.0F))
+                .texOffs(4, 16).addBox(-2.0F, 0.0F, 2.25F, 2.0F, 0.0F, 6.0F, new CubeDeformation(0.0F)), PartPose.offset(-1.0F, 0.0F, 0.75F));
 
-        ModelPartData rightWingTwo = rightWingOne.addChild("rightWingTwo", ModelPartBuilder.create().uv(-9, 9).cuboid(-4.0F, 0.0F, -0.5F, 4.0F, 0.0F, 9.0F, new Dilation(0.0F)), ModelTransform.pivot(-2.0F, 0.0F, 0.75F));
+        PartDefinition rightWingTwo = rightWingOne.addOrReplaceChild("rightWingTwo", CubeListBuilder.create().texOffs(-9, 9).addBox(-4.0F, 0.0F, -0.5F, 4.0F, 0.0F, 9.0F, new CubeDeformation(0.0F)), PartPose.offset(-2.0F, 0.0F, 0.75F));
 
-        ModelPartData rightWingThree = rightWingTwo.addChild("rightWingThree", ModelPartBuilder.create().uv(-9, 0).cuboid(-4.0F, 0.0F, -0.5F, 4.0F, 0.0F, 9.0F, new Dilation(0.0F)), ModelTransform.pivot(-4.0F, 0.0F, 1.0F));
+        PartDefinition rightWingThree = rightWingTwo.addOrReplaceChild("rightWingThree", CubeListBuilder.create().texOffs(-9, 0).addBox(-4.0F, 0.0F, -0.5F, 4.0F, 0.0F, 9.0F, new CubeDeformation(0.0F)), PartPose.offset(-4.0F, 0.0F, 1.0F));
 
-        ModelPartData leftWingOne = bodyOne.addChild("leftWingOne", ModelPartBuilder.create().uv(0, 41).cuboid(0.0F, -0.5F, -0.75F, 2.0F, 1.0F, 3.0F, new Dilation(0.0F))
-                .uv(4, 41).cuboid(0.0F, 0.0F, 2.25F, 2.0F, 0.0F, 6.0F, new Dilation(0.0F)), ModelTransform.pivot(1.0F, 0.0F, 0.75F));
+        PartDefinition leftWingOne = bodyOne.addOrReplaceChild("leftWingOne", CubeListBuilder.create().texOffs(0, 41).addBox(0.0F, -0.5F, -0.75F, 2.0F, 1.0F, 3.0F, new CubeDeformation(0.0F))
+                .texOffs(4, 41).addBox(0.0F, 0.0F, 2.25F, 2.0F, 0.0F, 6.0F, new CubeDeformation(0.0F)), PartPose.offset(1.0F, 0.0F, 0.75F));
 
-        ModelPartData leftWingTwo = leftWingOne.addChild("leftWingTwo", ModelPartBuilder.create().uv(36, 0).cuboid(0.0F, 0.0F, -0.5F, 4.0F, 0.0F, 9.0F, new Dilation(0.0F)), ModelTransform.pivot(2.0F, 0.0F, 0.75F));
+        PartDefinition leftWingTwo = leftWingOne.addOrReplaceChild("leftWingTwo", CubeListBuilder.create().texOffs(36, 0).addBox(0.0F, 0.0F, -0.5F, 4.0F, 0.0F, 9.0F, new CubeDeformation(0.0F)), PartPose.offset(2.0F, 0.0F, 0.75F));
 
-        ModelPartData leftWingThree = leftWingTwo.addChild("leftWingThree", ModelPartBuilder.create().uv(36, 9).cuboid(0.0F, 0.0F, -0.5F, 4.0F, 0.0F, 9.0F, new Dilation(0.0F)), ModelTransform.pivot(4.0F, 0.0F, 1.0F));
-        return TexturedModelData.of(modelData, 64, 64);
+        PartDefinition leftWingThree = leftWingTwo.addOrReplaceChild("leftWingThree", CubeListBuilder.create().texOffs(36, 9).addBox(0.0F, 0.0F, -0.5F, 4.0F, 0.0F, 9.0F, new CubeDeformation(0.0F)), PartPose.offset(4.0F, 0.0F, 1.0F));
+        return LayerDefinition.create(modelData, 64, 64);
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
-    }
-
-    @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        this.getPart().render(matrices, vertices, light, overlay, color);
-    }
-
-    @Override
-    public void setAngles(EchofinEntity echofin, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
-        this.updateAnimation(echofin.movingAnimState, EchofinEntityAnimations.ECHOFIN_SWIMMING, animationProgress, 1f);
+    public void setupAnim(EchofinEntity echofin, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
+        this.root().getAllParts().forEach(ModelPart::resetPose);
+        this.animate(echofin.movingAnimState, EchofinEntityAnimations.ECHOFIN_SWIMMING, animationProgress, 1f);
     }
 
     @Override

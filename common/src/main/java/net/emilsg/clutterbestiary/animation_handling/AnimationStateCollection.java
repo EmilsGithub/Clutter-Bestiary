@@ -1,8 +1,7 @@
 package net.emilsg.clutterbestiary.animation_handling;
 
-import net.minecraft.entity.AnimationState;
-
 import java.util.EnumMap;
+import net.minecraft.world.entity.AnimationState;
 
 public class AnimationStateCollection<StateKey extends Enum<StateKey>> {
     // Each enum value owns one reusable AnimationState instead of creating new states during rendering.

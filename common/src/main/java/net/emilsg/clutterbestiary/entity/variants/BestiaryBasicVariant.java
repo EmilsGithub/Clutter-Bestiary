@@ -1,9 +1,9 @@
 package net.emilsg.clutterbestiary.entity.variants;
 
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
 
 public interface BestiaryBasicVariant {
-    Formatting getFormatting();
+    ChatFormatting getFormatting();
 
     String getID();
 

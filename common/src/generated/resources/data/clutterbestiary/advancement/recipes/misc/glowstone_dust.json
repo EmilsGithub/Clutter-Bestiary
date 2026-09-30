@@ -13,7 +13,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "clutterbestiary:glowstone_dust"
+        "recipes": "clutterbestiary:glowstone_dust"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

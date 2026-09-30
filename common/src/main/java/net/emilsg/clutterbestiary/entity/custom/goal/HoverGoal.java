@@ -1,8 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
-import net.minecraft.entity.ai.goal.Goal;
-
+import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.EnumSet;
 
 public class HoverGoal extends Goal {
@@ -10,17 +9,17 @@ public class HoverGoal extends Goal {
     private int hoverTime;
 
     public HoverGoal(ParentAnimalEntity animalEntity) {
-        setControls(EnumSet.of(Control.MOVE));
+        setFlags(EnumSet.of(Flag.MOVE));
         this.animalEntity = animalEntity;
     }
 
     @Override
-    public boolean canStart() {
-        return animalEntity.getNavigation().isIdle() && animalEntity.getRandom().nextInt(24) == 0;
+    public boolean canUse() {
+        return animalEntity.getNavigation().isDone() && animalEntity.getRandom().nextInt(24) == 0;
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         return hoverTime-- > 0;
     }
 
@@ -31,10 +30,10 @@ public class HoverGoal extends Goal {
 
     @Override
     public void tick() {
-        if (animalEntity.isTouchingWater()) this.stop();
+        if (animalEntity.isInWater()) this.stop();
 
         animalEntity.getNavigation().stop();
-        double hoverY = Math.sin(animalEntity.age * 0.2) * 0.02;
-        animalEntity.setVelocity(0, hoverY, 0);
+        double hoverY = Math.sin(animalEntity.tickCount * 0.2) * 0.02;
+        animalEntity.setDeltaMovement(0, hoverY, 0);
     }
 }

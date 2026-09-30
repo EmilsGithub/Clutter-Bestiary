@@ -26,11 +26,6 @@ configurations {
 
 repositories {
     maven {
-        name = 'NeoForged'
-        url = 'https://maven.neoforged.net/releases'
-    }
-
-    maven {
         name = "Illusive Soulworks maven"
         url = "https://maven.theillusivec4.top/"
     }
@@ -40,13 +35,13 @@ dependencies {
     neoForge "net.neoforged:neoforge:$rootProject.neoforge_version"
 
     // Architectury API. This is optional, and you can comment it out if you don't need it.
-    modImplementation "dev.architectury:architectury-neoforge:$rootProject.architectury_api_version"
+    implementation "dev.architectury:architectury-neoforge:$rootProject.architectury_api_version"
 
-    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
-    shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
+    common(project(path: ':common')) { transitive = false }
+    shadowBundle(project(path: ':common', configuration: 'transformProductionNeoForge')) { transitive = false }
 
     // Curios. Optional
-    modCompileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}:api"
+    compileOnly("top.theillusivec4.curios:curios-neoforge:${rootProject.curios_version}:api") { transitive = false }
 }
 
 processResources {
@@ -57,31 +52,30 @@ processResources {
     }
 }
 
-shadowJar {
-    configurations = [project.configurations.shadowBundle]
-    archiveClassifier = 'dev-shadow'
+jar {
+    archiveClassifier = 'raw'
 }
 
-remapJar {
-    inputFile.set shadowJar.archiveFile
+shadowJar {
+    exclude 'fabric.mod.json'
+    exclude 'architectury.common.json'
+
+    dependsOn jar
+    mainSpec.sourcePaths.clear()
+    from(zipTree(jar.archiveFile))
+    configurations = [project.configurations.shadowBundle]
+    archiveClassifier = null
 }
+
+assemble.dependsOn shadowJar
 
 def localDevUsername = rootProject.ext.localDevUsername
 def localDevUuid = rootProject.ext.localDevUuid
 loom {
-    accessWidenerPath.set(project(":common").loom.accessWidenerPath)
-
     if (localDevUsername && localDevUuid) {
         runs.named("client") {
             programArgs("--username", localDevUsername)
             programArgs("--uuid", localDevUuid)
         }
-    }
-
-    runs.create("datagen") {
-        data()
-        programArgs("--all", "--mod", "clutterbestiary")
-        programArgs("--output", project(":common").file("src/main/generated/resources").absolutePath)
-        programArgs("--existing", project(":common").file("src/main/resources").absolutePath)
     }
 }

@@ -4,9 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.entity.variants.BestiaryBasicVariant;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.resources.Identifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -14,13 +13,13 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 public enum KoiSecondaryPatternTypeVariant implements BestiaryBasicVariant {
-    NONE("none", Formatting.STRIKETHROUGH),
-    SMALL_SPOTS("small_spots", Formatting.ITALIC),
-    MEDIUM_SPOTS("medium_spots", Formatting.ITALIC);
+    NONE("none", ChatFormatting.STRIKETHROUGH),
+    SMALL_SPOTS("small_spots", ChatFormatting.ITALIC),
+    MEDIUM_SPOTS("medium_spots", ChatFormatting.ITALIC);
 
     private static final Map<Identifier, KoiSecondaryPatternTypeVariant> BY_ID =
             Arrays.stream(values()).collect(Collectors.toMap(
-                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName()),
+                    v -> Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, v.getName()),
                     v -> v
             ));
 
@@ -32,13 +31,13 @@ public enum KoiSecondaryPatternTypeVariant implements BestiaryBasicVariant {
                                 ? DataResult.success(v)
                                 : DataResult.error(() -> "Unknown koi secondary pattern type variant: " + id);
                     },
-                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName())
+                    v -> Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, v.getName())
             );
 
     private final String name;
-    private final Formatting formatting;
+    private final ChatFormatting formatting;
 
-    KoiSecondaryPatternTypeVariant(String name, Formatting formatting) {
+    KoiSecondaryPatternTypeVariant(String name, ChatFormatting formatting) {
         this.name = name;
         this.formatting = formatting;
     }
@@ -52,7 +51,7 @@ public enum KoiSecondaryPatternTypeVariant implements BestiaryBasicVariant {
         return variants.get(new Random().nextInt(variants.size()));
     }
 
-    public Formatting getFormatting() {
+    public ChatFormatting getFormatting() {
         return this.formatting;
     }
 
@@ -65,6 +64,6 @@ public enum KoiSecondaryPatternTypeVariant implements BestiaryBasicVariant {
     }
 
     public Identifier getTextureLocation() {
-        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/koi/koi_secondary_pattern_" + getName() + ".png");
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/koi/koi_secondary_pattern_" + getName() + ".png");
     }
 }

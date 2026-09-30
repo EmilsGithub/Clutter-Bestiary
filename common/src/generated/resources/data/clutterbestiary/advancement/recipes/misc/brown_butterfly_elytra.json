@@ -23,7 +23,7 @@
     },
     "has_the_recipe": {
       "conditions": {
-        "recipe": "clutterbestiary:brown_butterfly_elytra"
+        "recipes": "clutterbestiary:brown_butterfly_elytra"
       },
       "trigger": "minecraft:recipe_unlocked"
     }

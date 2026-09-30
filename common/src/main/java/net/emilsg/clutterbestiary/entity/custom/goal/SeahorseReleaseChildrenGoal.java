@@ -2,11 +2,10 @@ package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.SeahorseEntity;
 import net.emilsg.clutterbestiary.entity.variants.SeahorseVariant;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Util;
-import net.minecraft.util.math.random.Random;
-
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,19 +17,19 @@ public class SeahorseReleaseChildrenGoal extends Goal {
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         return this.areChildrenReady();
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         return this.areChildrenReady();
     }
 
     @Override
     public void start() {
-        if (seahorse.getWorld() instanceof ServerWorld serverWorld) {
-            Random random = serverWorld.getRandom();
+        if (seahorse.level() instanceof ServerLevel serverWorld) {
+            RandomSource random = serverWorld.getRandom();
             List<SeahorseEntity> children = new ArrayList<>();
             int childCount = random.nextInt(seahorse.getMaxChildren()) + 1;
 
@@ -38,13 +37,13 @@ public class SeahorseReleaseChildrenGoal extends Goal {
                 SeahorseEntity child = seahorse.createChild(serverWorld, seahorse);
                 if (child == null) return;
                 child.setBaby(true);
-                child.setPosition(seahorse.getPos());
-                child.setVariant(random.nextBoolean() ? seahorse.getVariant() : Util.getRandom(SeahorseVariant.values(), serverWorld.random));
+                child.setPos(seahorse.position());
+                child.setVariant(random.nextBoolean() ? seahorse.getVariant() : Util.getRandom(SeahorseVariant.values(), serverWorld.getRandom()));
                 children.add(child);
             }
 
             for (SeahorseEntity spawnedChild : children) {
-                serverWorld.spawnEntity(spawnedChild);
+                serverWorld.addFreshEntity(spawnedChild);
             }
 
             seahorse.setHasChildren(false);

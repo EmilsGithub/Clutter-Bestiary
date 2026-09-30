@@ -5,7 +5,7 @@
       "conditions": {
         "damage": {
           "source_entity": {
-            "type": "clutterbestiary:jellyfish"
+            "minecraft:entity_type": "clutterbestiary:jellyfish"
           }
         }
       },
@@ -17,7 +17,6 @@
       "translate": "advancements.bestiary.that_stings.description"
     },
     "icon": {
-      "count": 1,
       "id": "minecraft:slime_ball"
     },
     "title": {

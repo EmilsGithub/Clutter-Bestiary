@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "clutterbestiary",
-  "version": "${version}-Fabric-1.21.1",
+  "version": "${version}-Fabric-26.3",
   "name": "Clutter: Bestiary",
   "description": "Lots and lots of creatures, still with a vanilla-ish feeling.",
   "authors": [
@@ -33,11 +33,11 @@
     "clutterbestiaryfabric.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.17.2",
-    "minecraft": "~1.21.1",
-    "java": ">=21",
-    "architectury": ">=13.0.8",
-    "fabric-api": "*"
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.3",
+    "java": ">=25",
+    "architectury": ">=22.0.3",
+    "fabric-api": ">=0.161.0"
   },
   "suggests": {
     "trinkets": "*"

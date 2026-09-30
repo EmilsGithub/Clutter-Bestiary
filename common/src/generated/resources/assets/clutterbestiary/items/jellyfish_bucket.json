@@ -1,0 +1,26 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "cases": [
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/blue_jellyfish_bucket"
+        },
+        "when": "clutterbestiary:blue"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/purple_jellyfish_bucket"
+        },
+        "when": "clutterbestiary:purple"
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "clutterbestiary:item/jellyfish_bucket"
+    },
+    "property": "clutterbestiary:bucket_entity_variant"
+  }
+}

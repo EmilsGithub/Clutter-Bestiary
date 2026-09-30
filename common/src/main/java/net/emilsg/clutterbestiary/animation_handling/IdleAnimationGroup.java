@@ -1,11 +1,10 @@
 package net.emilsg.clutterbestiary.animation_handling;
 
-import net.minecraft.entity.AnimationState;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.random.Random;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.Entity;
 
 public class IdleAnimationGroup {
     private final int minDelay;
@@ -30,14 +29,14 @@ public class IdleAnimationGroup {
     }
 
     public void tick(Entity entity, boolean isValid) {
-        if (!entity.getWorld().isClient) return;
+        if (!entity.level().isClientSide()) return;
         if (cooldown > 0) {
             cooldown--;
             return;
         }
         if (!isValid || entries.isEmpty()) return;
 
-        Random random = entity.getRandom();
+        RandomSource random = entity.getRandom();
         if (random.nextInt(chance) != 0) return;
         cooldown = minDelay + random.nextInt(maxDelay - minDelay + 1);
         int choice = random.nextInt(totalWeight);
@@ -47,7 +46,7 @@ public class IdleAnimationGroup {
         for (Entry entry : entries) {
             choice -= entry.weight;
             if (choice < 0) {
-                for (AnimationState state : entry.states) state.start(entity.age);
+                for (AnimationState state : entry.states) state.start(entity.tickCount);
                 return;
             }
         }

@@ -1,13 +1,12 @@
 package net.emilsg.clutterbestiary.item.custom;
 
-import net.minecraft.item.ElytraItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
-public class BestiaryElytraItem extends ElytraItem {
+public class BestiaryElytraItem extends Item {
     private final Item component;
 
-    public BestiaryElytraItem(Settings settings, Item component) {
+    public BestiaryElytraItem(Properties settings, Item component) {
         super(settings);
         this.component = component;
     }
@@ -17,7 +16,7 @@ public class BestiaryElytraItem extends ElytraItem {
     }
 
     public boolean isBroken(ItemStack stack) {
-        return !isUsable(stack);
+        return stack.nextDamageWillBreak();
     }
 
 }

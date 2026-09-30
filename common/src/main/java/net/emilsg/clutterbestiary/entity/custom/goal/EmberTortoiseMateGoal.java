@@ -1,9 +1,9 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.EmberTortoiseEntity;
-import net.minecraft.entity.ai.goal.AnimalMateGoal;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
 
-public class EmberTortoiseMateGoal extends AnimalMateGoal {
+public class EmberTortoiseMateGoal extends BreedGoal {
     EmberTortoiseEntity emberTortoise;
 
     public EmberTortoiseMateGoal(EmberTortoiseEntity emberTortoise, double speed) {
@@ -12,8 +12,8 @@ public class EmberTortoiseMateGoal extends AnimalMateGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return !this.emberTortoise.isShielding() && super.canStart();
+    public boolean canUse() {
+        return !this.emberTortoise.isShielding() && super.canUse();
     }
 
     @Override

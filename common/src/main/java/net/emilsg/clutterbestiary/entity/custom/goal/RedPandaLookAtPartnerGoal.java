@@ -2,9 +2,8 @@ package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.animation_handling.animation_states.RedPandaEntityAnimationState;
 import net.emilsg.clutterbestiary.entity.custom.RedPandaEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.world.World;
-
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.Level;
 import java.util.EnumSet;
 
 public class RedPandaLookAtPartnerGoal extends Goal {
@@ -13,14 +12,14 @@ public class RedPandaLookAtPartnerGoal extends Goal {
 
     public RedPandaLookAtPartnerGoal(RedPandaEntity goalOwner) {
         this.goalOwner = goalOwner;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         if (this.goalOwner.getPartnerID() == -1) return false;
-        World world = this.goalOwner.getWorld();
-        if (!(world.getEntityById(this.goalOwner.getPartnerID()) instanceof RedPandaEntity redPandaEntity)
+        Level world = this.goalOwner.level();
+        if (!(world.getEntity(this.goalOwner.getPartnerID()) instanceof RedPandaEntity redPandaEntity)
                 || !redPandaEntity.isAlive() || redPandaEntity.getPartnerID() != this.goalOwner.getId()) {
             this.goalOwner.setPartnerID(-1);
             return false;
@@ -30,7 +29,7 @@ public class RedPandaLookAtPartnerGoal extends Goal {
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         return this.partner != null && this.partner.isAlive()
                 && this.goalOwner.getPartnerID() == this.partner.getId()
                 && this.partner.getPartnerID() == this.goalOwner.getId();
@@ -61,7 +60,7 @@ public class RedPandaLookAtPartnerGoal extends Goal {
     public void tick() {
         this.goalOwner.setYPoseTicker(this.goalOwner.getYPoseTicker() + 1);
 
-        this.goalOwner.getLookControl().lookAt(partner, 30, 30);
+        this.goalOwner.getLookControl().setLookAt(partner, 30, 30);
 
         if (this.goalOwner.getYPoseTicker() >= this.goalOwner.getYPoseDuration()) {
             this.goalOwner.setPartnerID(-1);

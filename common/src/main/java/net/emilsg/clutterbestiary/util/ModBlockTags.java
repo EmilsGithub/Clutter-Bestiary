@@ -1,10 +1,10 @@
 package net.emilsg.clutterbestiary.util;
 
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.block.Block;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
 
 public class ModBlockTags {
 
@@ -44,6 +44,6 @@ public class ModBlockTags {
     public static final TagKey<Block> STRIPPED_LOGS = create("c", "stripped_logs");
 
     private static TagKey<Block> create(String namespace, String path) {
-        return TagKey.of(Registries.BLOCK.getKey(), Identifier.of(namespace, path));
+        return TagKey.create(BuiltInRegistries.BLOCK.key(), Identifier.fromNamespaceAndPath(namespace, path));
     }
 }

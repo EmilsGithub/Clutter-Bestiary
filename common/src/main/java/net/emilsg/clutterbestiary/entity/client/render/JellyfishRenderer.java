@@ -1,43 +1,47 @@
 package net.emilsg.clutterbestiary.entity.client.render;
+import net.emilsg.clutterbestiary.entity.client.render.state.BestiaryRenderState;
 
+import net.emilsg.clutterbestiary.entity.client.render.parent.BestiaryMobRenderer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.emilsg.clutterbestiary.entity.client.layer.ModModelLayers;
 import net.emilsg.clutterbestiary.entity.client.model.JellyfishModel;
 import net.emilsg.clutterbestiary.entity.custom.JellyfishEntity;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.MobEntityRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RotationAxis;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
-public class JellyfishRenderer extends MobEntityRenderer<JellyfishEntity, JellyfishModel<JellyfishEntity>> {
+public class JellyfishRenderer extends BestiaryMobRenderer<JellyfishEntity, JellyfishModel<JellyfishEntity>> {
 
-    public JellyfishRenderer(EntityRendererFactory.Context ctx) {
-        super(ctx, new JellyfishModel<>(ctx.getPart(ModModelLayers.JELLYFISH)), 0.4f);
+    public JellyfishRenderer(EntityRendererProvider.Context ctx) {
+        super(ctx, new JellyfishModel<>(ctx.bakeLayer(ModModelLayers.JELLYFISH)), 0.4f);
     }
 
     @Override
-    public Identifier getTexture(JellyfishEntity entity) {
+    public Identifier getTextureLocation(JellyfishEntity entity) {
         return entity.getVariant().getTextureLocation();
     }
 
     @Nullable
     @Override
-    protected RenderLayer getRenderLayer(JellyfishEntity entity, boolean showBody, boolean translucent, boolean showOutline) {
-        return super.getRenderLayer(entity, showBody, true, showOutline);
+    protected RenderType getRenderType(BestiaryRenderState<JellyfishEntity> state, boolean showBody, boolean translucent, boolean showOutline) {
+        return super.getRenderType(state, showBody, true, showOutline);
     }
 
     @Override
-    protected void setupTransforms(JellyfishEntity jellyfishEntity, MatrixStack matrices, float animationProgress, float bodyYaw, float tickDelta, float scale) {
-        super.setupTransforms(jellyfishEntity, matrices, animationProgress, bodyYaw, tickDelta, scale);
-        float i = MathHelper.lerp(tickDelta, jellyfishEntity.prevTiltAngle, jellyfishEntity.tiltAngle);
-        float j = MathHelper.lerp(tickDelta, jellyfishEntity.prevRollAngle, jellyfishEntity.rollAngle);
+    protected void setupRotations(BestiaryRenderState<JellyfishEntity> state, PoseStack matrices, float bodyYaw, float scale) {
+        super.setupRotations(state, matrices, bodyYaw, scale);
+        JellyfishEntity jellyfishEntity = state.entity;
+        if (jellyfishEntity == null) return;
+        float tickDelta = state.partialTick;
+        float i = Mth.lerp(tickDelta, jellyfishEntity.prevTiltAngle, jellyfishEntity.tiltAngle);
+        float j = Mth.lerp(tickDelta, jellyfishEntity.prevRollAngle, jellyfishEntity.rollAngle);
         matrices.translate(0.0f, 0.25f, 0.0f);
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0f - bodyYaw));
-        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(i));
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(j));
+        matrices.rotateDegrees(Axis.YP, 180.0f - bodyYaw);
+        matrices.rotateDegrees(Axis.XP, i);
+        matrices.rotateDegrees(Axis.YP, j);
         matrices.translate(0.0f, 0.0f, 0.0f);
     }
 }

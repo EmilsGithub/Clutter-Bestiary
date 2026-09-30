@@ -1,10 +1,10 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.EchofinEntity;
-import net.minecraft.entity.ai.goal.ActiveTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 
 @SuppressWarnings("unchecked")
-public class EchofinConditionalActiveTargetGoal extends ActiveTargetGoal {
+public class EchofinConditionalActiveTargetGoal extends NearestAttackableTargetGoal {
     EchofinEntity echofinEntity;
 
     public EchofinConditionalActiveTargetGoal(EchofinEntity echofinEntity, Class targetClass, boolean checkVisibility) {
@@ -13,12 +13,12 @@ public class EchofinConditionalActiveTargetGoal extends ActiveTargetGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return super.canStart() && echofinEntity.hasAbility();
+    public boolean canUse() {
+        return super.canUse() && echofinEntity.hasAbility();
     }
 
     @Override
-    public boolean shouldContinue() {
-        return super.shouldContinue() && echofinEntity.hasAbility();
+    public boolean canContinueToUse() {
+        return super.canContinueToUse() && echofinEntity.hasAbility();
     }
 }

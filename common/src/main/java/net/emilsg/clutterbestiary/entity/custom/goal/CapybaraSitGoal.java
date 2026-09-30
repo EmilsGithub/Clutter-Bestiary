@@ -2,28 +2,27 @@ package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.animation_handling.animation_states.CapybaraEntityAnimationState;
 import net.emilsg.clutterbestiary.entity.custom.CapybaraEntity;
-import net.minecraft.entity.ai.goal.SitGoal;
-
+import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import java.util.EnumSet;
 
-public class CapybaraSitGoal extends SitGoal {
+public class CapybaraSitGoal extends SitWhenOrderedToGoal {
     private final CapybaraEntity capybara;
 
     public CapybaraSitGoal(CapybaraEntity capybara) {
         super(capybara);
         this.capybara = capybara;
-        this.setControls(EnumSet.of(Control.JUMP, Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Flag.JUMP, Flag.MOVE, Flag.LOOK));
     }
 
     @Override
-    public boolean canStart() {
-        super.canStart();
-        return capybara.isTamed() && capybara.isForceSleeping();
+    public boolean canUse() {
+        super.canUse();
+        return capybara.isTame() && capybara.isForceSleeping();
     }
 
     @Override
-    public boolean shouldContinue() {
-        return capybara.isTamed() && capybara.isForceSleeping();
+    public boolean canContinueToUse() {
+        return capybara.isTame() && capybara.isForceSleeping();
     }
 
     @Override

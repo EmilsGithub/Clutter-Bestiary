@@ -1,4 +1,8 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import java.util.function.Predicate;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.block.ModBlocks;
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
@@ -8,36 +12,42 @@ import net.emilsg.clutterbestiary.entity.custom.parent.IEggLayingAnimal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.sound.ModSoundEvents;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.entity.AnimationState;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.pathfinder.PathType;
 import org.jetbrains.annotations.Nullable;
 
 public class EmperorPenguinEntity extends ParentAnimalEntity implements IEggLayingAnimal {
     private static final int EGG_LAYING_DELAY_TICKS = 400;
-    private static final Ingredient BREEDING_INGREDIENT = Ingredient.fromTag(ItemTags.FISHES);
-    private static final TrackedData<Boolean> HAS_EGG = DataTracker.registerData(EmperorPenguinEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final Predicate<ItemStack> BREEDING_INGREDIENT = stack -> stack.is(ItemTags.FISHES);
+    private static final EntityDataAccessor<Boolean> HAS_EGG = SynchedEntityData.defineId(EmperorPenguinEntity.class, EntityDataSerializers.BOOLEAN);
 
     public final AnimationState flapAnimationStateOne = new AnimationState();
     public final AnimationState flapAnimationStateTwo = new AnimationState();
@@ -47,67 +57,67 @@ public class EmperorPenguinEntity extends ParentAnimalEntity implements IEggLayi
 
     private int eggTimer;
 
-    public EmperorPenguinEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
+    public EmperorPenguinEntity(EntityType<? extends ParentAnimalEntity> entityType, Level world) {
         super(entityType, world);
-        this.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
-        this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.DAMAGE_FIRE, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.COCOA, -1.0F);
+        this.setPathfindingMalus(PathType.WATER, 0.0F);
+        this.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, -1.0F);
+        this.setPathfindingMalus(PathType.FIRE, -1.0F);
+        this.setPathfindingMalus(PathType.COCOA, -1.0F);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(HAS_EGG, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(HAS_EGG, false);
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(2, new EmperorPenguinMateGoal(this, 1));
-        this.goalSelector.add(3, new EmperorPenguinLayEggGoal(this, 1, ModBlocks.EMPEROR_PENGUIN_EGG.get().getDefaultState()));
-        this.goalSelector.add(4, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(5, new FollowParentGoal(this, 1));
-        this.goalSelector.add(6, new WanderAroundFarGoal(this, 1f));
-        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0F));
-        this.goalSelector.add(8, new LookAroundGoal(this));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
+        this.goalSelector.addGoal(2, new EmperorPenguinMateGoal(this, 1));
+        this.goalSelector.addGoal(3, new EmperorPenguinLayEggGoal(this, 1, ModBlocks.EMPEROR_PENGUIN_EGG.get().defaultBlockState()));
+        this.goalSelector.addGoal(4, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
+        this.goalSelector.addGoal(5, new FollowParentGoal(this, 1));
+        this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 1f));
+        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 6.0F));
+        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
     }
 
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.setHasEgg(nbt.getBoolean("HasEgg"));
-        this.setEggTimer(nbt.getInt("EggTimer"));
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.setHasEgg(nbt.getBooleanOr("HasEgg", false));
+        this.setEggTimer(nbt.getIntOr("EggTimer", 0));
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putBoolean("HasEgg", this.hasEgg());
         nbt.putInt("EggTimer", this.getEggTimer());
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentAnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 16.0D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.14f)
-                .add(EntityAttributes.GENERIC_ATTACK_SPEED, 0.5f)
-                .add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.1f)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 4.0f)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    public static AttributeSupplier.Builder setAttributes() {
+        return ParentAnimalEntity.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 16.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.14f)
+                .add(Attributes.ATTACK_SPEED, 0.5f)
+                .add(Attributes.ATTACK_KNOCKBACK, 0.1f)
+                .add(Attributes.ATTACK_DAMAGE, 4.0f)
+                .add(Attributes.FOLLOW_RANGE, 16.0f);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.EMPEROR_PENGUINS_SPAWN_ON);
+    public static boolean checkAnimalSpawnRules(EntityType<? extends Animal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos.below()).is(ModBlockTags.EMPEROR_PENGUINS_SPAWN_ON);
     }
 
-    public boolean canEat() {
-        return super.canEat() && !this.hasEgg();
+    public boolean canFallInLove() {
+        return super.canFallInLove() && !this.hasEgg();
     }
 
     @Nullable
     @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.EMPEROR_PENGUIN.get().create(world);
+    public AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
+        return ModEntityTypes.EMPEROR_PENGUIN.get().create(world, EntitySpawnReason.BREEDING);
     }
 
     public int getEggTimer() {
@@ -119,13 +129,13 @@ public class EmperorPenguinEntity extends ParentAnimalEntity implements IEggLayi
     }
 
     @Override
-    public int getMinAmbientSoundDelay() {
+    public int getAmbientSoundInterval() {
         return 240;
     }
 
     @Override
     public boolean hasEgg() {
-        return this.dataTracker.get(HAS_EGG);
+        return this.entityData.get(HAS_EGG);
     }
 
     @Override
@@ -145,7 +155,7 @@ public class EmperorPenguinEntity extends ParentAnimalEntity implements IEggLayi
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return BREEDING_INGREDIENT.test(stack);
     }
 
@@ -153,30 +163,30 @@ public class EmperorPenguinEntity extends ParentAnimalEntity implements IEggLayi
     public void playAmbientSound() {
         SoundEvent soundEvent = this.getAmbientSound();
         if (soundEvent != null) {
-            this.playSound(soundEvent, this.getSoundVolume(), this.getSoundPitch() + 0.3f);
+            this.playSound(soundEvent, this.getSoundVolume(), this.getVoicePitch() + 0.3f);
         }
 
     }
 
     public void setHasEgg(boolean hasEgg) {
-        this.dataTracker.set(HAS_EGG, hasEgg);
+        this.entityData.set(HAS_EGG, hasEgg);
     }
 
     @Override
     public void tick() {
         super.tick();
-        World world = this.getWorld();
+        Level world = this.level();
 
-        if (world.isClient) {
+        if (world.isClientSide()) {
             this.setupAnimationStates();
         }
     }
 
     @Override
-    public void tickMovement() {
-        super.tickMovement();
+    public void aiStep() {
+        super.aiStep();
 
-        if (!this.getWorld().isClient && this.hasEgg() && this.eggTimer < EGG_LAYING_DELAY_TICKS) {
+        if (!this.level().isClientSide() && this.hasEgg() && this.eggTimer < EGG_LAYING_DELAY_TICKS) {
             this.eggTimer++;
         }
     }
@@ -186,27 +196,27 @@ public class EmperorPenguinEntity extends ParentAnimalEntity implements IEggLayi
         return ModSoundEvents.ENTITY_EMPEROR_PENGUIN_AMBIENT.get();
     }
 
-    protected void updateLimbs(float v) {
+    protected void updateWalkAnimation(float v) {
         float f;
-        if (this.getPose() == EntityPose.STANDING) {
+        if (this.getPose() == Pose.STANDING) {
             f = Math.min(v * 6.0f, 1.0f);
         } else {
             f = 0.0f;
         }
 
-        this.limbAnimator.updateLimbs(f * 1.5f, 0.3F);
+        this.walkAnimation.update(f * 1.5f, 0.3F, 1.0F);
     }
 
     private void pickRandomIdleAnim(int i) {
         switch (i) {
-            case 1 -> this.flapAnimationStateTwo.startIfNotRunning(this.age);
-            case 2 -> this.preenAnimationState.startIfNotRunning(this.age);
-            default -> this.flapAnimationStateOne.startIfNotRunning(this.age);
+            case 1 -> this.flapAnimationStateTwo.startIfStopped(this.tickCount);
+            case 2 -> this.preenAnimationState.startIfStopped(this.tickCount);
+            default -> this.flapAnimationStateOne.startIfStopped(this.tickCount);
         }
     }
 
     private void setupAnimationStates() {
-        if (this.randomAnimationTimeout <= 0 && random.nextInt(400) == 0 && this.getNavigation().isIdle()) {
+        if (this.randomAnimationTimeout <= 0 && random.nextInt(400) == 0 && this.getNavigation().isDone()) {
             this.randomAnimationTimeout = 400;
             this.pickRandomIdleAnim(random.nextInt(3));
         } else {

@@ -3,15 +3,15 @@ package net.emilsg.clutterbestiary.entity.custom.goal;
 import net.emilsg.clutterbestiary.block.ModBlocks;
 import net.emilsg.clutterbestiary.block.custom.ButterflyCocoonBlock;
 import net.emilsg.clutterbestiary.entity.custom.ButterflyEntity;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.ai.goal.MoveToTargetPosGoal;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldView;
-import net.minecraft.world.event.GameEvent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.ai.goal.MoveToBlockGoal;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
 
-public class ButterflyPlaceCocoonGoal extends MoveToTargetPosGoal {
+public class ButterflyPlaceCocoonGoal extends MoveToBlockGoal {
     private final ButterflyEntity butterfly;
 
     public ButterflyPlaceCocoonGoal(ButterflyEntity butterfly, double speed) {
@@ -20,53 +20,53 @@ public class ButterflyPlaceCocoonGoal extends MoveToTargetPosGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return this.butterfly.hasCocoon() && super.canStart();
+    public boolean canUse() {
+        return this.butterfly.hasCocoon() && super.canUse();
     }
 
     @Override
-    public boolean shouldContinue() {
-        return this.butterfly.hasCocoon() && super.shouldContinue();
+    public boolean canContinueToUse() {
+        return this.butterfly.hasCocoon() && super.canContinueToUse();
     }
 
     @Override
-    protected void startMovingToTarget() {
-        this.butterfly.getNavigation().startMovingTo(
-                this.targetPos.getX() + 0.5,
-                this.targetPos.getY(),
-                this.targetPos.getZ() + 0.5,
-                this.speed
+    protected void moveMobToBlock() {
+        this.butterfly.getNavigation().moveTo(
+                this.blockPos.getX() + 0.5,
+                this.blockPos.getY(),
+                this.blockPos.getZ() + 0.5,
+                this.speedModifier
         );
     }
 
     @Override
-    protected BlockPos getTargetPos() {
-        return this.targetPos;
+    protected BlockPos getMoveToTarget() {
+        return this.blockPos;
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (!this.hasReached() || !(this.butterfly.getWorld() instanceof ServerWorld serverWorld)) return;
-        if (!this.isTargetPos(serverWorld, this.targetPos)) return;
+        if (!this.isReachedTarget() || !(this.butterfly.level() instanceof ServerLevel serverWorld)) return;
+        if (!this.isValidTarget(serverWorld, this.blockPos)) return;
 
         BlockState cocoonState = this.getCocoonState();
-        if (serverWorld.setBlockState(this.targetPos, cocoonState, Block.NOTIFY_ALL)) {
-            serverWorld.emitGameEvent(GameEvent.BLOCK_PLACE, this.targetPos, GameEvent.Emitter.of(this.butterfly, cocoonState));
-            this.cooldown = 0;
+        if (serverWorld.setBlock(this.blockPos, cocoonState, Block.UPDATE_ALL)) {
+            serverWorld.gameEvent(GameEvent.BLOCK_PLACE, this.blockPos, GameEvent.Context.of(this.butterfly, cocoonState));
+            this.nextStartTick = 0;
             this.butterfly.setHasCocoon(false);
             this.butterfly.getNavigation().stop();
         }
     }
 
     @Override
-    protected boolean isTargetPos(WorldView world, BlockPos pos) {
+    protected boolean isValidTarget(LevelReader world, BlockPos pos) {
         BlockState cocoonState = this.getCocoonState();
-        return world.getBlockState(pos).isReplaceable() && world.getFluidState(pos).isEmpty()
-                && cocoonState.canPlaceAt(world, pos);
+        return world.getBlockState(pos).canBeReplaced() && world.getFluidState(pos).isEmpty()
+                && cocoonState.canSurvive(world, pos);
     }
 
     private BlockState getCocoonState() {
-        return ModBlocks.BUTTERFLY_COCOON.get().getDefaultState().with(ButterflyCocoonBlock.CAN_HATCH, true);
+        return ModBlocks.BUTTERFLY_COCOON.get().defaultBlockState().setValue(ButterflyCocoonBlock.CAN_HATCH, true);
     }
 }

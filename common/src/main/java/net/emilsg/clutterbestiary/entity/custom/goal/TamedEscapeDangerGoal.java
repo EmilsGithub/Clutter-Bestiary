@@ -1,15 +1,15 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
-import net.minecraft.entity.ai.goal.EscapeDangerGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
 
-public class TamedEscapeDangerGoal extends EscapeDangerGoal {
+public class TamedEscapeDangerGoal extends PanicGoal {
 
     public TamedEscapeDangerGoal(ParentTameableEntity entity, double speed) {
         super(entity, speed);
     }
 
-    protected boolean isInDanger() {
-        return this.mob.shouldEscapePowderSnow() || this.mob.isOnFire();
+    protected boolean shouldPanic() {
+        return this.mob.isFreezing() || this.mob.isOnFire();
     }
 }

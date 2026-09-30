@@ -1,83 +1,82 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.entity.variants.PotionWaspVariant;
-import net.minecraft.component.type.PotionContentsComponent;
-import net.minecraft.entity.AreaEffectCloudEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Arm;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.AreaEffectCloud;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PotionSacEntity extends MobEntity {
-    private static final TrackedData<String> VARIANT = DataTracker.registerData(PotionSacEntity.class, TrackedDataHandlerRegistry.STRING);
+public class PotionSacEntity extends Mob {
+    private static final EntityDataAccessor<String> VARIANT = SynchedEntityData.defineId(PotionSacEntity.class, EntityDataSerializers.STRING);
 
-    public PotionSacEntity(EntityType<? extends MobEntity> entityType, World world) {
+    public PotionSacEntity(EntityType<? extends Mob> entityType, Level world) {
         super(entityType, world);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(VARIANT, PotionWaspVariant.REGENERATION.getId());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(VARIANT, PotionWaspVariant.REGENERATION.getId());
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.entityData.set(VARIANT, nbt.getStringOr("Variant", ""));
     }
 
     @Override
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putString("Variant", this.getTypeVariant());
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return MobEntity.createMobAttributes().add(EntityAttributes.GENERIC_MAX_HEALTH, 1D);
+    public static AttributeSupplier.Builder setAttributes() {
+        return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 1D);
     }
 
     @Override
-    public boolean collidesWith(Entity other) {
+    public boolean canCollideWith(Entity other) {
         return false;
     }
 
     @Override
-    public void equipStack(EquipmentSlot slot, ItemStack stack) {
+    public void setItemSlot(EquipmentSlot slot, ItemStack stack) {
     }
 
     @Override
-    public Iterable<ItemStack> getArmorItems() {
-        return List.of();
-    }
-
-    @Override
-    public ItemStack getEquippedStack(EquipmentSlot slot) {
+    public ItemStack getItemBySlot(EquipmentSlot slot) {
         return ItemStack.EMPTY;
     }
 
     @Override
-    public Arm getMainArm() {
-        return Arm.RIGHT;
+    public HumanoidArm getMainArm() {
+        return HumanoidArm.RIGHT;
     }
 
     public String getTypeVariant() {
-        return this.dataTracker.get(VARIANT);
+        return this.entityData.get(VARIANT);
     }
 
     public PotionWaspVariant getVariant() {
@@ -85,27 +84,27 @@ public class PotionSacEntity extends MobEntity {
     }
 
     public void setVariant(PotionWaspVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId());
+        this.entityData.set(VARIANT, variant.getId());
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (!(this.getWorld() instanceof ServerWorld serverWorld) || !this.isAlive()) return;
-        if (!this.isOnGround() && !this.horizontalCollision && !this.isInsideWall()) return;
+        if (!(this.level() instanceof ServerLevel serverWorld) || !this.isAlive()) return;
+        if (!this.onGround() && !this.horizontalCollision && !this.isInWall()) return;
 
-        AreaEffectCloudEntity potionCloud = EntityType.AREA_EFFECT_CLOUD.create(serverWorld);
+        AreaEffectCloud potionCloud = EntityTypes.AREA_EFFECT_CLOUD.create(serverWorld, EntitySpawnReason.TRIGGERED);
         if (potionCloud == null) return;
 
-        potionCloud.setPotionContents(new PotionContentsComponent(this.getVariant().getPotionEffect()));
+        potionCloud.setPotionContents(new PotionContents(this.getVariant().getPotionEffect()));
         potionCloud.setDuration(300);
         potionCloud.setRadius(1.5f);
-        potionCloud.setPosition(this.getPos());
-        if (serverWorld.spawnEntity(potionCloud)) this.discard();
+        potionCloud.setPos(this.position());
+        if (serverWorld.addFreshEntity(potionCloud)) this.discard();
     }
 
     @Override
     protected @Nullable SoundEvent getDeathSound() {
-        return SoundEvents.ENTITY_SLIME_DEATH_SMALL;
+        return SoundEvents.SLIME_DEATH_SMALL;
     }
 }

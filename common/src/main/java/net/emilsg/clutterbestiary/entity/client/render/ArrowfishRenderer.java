@@ -1,5 +1,6 @@
 package net.emilsg.clutterbestiary.entity.client.render;
 
+import net.emilsg.clutterbestiary.entity.client.render.parent.BestiaryMobRenderer;
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.entity.client.layer.ModModelLayers;
 import net.emilsg.clutterbestiary.entity.client.model.ArrowfishModel;
@@ -11,19 +12,18 @@ import net.emilsg.clutterbestiary.entity.client.render.feature.KoiSecondaryPatte
 import net.emilsg.clutterbestiary.entity.custom.ArrowfishEntity;
 import net.emilsg.clutterbestiary.entity.custom.KoiEntity;
 import net.emilsg.clutterbestiary.entity.variants.koi.KoiBaseColorVariant;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.MobEntityRenderer;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.Identifier;
 
-public class ArrowfishRenderer extends MobEntityRenderer<ArrowfishEntity, ArrowfishModel<ArrowfishEntity>> {
-    private static final Identifier TEXTURE = Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/arrowfish/arrowfish.png");
+public class ArrowfishRenderer extends BestiaryMobRenderer<ArrowfishEntity, ArrowfishModel<ArrowfishEntity>> {
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/arrowfish/arrowfish.png");
 
-    public ArrowfishRenderer(EntityRendererFactory.Context ctx) {
-        super(ctx, new ArrowfishModel<>(ctx.getPart(ModModelLayers.ARROWFISH)), 0.4f);
+    public ArrowfishRenderer(EntityRendererProvider.Context ctx) {
+        super(ctx, new ArrowfishModel<>(ctx.bakeLayer(ModModelLayers.ARROWFISH)), 0.4f);
     }
 
     @Override
-    public Identifier getTexture(ArrowfishEntity arrowfishEntity) {
+    public Identifier getTextureLocation(ArrowfishEntity arrowfishEntity) {
         return TEXTURE;
     }
 }

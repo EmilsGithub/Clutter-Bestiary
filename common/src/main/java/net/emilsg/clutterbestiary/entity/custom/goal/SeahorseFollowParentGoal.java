@@ -1,7 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.SeahorseEntity;
-import net.minecraft.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.Goal;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -21,17 +21,17 @@ public class SeahorseFollowParentGoal extends Goal {
         this.speed = speed;
     }
 
-    public boolean canStart() {
+    public boolean canUse() {
         if (this.seahorse.getBreedingAge() >= 0) {
             return false;
         } else {
-            List<? extends SeahorseEntity> list = this.seahorse.getWorld().getNonSpectatingEntities(this.seahorse.getClass(), this.seahorse.getBoundingBox().expand(8.0, 4.0, 8.0));
+            List<? extends SeahorseEntity> list = this.seahorse.level().getEntitiesOfClass(this.seahorse.getClass(), this.seahorse.getBoundingBox().inflate(8.0, 4.0, 8.0));
             SeahorseEntity seahorseEntity = null;
             double d = Double.MAX_VALUE;
 
             for (SeahorseEntity seahorseEntity1 : list) {
                 if (seahorseEntity1.getBreedingAge() >= 0) {
-                    double e = this.seahorse.squaredDistanceTo(seahorseEntity1);
+                    double e = this.seahorse.distanceToSqr(seahorseEntity1);
                     if (!(e > d)) {
                         d = e;
                         seahorseEntity = seahorseEntity1;
@@ -50,13 +50,13 @@ public class SeahorseFollowParentGoal extends Goal {
         }
     }
 
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         if (this.seahorse.getBreedingAge() >= 0) {
             return false;
         } else if (!this.parent.isAlive()) {
             return false;
         } else {
-            double d = this.seahorse.squaredDistanceTo(this.parent);
+            double d = this.seahorse.distanceToSqr(this.parent);
             return !(d < 9.0) && !(d > 256.0);
         }
     }
@@ -71,8 +71,8 @@ public class SeahorseFollowParentGoal extends Goal {
 
     public void tick() {
         if (--this.delay <= 0) {
-            this.delay = this.getTickCount(10);
-            this.seahorse.getNavigation().startMovingTo(this.parent, this.speed);
+            this.delay = this.adjustedTickDelay(10);
+            this.seahorse.getNavigation().moveTo(this.parent, this.speed);
         }
     }
 }

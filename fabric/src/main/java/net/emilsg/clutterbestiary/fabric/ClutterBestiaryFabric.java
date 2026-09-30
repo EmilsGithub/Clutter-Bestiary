@@ -3,15 +3,11 @@ package net.emilsg.clutterbestiary.fabric;
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.config.Configs;
 import net.emilsg.clutterbestiary.config.ModConfigManager;
-import net.emilsg.clutterbestiary.fabric.compat.trinkets.TrinketsElytraUse;
 import net.emilsg.clutterbestiary.fabric.util.FabricEntitySpawns;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.EntityElytraEvents;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ElytraItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.world.event.GameEvent;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 
 public final class ClutterBestiaryFabric implements ModInitializer {
 
@@ -20,31 +16,10 @@ public final class ClutterBestiaryFabric implements ModInitializer {
         ClutterBestiary.init();
         FabricEntitySpawns.register();
 
-        EntityElytraEvents.CUSTOM.register((LivingEntity livingEntity, boolean tick) -> {
-            ItemStack itemStack = livingEntity.getEquippedStack(EquipmentSlot.CHEST);
-
-            if (itemStack.getItem() instanceof ElytraItem && ElytraItem.isUsable(itemStack)) {
-                doElytraTick(livingEntity, itemStack);
-                return true;
-            }
-
-            return false;
-        });
-
-        if (ClutterBestiary.IS_TRINKETS_LOADED && ModConfigManager.get(Configs.doTrinketsElytraFlight, true))
-            TrinketsElytraUse.doFlight();
-
-    }
-
-    private static void doElytraTick(LivingEntity entity, ItemStack itemStack) {
-        int nextRoll = entity.getFallFlyingTicks() + 1;
-
-        if (!entity.getWorld().isClient && nextRoll % 10 == 0) {
-            if (nextRoll / 10 % 2 == 0) {
-                itemStack.damage(1, entity, EquipmentSlot.CHEST);
-            }
-
-            entity.emitGameEvent(GameEvent.ELYTRA_GLIDE);
+        // Butterfly Elytras are gliders: chest-slot flight and durability are handled by vanilla, and Trinkets
+        // Updated flies any glider worn in its cape slot. The config can still switch the Trinkets slot off.
+        if (ClutterBestiary.IS_TRINKETS_LOADED && !ModConfigManager.get(Configs.doTrinketsElytraFlight, true)) {
+            EntityElytraEvents.ALLOW.register((LivingEntity livingEntity) -> LivingEntity.canGlideUsing(livingEntity.getItemBySlot(EquipmentSlot.CHEST), EquipmentSlot.CHEST));
         }
     }
 

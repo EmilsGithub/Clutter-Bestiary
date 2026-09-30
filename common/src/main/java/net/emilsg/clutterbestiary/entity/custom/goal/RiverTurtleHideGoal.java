@@ -2,8 +2,7 @@ package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.animation_handling.animation_states.RiverTurtleAnimationState;
 import net.emilsg.clutterbestiary.entity.custom.RiverTurtleEntity;
-import net.minecraft.entity.ai.goal.Goal;
-
+import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.EnumSet;
 
 public class RiverTurtleHideGoal extends Goal {
@@ -11,16 +10,16 @@ public class RiverTurtleHideGoal extends Goal {
 
     public RiverTurtleHideGoal(RiverTurtleEntity riverTurtleEntity) {
         this.riverTurtleEntity = riverTurtleEntity;
-        this.setControls(EnumSet.of(Goal.Control.JUMP, Goal.Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Goal.Flag.JUMP, Goal.Flag.MOVE, Flag.LOOK));
     }
 
     @Override
-    public boolean canStart() {
-        return this.riverTurtleEntity.isHiding() && this.riverTurtleEntity.isOnGround() && !this.riverTurtleEntity.isInsideWaterOrBubbleColumn();
+    public boolean canUse() {
+        return this.riverTurtleEntity.isHiding() && this.riverTurtleEntity.onGround() && !this.riverTurtleEntity.isInWater();
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         return this.riverTurtleEntity.isHiding();
     }
 

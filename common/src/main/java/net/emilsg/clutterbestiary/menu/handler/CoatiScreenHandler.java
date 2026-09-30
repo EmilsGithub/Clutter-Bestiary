@@ -1,25 +1,30 @@
 package net.emilsg.clutterbestiary.menu.handler;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.codec.ByteBufCodecs;
+import io.netty.buffer.ByteBuf;
 
 import net.emilsg.clutterbestiary.entity.custom.CoatiEntity;
 import net.emilsg.clutterbestiary.menu.ModMenuTypes;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
-public class CoatiScreenHandler extends ScreenHandler {
-    private final Inventory inventory;
+public class CoatiScreenHandler extends AbstractContainerMenu {
+    /** Extra menu data sent to the client: the network id of the Coati whose inventory is open. */
+    public static final StreamCodec<ByteBuf, Integer> ENTITY_ID_CODEC = ByteBufCodecs.INT;
+    private final Container inventory;
     private final CoatiEntity coati;
 
 
-    public CoatiScreenHandler(int syncId, PlayerInventory playerInventory, CoatiEntity coati) {
+    public CoatiScreenHandler(int syncId, Inventory playerInventory, CoatiEntity coati) {
         super(ModMenuTypes.COATI.get(), syncId);
         this.coati = coati;
         this.inventory = coati.getCoatiInventory();
-        checkSize(inventory, 12);
-        inventory.onOpen(playerInventory.player);
+        checkContainerSize(inventory, 12);
+        inventory.startOpen(playerInventory.player);
 
         int leftX = 35, topY = 26, s = 18;
 
@@ -42,42 +47,42 @@ public class CoatiScreenHandler extends ScreenHandler {
     }
 
     @Override
-    public boolean canUse(PlayerEntity player) {
-        return coati != null && coati.isAlive() && coati.squaredDistanceTo(player) < 64 && this.inventory.canPlayerUse(player);
+    public boolean stillValid(Player player) {
+        return coati != null && coati.isAlive() && coati.distanceToSqr(player) < 64 && this.inventory.stillValid(player);
     }
 
     @Override
-    public void onClosed(PlayerEntity player) {
-        super.onClosed(player);
-        this.inventory.onClose(player);
+    public void removed(Player player) {
+        super.removed(player);
+        this.inventory.stopOpen(player);
     }
 
     @Override
-    public ItemStack quickMove(PlayerEntity player, int slot) {
+    public ItemStack quickMoveStack(Player player, int slot) {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot2 = this.slots.get(slot);
-        if (slot2.hasStack()) {
-            ItemStack itemStack2 = slot2.getStack();
+        if (slot2.hasItem()) {
+            ItemStack itemStack2 = slot2.getItem();
             itemStack = itemStack2.copy();
-            if (slot < this.inventory.size()) {
-                if (!this.insertItem(itemStack2, this.inventory.size(), this.slots.size(), true)) {
+            if (slot < this.inventory.getContainerSize()) {
+                if (!this.moveItemStackTo(itemStack2, this.inventory.getContainerSize(), this.slots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (!this.insertItem(itemStack2, 0, this.inventory.size(), false)) {
+            } else if (!this.moveItemStackTo(itemStack2, 0, this.inventory.getContainerSize(), false)) {
                 return ItemStack.EMPTY;
             }
 
             if (itemStack2.isEmpty()) {
-                slot2.setStack(ItemStack.EMPTY);
+                slot2.setByPlayer(ItemStack.EMPTY);
             } else {
-                slot2.markDirty();
+                slot2.setChanged();
             }
 
             if (itemStack2.getCount() == itemStack.getCount()) {
                 return ItemStack.EMPTY;
             }
 
-            slot2.onTakeItem(player, itemStack2);
+            slot2.onTake(player, itemStack2);
         }
 
         return itemStack;

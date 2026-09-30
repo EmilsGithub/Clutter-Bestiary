@@ -1,0 +1,145 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "cases": [
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/white_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:white"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/light_gray_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:light_gray"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/gray_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:gray"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/black_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:black"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/brown_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:brown"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/red_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:red"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/orange_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:orange"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/yellow_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:yellow"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/lime_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:lime"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/green_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:green"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/light_blue_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:light_blue"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/cyan_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:cyan"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/blue_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:blue"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/purple_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:purple"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/magenta_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:magenta"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/pink_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:pink"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/warped_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:warped"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/crimson_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:crimson"
+      },
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "clutterbestiary:item/soul_butterfly_in_a_bottle"
+        },
+        "when": "clutterbestiary:soul"
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "clutterbestiary:item/butterfly_in_a_bottle"
+    },
+    "property": "clutterbestiary:bucket_entity_variant"
+  }
+}

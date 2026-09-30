@@ -1,142 +1,148 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.goal.PotionWaspWanderAroundGoal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.entity.variants.PotionWaspVariant;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.AnimationState;
-import net.minecraft.entity.EntityData;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.ai.control.FlightMoveControl;
-import net.minecraft.entity.ai.control.LookControl;
-import net.minecraft.entity.ai.pathing.BirdNavigation;
-import net.minecraft.entity.ai.pathing.EntityNavigation;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.*;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.FlyingMoveControl;
+import net.minecraft.world.entity.ai.control.LookControl;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class PotionWaspEntity extends ParentAnimalEntity {
-    private static final TrackedData<String> VARIANT = DataTracker.registerData(PotionWaspEntity.class, TrackedDataHandlerRegistry.STRING);
-    private static final TrackedData<Boolean> HAS_POTION_SAC = DataTracker.registerData(PotionWaspEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+    private static final EntityDataAccessor<String> VARIANT = SynchedEntityData.defineId(PotionWaspEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Boolean> HAS_POTION_SAC = SynchedEntityData.defineId(PotionWaspEntity.class, EntityDataSerializers.BOOLEAN);
 
     public final AnimationState flyingAnimState = new AnimationState();
     private int animationTimeout = 0;
     private int regrowthTicker = 0;
 
-    public PotionWaspEntity(EntityType<? extends AnimalEntity> entityType, World world) {
+    public PotionWaspEntity(EntityType<? extends Animal> entityType, Level world) {
         super(entityType, world);
-        this.moveControl = new FlightMoveControl(this, 20, true);
+        this.moveControl = new FlyingMoveControl(this, 20, true);
         this.lookControl = new LookControl(this);
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData entityData) {
         PotionWaspVariant variant = PotionWaspVariant.getRandom();
         this.setVariant(variant);
         this.setHasPotionSac(true);
 
-        return super.initialize(world, difficulty, spawnReason, entityData);
+        return super.finalizeSpawn(world, difficulty, spawnReason, entityData);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(VARIANT, PotionWaspVariant.REGENERATION.getId());
-        builder.add(HAS_POTION_SAC, true);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(VARIANT, PotionWaspVariant.REGENERATION.getId());
+        builder.define(HAS_POTION_SAC, true);
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(1, new PotionWaspWanderAroundGoal(this));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(1, new PotionWaspWanderAroundGoal(this));
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.dataTracker.set(VARIANT, nbt.getString("Variant"));
-        this.dataTracker.set(HAS_POTION_SAC, nbt.getBoolean("HasPotionSac"));
-        this.regrowthTicker = Math.max(0, nbt.getInt("RegrowthTicker"));
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.entityData.set(VARIANT, nbt.getStringOr("Variant", ""));
+        this.entityData.set(HAS_POTION_SAC, nbt.getBooleanOr("HasPotionSac", false));
+        this.regrowthTicker = Math.max(0, nbt.getIntOr("RegrowthTicker", 0));
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
         nbt.putString("Variant", this.getTypeVariant());
         nbt.putBoolean("HasPotionSac", this.hasPotionSac());
         nbt.putInt("RegrowthTicker", this.regrowthTicker);
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentAnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 10D)
-                .add(EntityAttributes.GENERIC_FLYING_SPEED, 0.5f)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.1f)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    public static AttributeSupplier.Builder setAttributes() {
+        return ParentAnimalEntity.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 10D)
+                .add(Attributes.FLYING_SPEED, 0.5f)
+                .add(Attributes.MOVEMENT_SPEED, 0.1f)
+                .add(Attributes.FOLLOW_RANGE, 16.0f);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.POTION_WASPS_SPAWN_ON);
+    public static boolean checkAnimalSpawnRules(EntityType<? extends Animal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos.below()).is(ModBlockTags.POTION_WASPS_SPAWN_ON);
     }
 
     @Override
-    public boolean canHaveStatusEffect(StatusEffectInstance effectInstance) {
-        List<RegistryEntry<StatusEffect>> potionEffects = PotionWaspVariant.getAllStatusEffects();
-        for (RegistryEntry<StatusEffect> effect : potionEffects) {
-            if (effectInstance.getEffectType() == effect) return false;
+    public boolean canBeAffected(MobEffectInstance effectInstance) {
+        List<Holder<MobEffect>> potionEffects = PotionWaspVariant.getAllStatusEffects();
+        for (Holder<MobEffect> effect : potionEffects) {
+            if (effectInstance.getEffect() == effect) return false;
         }
         return true;
     }
 
     @Override
-    public @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
+    public @Nullable AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
         return null;
     }
 
     @Override
-    public boolean damage(DamageSource source, float amount) {
-        if (!super.damage(source, amount)) return false;
+    public boolean hurtServer(ServerLevel serverLevel, DamageSource source, float amount) {
+        if (!super.hurtServer(serverLevel, source, amount)) return false;
         if (this.hasPotionSac()) {
-            if (this.getWorld() instanceof ServerWorld serverWorld) {
-                PotionSacEntity potionSacEntity = ModEntityTypes.POTION_SAC.get().create(serverWorld);
+            if (this.level() instanceof ServerLevel serverWorld) {
+                PotionSacEntity potionSacEntity = ModEntityTypes.POTION_SAC.get().create(serverWorld, EntitySpawnReason.BREEDING);
 
                 if (potionSacEntity == null) return true;
 
                 potionSacEntity.setVariant(this.getVariant());
-                potionSacEntity.setPosition(this.getPos().add(0D, -0.25D, 0D));
+                potionSacEntity.setPos(this.position().add(0D, -0.25D, 0D));
                 potionSacEntity.setOnGround(false);
 
-                serverWorld.spawnEntity(potionSacEntity);
+                serverWorld.addFreshEntity(potionSacEntity);
                 this.setHasPotionSac(false);
             }
         }
         return true;
     }
 
-    public float getPathfindingFavor(BlockPos pos, WorldView world) {
+    public float getWalkTargetValue(BlockPos pos, LevelReader world) {
         return world.getBlockState(pos).isAir() ? 10.0F : 0.0F;
     }
 
     public String getTypeVariant() {
-        return this.dataTracker.get(VARIANT);
+        return this.entityData.get(VARIANT);
     }
 
     public PotionWaspVariant getVariant() {
@@ -144,38 +150,38 @@ public class PotionWaspEntity extends ParentAnimalEntity {
     }
 
     public void setVariant(PotionWaspVariant variant) {
-        this.dataTracker.set(VARIANT, variant.getId());
+        this.entityData.set(VARIANT, variant.getId());
     }
 
     @Override
-    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+    public boolean causeFallDamage(double fallDistance, float damageMultiplier, DamageSource damageSource) {
         return false;
     }
 
     public boolean hasPotionSac() {
-        return this.dataTracker.get(HAS_POTION_SAC);
+        return this.entityData.get(HAS_POTION_SAC);
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return false;
     }
 
     public void setHasPotionSac(boolean hasPotionSac) {
-        this.dataTracker.set(HAS_POTION_SAC, hasPotionSac);
+        this.entityData.set(HAS_POTION_SAC, hasPotionSac);
     }
 
     @Override
-    public void takeKnockback(double strength, double x, double z) {
-        super.takeKnockback(this.hasPotionSac() ? 0 : strength, x, z);
+    public void knockback(double strength, double x, double z, DamageSource source, float damage, boolean comesFromEffect) {
+        super.knockback(this.hasPotionSac() ? 0 : strength, x, z, source, damage, comesFromEffect);
     }
 
     @Override
     public void tick() {
         super.tick();
-        World world = this.getWorld();
+        Level world = this.level();
 
-        if (!world.isClient && !this.hasPotionSac()) {
+        if (!world.isClientSide() && !this.hasPotionSac()) {
             if (this.regrowthTicker >= 1200) {
                 if (random.nextFloat() <= 0.0125) {
                     this.setHasPotionSac(true);
@@ -185,32 +191,31 @@ public class PotionWaspEntity extends ParentAnimalEntity {
             this.regrowthTicker++;
         }
 
-        if (world.isClient) {
+        if (world.isClientSide()) {
             this.setupAnimationStates();
         }
     }
 
-    protected EntityNavigation createNavigation(World world) {
-        BirdNavigation birdNavigation = new BirdNavigation(this, world) {
-            public boolean isValidPosition(BlockPos pos) {
-                return !this.world.getBlockState(pos.down()).isAir();
+    protected PathNavigation createNavigation(Level world) {
+        FlyingPathNavigation birdNavigation = new FlyingPathNavigation(this, world) {
+            public boolean isStableDestination(BlockPos pos) {
+                return !this.level.getBlockState(pos.below()).isAir();
             }
 
         };
-        birdNavigation.setCanPathThroughDoors(false);
-        birdNavigation.setCanSwim(false);
-        birdNavigation.setCanEnterOpenDoors(true);
+        birdNavigation.setCanOpenDoors(false);
+        birdNavigation.setCanFloat(false);
         return birdNavigation;
     }
 
     @Override
-    protected void fall(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
+    protected void checkFallDamage(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
     }
 
     private void setupAnimationStates() {
         if (this.animationTimeout <= 0) {
             this.animationTimeout = 40;
-            this.flyingAnimState.start(this.age);
+            this.flyingAnimState.start(this.tickCount);
         } else {
             --this.animationTimeout;
         }

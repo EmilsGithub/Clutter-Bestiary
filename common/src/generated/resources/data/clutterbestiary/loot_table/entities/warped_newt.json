@@ -2,110 +2,84 @@
   "type": "minecraft:entity",
   "pools": [
     {
-      "bonus_rolls": 0.0,
       "entries": [
         {
           "type": "minecraft:item",
-          "conditions": [
-            {
-              "condition": "minecraft:entity_properties",
-              "entity": "this",
-              "predicate": {
-                "nbt": "{Fungi:1}"
-              }
+          "condition": {
+            "type": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "minecraft:nbt": "{Fungi:1}"
             }
-          ],
-          "functions": [
-            {
-              "add": false,
-              "count": 1.0,
-              "function": "minecraft:set_count"
-            }
-          ],
+          },
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": 1
+          },
           "name": "minecraft:warped_fungus"
         },
         {
           "type": "minecraft:item",
-          "conditions": [
-            {
-              "condition": "minecraft:entity_properties",
-              "entity": "this",
-              "predicate": {
-                "nbt": "{Fungi:2}"
-              }
+          "condition": {
+            "type": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "minecraft:nbt": "{Fungi:2}"
             }
-          ],
-          "functions": [
-            {
-              "add": false,
-              "count": 2.0,
-              "function": "minecraft:set_count"
-            }
-          ],
+          },
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": 2
+          },
           "name": "minecraft:warped_fungus"
         },
         {
           "type": "minecraft:item",
-          "conditions": [
-            {
-              "condition": "minecraft:entity_properties",
-              "entity": "this",
-              "predicate": {
-                "nbt": "{Fungi:3}"
-              }
+          "condition": {
+            "type": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "minecraft:nbt": "{Fungi:3}"
             }
-          ],
-          "functions": [
-            {
-              "add": false,
-              "count": 3.0,
-              "function": "minecraft:set_count"
-            }
-          ],
+          },
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": 3
+          },
           "name": "minecraft:warped_fungus"
         },
         {
           "type": "minecraft:item",
-          "conditions": [
-            {
-              "condition": "minecraft:entity_properties",
-              "entity": "this",
-              "predicate": {
-                "nbt": "{Fungi:4}"
-              }
+          "condition": {
+            "type": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "minecraft:nbt": "{Fungi:4}"
             }
-          ],
-          "functions": [
-            {
-              "add": false,
-              "count": 4.0,
-              "function": "minecraft:set_count"
-            }
-          ],
+          },
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": 4
+          },
           "name": "minecraft:warped_fungus"
         },
         {
           "type": "minecraft:item",
-          "conditions": [
-            {
-              "condition": "minecraft:entity_properties",
-              "entity": "this",
-              "predicate": {
-                "nbt": "{Fungi:5}"
-              }
+          "condition": {
+            "type": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "minecraft:nbt": "{Fungi:5}"
             }
-          ],
-          "functions": [
-            {
-              "add": false,
-              "count": 5.0,
-              "function": "minecraft:set_count"
-            }
-          ],
+          },
+          "modifier": {
+            "type": "minecraft:set_count",
+            "count": 5
+          },
           "name": "minecraft:warped_fungus"
         }
       ],
-      "rolls": 1.0
+      "rolls": 1
     }
   ],
   "random_sequence": "clutterbestiary:warped_newt"

@@ -1,18 +1,18 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.WoodpeckerEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.PillarBlock;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.particle.BlockStateParticleEffect;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -36,26 +36,26 @@ public class WoodpeckerPeckLogGoal extends Goal {
     private final double speed;
     @Nullable private BlockPos targetLog;
     @Nullable private Direction targetFace;
-    @Nullable private Vec3d attachmentPos;
+    @Nullable private Vec3 attachmentPos;
     private int activityTicks;
     private long nextSearchTime;
 
     public WoodpeckerPeckLogGoal(WoodpeckerEntity woodpecker, double speed) {
         this.woodpecker = woodpecker;
         this.speed = speed;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         this.scheduleNextSearch();
     }
 
     @Override
-    public boolean canStart() {
-        if (this.woodpecker.getWorld().getTime() < this.nextSearchTime) return false;
-        if (!this.woodpecker.isAlive() || this.woodpecker.isTouchingWater()) return false;
+    public boolean canUse() {
+        if (this.woodpecker.level().getGameTime() < this.nextSearchTime) return false;
+        if (!this.woodpecker.isAlive() || this.woodpecker.isInWater()) return false;
         return this.findLog();
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         if (this.woodpecker.isPeckingInterrupted()) return false;
         if (!this.woodpecker.isAlive() || this.targetLog == null || this.targetFace == null || this.attachmentPos == null) return false;
         if (!this.isValidFace(this.targetLog, this.targetFace)) return false;
@@ -66,7 +66,7 @@ public class WoodpeckerPeckLogGoal extends Goal {
     public void start() {
         this.activityTicks = 0;
         this.woodpecker.setFlying(true);
-        if (this.attachmentPos != null) this.woodpecker.getNavigation().startMovingTo(
+        if (this.attachmentPos != null) this.woodpecker.getNavigation().moveTo(
                 this.attachmentPos.x, this.attachmentPos.y, this.attachmentPos.z, this.speed);
     }
 
@@ -82,7 +82,7 @@ public class WoodpeckerPeckLogGoal extends Goal {
     }
 
     @Override
-    public boolean shouldRunEveryTick() {
+    public boolean requiresUpdateEveryTick() {
         return true;
     }
 
@@ -91,11 +91,11 @@ public class WoodpeckerPeckLogGoal extends Goal {
         if (this.attachmentPos == null || this.targetFace == null) return;
         this.activityTicks++;
         if (!this.woodpecker.isAttached()) {
-            if (this.woodpecker.squaredDistanceTo(this.attachmentPos) < 0.25) {
+            if (this.woodpecker.distanceToSqr(this.attachmentPos) < 0.25) {
                 this.woodpecker.attachToLog(this.attachmentPos, this.targetFace);
                 this.activityTicks = 0;
-            } else if (this.woodpecker.getNavigation().isIdle()) {
-                this.woodpecker.getNavigation().startMovingTo(
+            } else if (this.woodpecker.getNavigation().isDone()) {
+                this.woodpecker.getNavigation().moveTo(
                         this.attachmentPos.x, this.attachmentPos.y, this.attachmentPos.z, this.speed);
             }
             return;
@@ -106,36 +106,36 @@ public class WoodpeckerPeckLogGoal extends Goal {
         this.woodpecker.setPecking(true);
         int peckingTicks = this.activityTicks - ATTACHED_IDLE_TICKS;
         if (peckingTicks % PECK_SOUND_INTERVAL_TICKS == PECK_SOUND_OFFSET_TICKS) {
-            this.woodpecker.playSound(SoundEvents.BLOCK_WOOD_HIT, 0.5f, 0.9f + this.woodpecker.getRandom().nextFloat() * 0.2f);
-            if (this.woodpecker.getWorld() instanceof ServerWorld serverWorld) this.spawnPeckParticles(serverWorld);
+            this.woodpecker.playSound(SoundEvents.WOOD_HIT, 0.5f, 0.9f + this.woodpecker.getRandom().nextFloat() * 0.2f);
+            if (this.woodpecker.level() instanceof ServerLevel serverWorld) this.spawnPeckParticles(serverWorld);
         }
     }
 
-    private void spawnPeckParticles(ServerWorld world) {
+    private void spawnPeckParticles(ServerLevel world) {
         if (this.targetLog == null || this.targetFace == null) return;
         BlockState log = world.getBlockState(this.targetLog);
-        Vec3d particlePos = Vec3d.ofCenter(this.targetLog).add(
-                this.targetFace.getOffsetX() * PECK_PARTICLE_DISTANCE_FROM_LOG_CENTER,
+        Vec3 particlePos = Vec3.atCenterOf(this.targetLog).add(
+                this.targetFace.getStepX() * PECK_PARTICLE_DISTANCE_FROM_LOG_CENTER,
                 0.0,
-                this.targetFace.getOffsetZ() * PECK_PARTICLE_DISTANCE_FROM_LOG_CENTER);
+                this.targetFace.getStepZ() * PECK_PARTICLE_DISTANCE_FROM_LOG_CENTER);
 
         for (int i = 0; i < PECK_PARTICLE_COUNT; i++) {
             double x = particlePos.x + (this.woodpecker.getRandom().nextDouble() - 0.5) * 0.08;
             double y = this.woodpecker.getEyeY() + (this.woodpecker.getRandom().nextDouble() - 0.5) * 0.12;
             double z = particlePos.z + (this.woodpecker.getRandom().nextDouble() - 0.5) * 0.08;
-            world.spawnParticles(new BlockStateParticleEffect(ParticleTypes.BLOCK, log), x, y, z, 0,
-                    this.targetFace.getOffsetX() * 0.02, 0.01, this.targetFace.getOffsetZ() * 0.02, 1.0);
+            world.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, log), x, y, z, 0,
+                    this.targetFace.getStepX() * 0.02, 0.01, this.targetFace.getStepZ() * 0.02, 1.0);
         }
     }
 
     private boolean findLog() {
-        BlockPos origin = this.woodpecker.getBlockPos();
-        for (BlockPos logPos : BlockPos.iterateOutwards(origin, SEARCH_RADIUS, SEARCH_HEIGHT_BELOW, SEARCH_RADIUS)) {
+        BlockPos origin = this.woodpecker.blockPosition();
+        for (BlockPos logPos : BlockPos.withinBoxByManhattanDistance(origin, SEARCH_RADIUS, SEARCH_HEIGHT_BELOW, SEARCH_RADIUS)) {
             if (logPos.getY() > origin.getY() + SEARCH_HEIGHT_ABOVE) continue;
-            if (!this.isValidLog(this.woodpecker.getWorld().getBlockState(logPos))) continue;
-            for (Direction face : Direction.Type.HORIZONTAL) {
+            if (!this.isValidLog(this.woodpecker.level().getBlockState(logPos))) continue;
+            for (Direction face : Direction.Plane.HORIZONTAL) {
                 if (!this.isValidFace(logPos, face)) continue;
-                this.targetLog = logPos.toImmutable();
+                this.targetLog = logPos.immutable();
                 this.targetFace = face;
                 this.attachmentPos = this.getAttachmentPos(logPos, face);
                 return true;
@@ -146,32 +146,32 @@ public class WoodpeckerPeckLogGoal extends Goal {
     }
 
     private boolean isValidFace(BlockPos logPos, Direction face) {
-        BlockState log = this.woodpecker.getWorld().getBlockState(logPos);
+        BlockState log = this.woodpecker.level().getBlockState(logPos);
         if (!this.isValidLog(log)) return false;
 
-        BlockPos adjacent = logPos.offset(face);
-        if (!this.woodpecker.getWorld().getBlockState(adjacent).isAir()
-                || !this.woodpecker.getWorld().getBlockState(adjacent.up()).isAir()) return false;
+        BlockPos adjacent = logPos.relative(face);
+        if (!this.woodpecker.level().getBlockState(adjacent).isAir()
+                || !this.woodpecker.level().getBlockState(adjacent.above()).isAir()) return false;
 
-        Vec3d attachmentPos = this.getAttachmentPos(logPos, face);
-        Box attachmentBox = this.woodpecker.getBoundingBox().offset(attachmentPos.subtract(this.woodpecker.getPos()));
-        return this.woodpecker.getWorld().isSpaceEmpty(this.woodpecker, attachmentBox);
+        Vec3 attachmentPos = this.getAttachmentPos(logPos, face);
+        AABB attachmentBox = this.woodpecker.getBoundingBox().move(attachmentPos.subtract(this.woodpecker.position()));
+        return this.woodpecker.level().noCollision(this.woodpecker, attachmentBox);
     }
 
     private boolean isValidLog(BlockState log) {
-        return log.isIn(BlockTags.LOGS) && log.contains(PillarBlock.AXIS)
-                && log.get(PillarBlock.AXIS) == Direction.Axis.Y;
+        return log.is(BlockTags.LOGS) && log.hasProperty(RotatedPillarBlock.AXIS)
+                && log.getValue(RotatedPillarBlock.AXIS) == Direction.Axis.Y;
     }
 
-    private Vec3d getAttachmentPos(BlockPos logPos, Direction face) {
-        return Vec3d.ofCenter(logPos).add(
-                face.getOffsetX() * ATTACHMENT_DISTANCE_FROM_LOG_CENTER,
+    private Vec3 getAttachmentPos(BlockPos logPos, Direction face) {
+        return Vec3.atCenterOf(logPos).add(
+                face.getStepX() * ATTACHMENT_DISTANCE_FROM_LOG_CENTER,
                 0.0,
-                face.getOffsetZ() * ATTACHMENT_DISTANCE_FROM_LOG_CENTER);
+                face.getStepZ() * ATTACHMENT_DISTANCE_FROM_LOG_CENTER);
     }
 
     private void scheduleNextSearch() {
-        this.nextSearchTime = this.woodpecker.getWorld().getTime()
-                + this.woodpecker.getRandom().nextBetween(MIN_SEARCH_DELAY_TICKS, MAX_SEARCH_DELAY_TICKS);
+        this.nextSearchTime = this.woodpecker.level().getGameTime()
+                + this.woodpecker.getRandom().nextIntBetweenInclusive(MIN_SEARCH_DELAY_TICKS, MAX_SEARCH_DELAY_TICKS);
     }
 }

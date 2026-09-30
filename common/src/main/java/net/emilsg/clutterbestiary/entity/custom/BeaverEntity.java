@@ -1,4 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.goal.BeaverStripBottomLogGoal;
@@ -10,46 +13,62 @@ import net.emilsg.clutterbestiary.sound.ModSoundEvents;
 import net.emilsg.clutterbestiary.util.ModAdvancements;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
 import net.emilsg.clutterbestiary.util.ModUtil;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.control.MoveControl;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.ai.pathing.*;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.SimpleInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.MoveControl;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.npc.InventoryCarrier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 import java.util.function.Predicate;
 
-public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
-    private static final Predicate<ItemStack> BREEDING_INGREDIENT = stack -> ModUtil.SAPLING_ITEM_MAP.contains(stack.getItem()) || stack.isIn(ItemTags.SAPLINGS);
-    private static final TrackedData<Boolean> IS_STRIPPING_ITEMS = DataTracker.registerData(BeaverEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Integer> ANIMATION_STATE = DataTracker.registerData(BeaverEntity.class, TrackedDataHandlerRegistry.INTEGER);
+public class BeaverEntity extends ParentAnimalEntity implements InventoryCarrier {
+    private static final Predicate<ItemStack> BREEDING_INGREDIENT = stack -> ModUtil.SAPLING_ITEM_MAP.contains(stack.getItem()) || stack.is(ItemTags.SAPLINGS);
+    private static final EntityDataAccessor<Boolean> IS_STRIPPING_ITEMS = SynchedEntityData.defineId(BeaverEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> ANIMATION_STATE = SynchedEntityData.defineId(BeaverEntity.class, EntityDataSerializers.INT);
 
     private static final String NBT_STRIPPING = "StrippingItems";
     private static final String NBT_STRIP_TIMER = "StripTimer";
@@ -60,9 +79,9 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
     public final AnimationState idleAnimationState = new AnimationState();
     public final AnimationState idlingAnimationState = new AnimationState();
     public final AnimationState strippingItemsAnimationState = new AnimationState();
-    protected final SwimNavigation waterNavigation;
-    protected final MobNavigation landNavigation;
-    private final SimpleInventory inventory = new SimpleInventory(1);
+    protected final WaterBoundPathNavigation waterNavigation;
+    protected final GroundPathNavigation landNavigation;
+    private final SimpleContainer inventory = new SimpleContainer(1);
     private int waterAnimationTimeout = 0;
     private int idleAnimationTimeout = 0;
     private int strippingAnimationTimer = 0;
@@ -71,179 +90,179 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
     private UUID strippingPlayerUuid;
     private boolean shouldSpawnStrippingParticles = false;
 
-    public BeaverEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
+    public BeaverEntity(EntityType<? extends ParentAnimalEntity> entityType, Level world) {
         super(entityType, world);
-        this.setPathfindingPenalty(PathNodeType.DANGER_FIRE, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.DAMAGE_FIRE, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.COCOA, -1.0F);
+        this.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, -1.0F);
+        this.setPathfindingMalus(PathType.FIRE, -1.0F);
+        this.setPathfindingMalus(PathType.COCOA, -1.0F);
         this.moveControl = new BeaverMoveControl(this);
-        this.setPathfindingPenalty(PathNodeType.WATER, 0.0F);
-        this.waterNavigation = new SwimNavigation(this, world);
-        this.landNavigation = new MobNavigation(this, world);
+        this.setPathfindingMalus(PathType.WATER, 0.0F);
+        this.waterNavigation = new WaterBoundPathNavigation(this, world);
+        this.landNavigation = new GroundPathNavigation(this, world);
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new AnimalMateGoal(this, 1.0f));
-        this.goalSelector.add(1, new BeaverStripItemsGoal(this));
-        this.goalSelector.add(2, new TemptGoal(this, 1.1f, BREEDING_INGREDIENT, false));
-        this.goalSelector.add(3, new FollowParentGoal(this, 1.0f));
-        this.goalSelector.add(4, new MeleeAttackGoal(this, 1.2f, true));
-        this.goalSelector.add(5, new BeaverStripBottomLogGoal(this, 1.0f));
-        this.goalSelector.add(6, new HighWanderAroundFarGoal(this, 1.0f, 0.001f));
-        this.goalSelector.add(6, new LeaveWaterGoal(this, 1.0f));
-        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0f));
-        this.goalSelector.add(8, new LookAroundGoal(this));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new BreedGoal(this, 1.0f));
+        this.goalSelector.addGoal(1, new BeaverStripItemsGoal(this));
+        this.goalSelector.addGoal(2, new TemptGoal(this, 1.1f, BREEDING_INGREDIENT, false));
+        this.goalSelector.addGoal(3, new FollowParentGoal(this, 1.0f));
+        this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.2f, true));
+        this.goalSelector.addGoal(5, new BeaverStripBottomLogGoal(this, 1.0f));
+        this.goalSelector.addGoal(6, new HighWanderAroundFarGoal(this, 1.0f, 0.001f));
+        this.goalSelector.addGoal(6, new LeaveWaterGoal(this, 1.0f));
+        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 6.0f));
+        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
 
-        this.targetSelector.add(3, new RevengeGoal(this));
+        this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(IS_STRIPPING_ITEMS, false);
-        builder.add(ANIMATION_STATE, BeaverEntityAnimationState.IDLING.getIndex());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(IS_STRIPPING_ITEMS, false);
+        builder.define(ANIMATION_STATE, BeaverEntityAnimationState.IDLING.getIndex());
     }
 
     @Override
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.readInventory(nbt, this.getRegistryManager());
-        boolean restoreStripping = nbt.getBoolean(NBT_STRIPPING);
-        this.strippingAnimationTimer = nbt.getInt(NBT_STRIP_TIMER);
-        this.logsStripped = nbt.getInt(NBT_LOGS_STRIPPED);
-        this.strippingPlayerUuid = nbt.containsUuid(NBT_STRIPPING_PLAYER) ? nbt.getUuid(NBT_STRIPPING_PLAYER) : null;
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.readInventoryFromTag(nbt);
+        boolean restoreStripping = nbt.getBooleanOr(NBT_STRIPPING, false);
+        this.strippingAnimationTimer = nbt.getIntOr(NBT_STRIP_TIMER, 0);
+        this.logsStripped = nbt.getIntOr(NBT_LOGS_STRIPPED, 0);
+        this.strippingPlayerUuid = nbt.read(NBT_STRIPPING_PLAYER, UUIDUtil.CODEC).orElse(null);
 
         this.setStrippingItems(restoreStripping);
 
         if (restoreStripping && !this.inventory.isEmpty()) {
-            ItemStack s = this.inventory.getStack(0);
-            this.setStackInHand(Hand.MAIN_HAND, s.copy());
+            ItemStack s = this.inventory.getItem(0);
+            this.setItemInHand(InteractionHand.MAIN_HAND, s.copy());
             this.startState(BeaverEntityAnimationState.STRIPPING_ITEMS);
         } else {
-            this.setStackInHand(Hand.MAIN_HAND, ItemStack.EMPTY);
+            this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
             this.startState(BeaverEntityAnimationState.IDLING);
             if (!restoreStripping) this.strippingAnimationTimer = 0;
         }
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        this.writeInventory(nbt, this.getRegistryManager());
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
+        this.writeInventoryToTag(nbt);
         nbt.putBoolean(NBT_STRIPPING, this.isStrippingItems());
         nbt.putInt(NBT_STRIP_TIMER, this.strippingAnimationTimer);
         nbt.putInt(NBT_LOGS_STRIPPED, this.logsStripped);
         if (this.strippingPlayerUuid != null) {
-            nbt.putUuid(NBT_STRIPPING_PLAYER, this.strippingPlayerUuid);
+            nbt.store(NBT_STRIPPING_PLAYER, UUIDUtil.CODEC, this.strippingPlayerUuid);
         }
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentAnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 10.0D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.15f)
-                .add(EntityAttributes.GENERIC_ATTACK_SPEED, 0.5f)
-                .add(EntityAttributes.GENERIC_ATTACK_KNOCKBACK, 0.1f)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 2.0f)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0f);
+    public static AttributeSupplier.Builder setAttributes() {
+        return ParentAnimalEntity.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 10.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.15f)
+                .add(Attributes.ATTACK_SPEED, 0.5f)
+                .add(Attributes.ATTACK_KNOCKBACK, 0.1f)
+                .add(Attributes.ATTACK_DAMAGE, 2.0f)
+                .add(Attributes.FOLLOW_RANGE, 16.0f);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.BEAVERS_SPAWN_ON);
+    public static boolean checkAnimalSpawnRules(EntityType<? extends Animal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos.below()).is(ModBlockTags.BEAVERS_SPAWN_ON);
     }
 
     @Nullable
     @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.BEAVER.get().create(world);
+    public AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
+        return ModEntityTypes.BEAVER.get().create(world, EntitySpawnReason.BREEDING);
     }
 
     @Override
-    public SimpleInventory getInventory() {
+    public SimpleContainer getInventory() {
         return inventory;
     }
 
     @Override
-    public float getScaleFactor() {
+    public float getAgeScale() {
         return this.isBaby() ? 0.6F : 1.0F;
     }
 
     @Override
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack stackInHand = player.getStackInHand(hand);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stackInHand = player.getItemInHand(hand);
         var strippedItem = ModUtil.getStrippedItem(stackInHand);
 
         if (strippedItem != null) {
-            if (!this.inventory.isEmpty() || this.isInsideWaterOrBubbleColumn()) return ActionResult.PASS;
+            if (!this.inventory.isEmpty() || this.isInWater()) return InteractionResult.PASS;
 
             if (stackInHand.getCount() >= 16) {
-                this.inventory.setStack(0, stackInHand.copyWithCount(16));
-                this.setStackInHand(Hand.MAIN_HAND, stackInHand.copyWithCount(16));
-                stackInHand.decrementUnlessCreative(16, player);
+                this.inventory.setItem(0, stackInHand.copyWithCount(16));
+                this.setItemInHand(InteractionHand.MAIN_HAND, stackInHand.copyWithCount(16));
+                stackInHand.consume(16, player);
             } else {
-                this.inventory.setStack(0, stackInHand.copy());
-                this.setStackInHand(Hand.MAIN_HAND, stackInHand.copy());
+                this.inventory.setItem(0, stackInHand.copy());
+                this.setItemInHand(InteractionHand.MAIN_HAND, stackInHand.copy());
                 stackInHand.setCount(0);
             }
 
             this.strippingAnimationTimer = 0;
-            if (!this.getWorld().isClient) {
-                this.strippingPlayerUuid = player.getUuid();
+            if (!this.level().isClientSide()) {
+                this.strippingPlayerUuid = player.getUUID();
             }
             this.setStrippingItems(true);
-            if (!this.getWorld().isClient) {
-                this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.NEUTRAL);
+            if (!this.level().isClientSide()) {
+                this.level().playSound(null, this.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.NEUTRAL);
                 if (this.shouldPlayChainsawSound())
-                    this.getWorld().playSound(null, this.getBlockPos(), ModSoundEvents.ENTITY_BEAVER_CHAINSAW.get(), SoundCategory.NEUTRAL);
+                    this.level().playSound(null, this.blockPosition(), ModSoundEvents.ENTITY_BEAVER_CHAINSAW.get(), SoundSource.NEUTRAL);
             }
 
             this.startState(BeaverEntityAnimationState.STRIPPING_ITEMS);
         }
 
-        return super.interactMob(player, hand);
+        return super.mobInteract(player, hand);
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return BREEDING_INGREDIENT.test(stack);
     }
 
     @Override
-    public boolean isPushedByFluids() {
+    public boolean isPushedByFluid() {
         return false;
     }
 
     public boolean isStrippingItems() {
-        return this.dataTracker.get(IS_STRIPPING_ITEMS);
+        return this.entityData.get(IS_STRIPPING_ITEMS);
     }
 
     public void setStrippingItems(boolean strippingItems) {
-        this.dataTracker.set(IS_STRIPPING_ITEMS, strippingItems);
+        this.entityData.set(IS_STRIPPING_ITEMS, strippingItems);
     }
 
-    public void onDeath(DamageSource damageSource) {
+    public void die(DamageSource damageSource) {
         this.startState(BeaverEntityAnimationState.IDLING);
-        this.dropStack(this.inventory.getStack(0));
-        super.onDeath(damageSource);
+        this.spawnAtLocation((ServerLevel) this.level(), this.inventory.getItem(0));
+        super.die(damageSource);
     }
 
-    public void onTrackedDataSet(TrackedData<?> data) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> data) {
         if (ANIMATION_STATE.equals(data)) {
             int state = this.getState();
             this.stopAnimations();
             switch (state) {
                 case 1:
-                    this.strippingItemsAnimationState.startIfNotRunning(this.age);
+                    this.strippingItemsAnimationState.startIfStopped(this.tickCount);
                     break;
                 default:
-                    this.idlingAnimationState.startIfNotRunning(this.age);
+                    this.idlingAnimationState.startIfStopped(this.tickCount);
                     break;
             }
 
-            this.calculateDimensions();
+            this.refreshDimensions();
         }
 
-        super.onTrackedDataSet(data);
+        super.onSyncedDataUpdated(data);
     }
 
     public void setShouldSpawnStrippingParticles(boolean spawnStrippingParticles) {
@@ -277,29 +296,29 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
     @Override
     public void tick() {
         super.tick();
-        World world = this.getWorld();
+        Level world = this.level();
 
         if (!this.getInventory().isEmpty() && this.isStrippingItems() && this.isAlive()) {
             this.strippingAnimationTimer++;
             if ((this.strippingAnimationTimer <= 70 || (this.strippingAnimationTimer >= 100 && this.strippingAnimationTimer < 140))) {
-                if ((this.age % 5) == 0 && !world.isClient && !this.shouldPlayChainsawSound())
-                    world.playSound(null, this.getBlockPos(), SoundEvents.ITEM_AXE_STRIP, SoundCategory.NEUTRAL);
+                if ((this.tickCount % 5) == 0 && !world.isClientSide() && !this.shouldPlayChainsawSound())
+                    world.playSound(null, this.blockPosition(), SoundEvents.AXE_STRIP.value(), SoundSource.NEUTRAL);
                 this.setShouldSpawnStrippingParticles(true);
             } else {
                 this.setShouldSpawnStrippingParticles(false);
             }
         }
 
-        if (!world.isClient && strippingAnimationTimer >= 160 && this.isAlive()) {
+        if (!world.isClientSide() && strippingAnimationTimer >= 160 && this.isAlive()) {
             this.setStrippingItems(false);
             this.startState(BeaverEntityAnimationState.IDLING);
-            ItemStack inventoryStack = this.inventory.getStack(0);
+            ItemStack inventoryStack = this.inventory.getItem(0);
             Item strippedItem = ModUtil.getStrippedItem(inventoryStack);
-            this.setStackInHand(Hand.MAIN_HAND, ItemStack.EMPTY);
+            this.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
 
             if (strippedItem == null) {
-                this.dropStack(inventoryStack);
-                this.inventory.setStack(0, ItemStack.EMPTY);
+                this.spawnAtLocation((ServerLevel) this.level(), inventoryStack);
+                this.inventory.setItem(0, ItemStack.EMPTY);
                 this.strippingAnimationTimer = 0;
                 this.strippingPlayerUuid = null;
                 return;
@@ -308,31 +327,31 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
             this.finishStrippingHandedLogs(inventoryStack.getCount());
 
             ItemStack strippedStack = new ItemStack(strippedItem, inventoryStack.getCount());
-            this.inventory.setStack(0, strippedStack);
+            this.inventory.setItem(0, strippedStack);
 
-            var vec = this.getRotationVector().normalize().multiply(0.5);
+            var vec = this.getLookAngle().normalize().scale(0.5);
             double x = this.getX() + vec.x;
             double y = this.getY() + 0.2;
             double z = this.getZ() + vec.z;
 
-            ItemEntity item = new ItemEntity(this.getWorld(), x, y, z, this.inventory.getStack(0));
-            item.setVelocity(vec.x * 0.1, 0.1, vec.z * 0.1);
-            this.getWorld().spawnEntity(item);
+            ItemEntity item = new ItemEntity(this.level(), x, y, z, this.inventory.getItem(0));
+            item.setDeltaMovement(vec.x * 0.1, 0.1, vec.z * 0.1);
+            this.level().addFreshEntity(item);
 
-            if (!this.getWorld().isClient)
-                this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.NEUTRAL);
+            if (!this.level().isClientSide())
+                this.level().playSound(null, this.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.NEUTRAL);
 
             this.startState(BeaverEntityAnimationState.IDLING);
             this.strippingAnimationTimer = 0;
             this.strippingPlayerUuid = null;
-            this.inventory.setStack(0, ItemStack.EMPTY);
+            this.inventory.setItem(0, ItemStack.EMPTY);
         }
 
         if (!this.isStrippingItems()) this.strippingAnimationTimer = 0;
 
         if (this.isStrippingItems()) {
-            if (this.getMainHandStack().isEmpty() && !this.inventory.isEmpty()) {
-                this.setStackInHand(Hand.MAIN_HAND, this.inventory.getStack(0).copy());
+            if (this.getMainHandItem().isEmpty() && !this.inventory.isEmpty()) {
+                this.setItemInHand(InteractionHand.MAIN_HAND, this.inventory.getItem(0).copy());
             }
         }
 
@@ -341,31 +360,31 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
     }
 
     public void onWorldLogStripped() {
-        if (!(this.getWorld() instanceof ServerWorld serverWorld)) return;
+        if (!(this.level() instanceof ServerLevel serverWorld)) return;
 
-        serverWorld.getPlayers(player -> player.squaredDistanceTo(this) <= 256.0)
+        serverWorld.getPlayers(player -> player.distanceToSqr(this) <= 256.0)
                 .forEach(player -> ModAdvancements.grant(player, ModAdvancements.DAM_GOOD_WORK));
     }
 
     private void finishStrippingHandedLogs(int amount) {
-        if (!(this.getWorld() instanceof ServerWorld serverWorld)) return;
+        if (!(this.level() instanceof ServerLevel serverWorld)) return;
 
         this.logsStripped = Math.min(25, this.logsStripped + amount);
         if (this.logsStripped < 25 || this.strippingPlayerUuid == null) return;
 
-        ServerPlayerEntity player = serverWorld.getServer().getPlayerManager().getPlayer(this.strippingPlayerUuid);
+        ServerPlayer player = serverWorld.getServer().getPlayerList().getPlayer(this.strippingPlayerUuid);
         if (player != null) {
             ModAdvancements.grant(player, ModAdvancements.BUSY_BEAVER);
         }
     }
 
-    public void travel(Vec3d movementInput) {
-        if (this.isLogicalSideForUpdatingMovement() && this.isTouchingWater()) {
-            this.updateVelocity(0.1F, movementInput);
-            this.move(MovementType.SELF, this.getVelocity());
-            this.setVelocity(this.getVelocity().multiply(0.9));
+    public void travel(Vec3 movementInput) {
+        if (this.isLocalInstanceAuthoritative() && this.isInWater()) {
+            this.moveRelative(0.1F, movementInput);
+            this.move(MoverType.SELF, this.getDeltaMovement());
+            this.setDeltaMovement(this.getDeltaMovement().scale(0.9));
             if (this.getTarget() == null) {
-                this.setVelocity(this.getVelocity().add(0.0, -0.005, 0.0));
+                this.setDeltaMovement(this.getDeltaMovement().add(0.0, -0.005, 0.0));
             }
         } else {
             super.travel(movementInput);
@@ -373,7 +392,7 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
 
     }
 
-    protected EntityNavigation createNavigation(World world) {
+    protected PathNavigation createNavigation(Level world) {
         return new BeaverSwimNavigation(this, world);
     }
 
@@ -381,40 +400,40 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
     //Animation
 
     @Override
-    protected int getNextAirUnderwater(int air) {
+    protected int decreaseAirSupply(int air) {
         return air;
     }
 
-    protected void updateLimbs(float v) {
+    protected void updateWalkAnimation(float v) {
         float f;
-        if (this.getPose() == EntityPose.STANDING) {
+        if (this.getPose() == Pose.STANDING) {
             f = Math.min(v * 6.0F, 1.0F);
         } else {
             f = 0.0F;
         }
 
-        this.limbAnimator.updateLimbs(f * 1.15f, 0.5F);
+        this.walkAnimation.update(f * 1.15f, 0.5F, 1.0F);
     }
 
     private int getState() {
-        return this.dataTracker.get(ANIMATION_STATE);
+        return this.entityData.get(ANIMATION_STATE);
     }
 
     private void setState(int state) {
-        this.dataTracker.set(ANIMATION_STATE, state);
+        this.entityData.set(ANIMATION_STATE, state);
     }
 
     private void setupAnimationStates() {
         if (this.waterAnimationTimeout <= 0) {
             this.waterAnimationTimeout = 20;
-            this.waterAnimationState.startIfNotRunning(this.age);
+            this.waterAnimationState.startIfStopped(this.tickCount);
         } else {
             --this.waterAnimationTimeout;
         }
 
         if (this.idleAnimationTimeout <= 0 && random.nextInt(200) == 0 && !this.isStrippingItems()) {
             this.idleAnimationTimeout = 20;
-            this.idleAnimationState.startIfNotRunning(this.age);
+            this.idleAnimationState.startIfStopped(this.tickCount);
         } else {
             --this.idleAnimationTimeout;
         }
@@ -444,44 +463,44 @@ public class BeaverEntity extends ParentAnimalEntity implements InventoryOwner {
         }
 
         public void tick() {
-            if (this.beaver.isTouchingWater()) {
-                this.beaver.setVelocity(this.beaver.getVelocity().add(0.0, 0.005, 0.0));
+            if (this.beaver.isInWater()) {
+                this.beaver.setDeltaMovement(this.beaver.getDeltaMovement().add(0.0, 0.005, 0.0));
 
-                if (this.state != State.MOVE_TO || this.beaver.getNavigation().isIdle()) {
-                    this.beaver.setMovementSpeed(0.0F);
+                if (this.operation != Operation.MOVE_TO || this.beaver.getNavigation().isDone()) {
+                    this.beaver.setSpeed(0.0F);
                     return;
                 }
 
-                double d = this.targetX - this.beaver.getX();
-                double e = this.targetY - this.beaver.getY();
-                double f = this.targetZ - this.beaver.getZ();
+                double d = this.wantedX - this.beaver.getX();
+                double e = this.wantedY - this.beaver.getY();
+                double f = this.wantedZ - this.beaver.getZ();
                 double g = Math.sqrt(d * d + e * e + f * f);
                 e /= g;
-                float h = (float) (MathHelper.atan2(f, d) * 57.2957763671875) - 90.0F;
-                this.beaver.setYaw(this.wrapDegrees(this.beaver.getYaw(), h, 90.0F));
-                this.beaver.bodyYaw = this.beaver.getYaw();
-                float i = (float) (this.speed * this.beaver.getAttributeValue(EntityAttributes.GENERIC_MOVEMENT_SPEED));
-                float j = MathHelper.lerp(0.125F, this.beaver.getMovementSpeed(), i);
-                this.beaver.setMovementSpeed(j);
-                this.beaver.setVelocity(this.beaver.getVelocity().add(0, this.beaver.getMovementSpeed() * e * 0.1, 0));
+                float h = (float) (Mth.atan2(f, d) * 57.2957763671875) - 90.0F;
+                this.beaver.setYRot(this.rotlerp(this.beaver.getYRot(), h, 90.0F));
+                this.beaver.yBodyRot = this.beaver.getYRot();
+                float i = (float) (this.speedModifier * this.beaver.getAttributeValue(Attributes.MOVEMENT_SPEED));
+                float j = Mth.lerp(0.125F, this.beaver.getSpeed(), i);
+                this.beaver.setSpeed(j);
+                this.beaver.setDeltaMovement(this.beaver.getDeltaMovement().add(0, this.beaver.getSpeed() * e * 0.1, 0));
             } else {
-                this.beaver.setVelocity(this.beaver.getVelocity().add(0.0, 0, 0.0));
+                this.beaver.setDeltaMovement(this.beaver.getDeltaMovement().add(0.0, 0, 0.0));
                 super.tick();
             }
         }
     }
 
-    private static class BeaverSwimNavigation extends AmphibiousSwimNavigation {
-        BeaverSwimNavigation(BeaverEntity owner, World world) {
+    private static class BeaverSwimNavigation extends AmphibiousPathNavigation {
+        BeaverSwimNavigation(BeaverEntity owner, Level world) {
             super(owner, world);
         }
 
-        public boolean isValidPosition(BlockPos pos) {
-            if (this.entity instanceof BeaverEntity) {
-                return this.world.getBlockState(pos).isOf(Blocks.WATER) || (this.world.getBlockState(pos).isReplaceable() && this.world.getBlockState(pos.down()).isSolidBlock(this.world, pos.down()));
+        public boolean isStableDestination(BlockPos pos) {
+            if (this.mob instanceof BeaverEntity) {
+                return this.level.getBlockState(pos).is(Blocks.WATER) || (this.level.getBlockState(pos).canBeReplaced() && this.level.getBlockState(pos.below()).isRedstoneConductor(this.level, pos.below()));
             }
 
-            return !this.world.getBlockState(pos.down()).isAir();
+            return !this.level.getBlockState(pos.below()).isAir();
         }
     }
 }

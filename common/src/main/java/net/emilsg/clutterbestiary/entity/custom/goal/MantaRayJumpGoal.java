@@ -1,16 +1,16 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.MantaRayEntity;
-import net.minecraft.entity.ai.goal.DiveJumpingGoal;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.registry.tag.FluidTags;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ai.goal.JumpGoal;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.Vec3;
 
-public class MantaRayJumpGoal extends DiveJumpingGoal {
+public class MantaRayJumpGoal extends JumpGoal {
     private static final int[] OFFSET_MULTIPLIERS = new int[]{0, 1, 4, 5, 6, 7};
     private final MantaRayEntity mantaRay;
     private final int chance;
@@ -18,17 +18,17 @@ public class MantaRayJumpGoal extends DiveJumpingGoal {
 
     public MantaRayJumpGoal(MantaRayEntity mantaRay, int chance) {
         this.mantaRay = mantaRay;
-        this.chance = toGoalTicks(chance);
+        this.chance = reducedTickDelay(chance);
     }
 
-    public boolean canStart() {
+    public boolean canUse() {
         if (this.mantaRay.getRandom().nextInt(this.chance) != 0) {
             return false;
         } else {
-            Direction direction = this.mantaRay.getMovementDirection();
-            int i = direction.getOffsetX();
-            int j = direction.getOffsetZ();
-            BlockPos blockPos = this.mantaRay.getBlockPos();
+            Direction direction = this.mantaRay.getMotionDirection();
+            int i = direction.getStepX();
+            int j = direction.getStepZ();
+            BlockPos blockPos = this.mantaRay.blockPosition();
             int[] var5 = OFFSET_MULTIPLIERS;
             int var6 = var5.length;
 
@@ -43,54 +43,54 @@ public class MantaRayJumpGoal extends DiveJumpingGoal {
         }
     }
 
-    public boolean canStop() {
+    public boolean isInterruptable() {
         return false;
     }
 
-    public boolean shouldContinue() {
-        double d = this.mantaRay.getVelocity().y;
-        return (!(d * d < 0.029999999329447746) || this.mantaRay.getPitch() == 0.0F || !(Math.abs(this.mantaRay.getPitch()) < 10.0F) || !this.mantaRay.isTouchingWater()) && !this.mantaRay.isOnGround();
+    public boolean canContinueToUse() {
+        double d = this.mantaRay.getDeltaMovement().y;
+        return (!(d * d < 0.029999999329447746) || this.mantaRay.getXRot() == 0.0F || !(Math.abs(this.mantaRay.getXRot()) < 10.0F) || !this.mantaRay.isInWater()) && !this.mantaRay.onGround();
     }
 
     public void start() {
         this.inWater = false;
-        Direction direction = this.mantaRay.getMovementDirection();
-        this.mantaRay.setVelocity(this.mantaRay.getVelocity().add((double) direction.getOffsetX() * 0.6, 0.7, (double) direction.getOffsetZ() * 0.6));
+        Direction direction = this.mantaRay.getMotionDirection();
+        this.mantaRay.setDeltaMovement(this.mantaRay.getDeltaMovement().add((double) direction.getStepX() * 0.6, 0.7, (double) direction.getStepZ() * 0.6));
         this.mantaRay.getNavigation().stop();
     }
 
     public void stop() {
-        this.mantaRay.setPitch(0.0F);
+        this.mantaRay.setXRot(0.0F);
     }
 
     public void tick() {
         boolean bl = this.inWater;
         if (!bl) {
-            FluidState fluidState = this.mantaRay.getWorld().getFluidState(this.mantaRay.getBlockPos());
-            this.inWater = fluidState.isIn(FluidTags.WATER);
+            FluidState fluidState = this.mantaRay.level().getFluidState(this.mantaRay.blockPosition());
+            this.inWater = fluidState.is(FluidTags.WATER);
         }
 
         if (this.inWater && !bl) {
-            this.mantaRay.playSound(SoundEvents.ENTITY_DOLPHIN_JUMP, 1.0F, 1.0F);
+            this.mantaRay.playSound(SoundEvents.DOLPHIN_JUMP, 1.0F, 1.0F);
         }
 
-        Vec3d vec3d = this.mantaRay.getVelocity();
-        if (vec3d.y * vec3d.y < 0.029999999329447746 && this.mantaRay.getPitch() != 0.0F) {
-            this.mantaRay.setPitch(MathHelper.lerpAngleDegrees(0.2F, this.mantaRay.getPitch(), 0.0F));
+        Vec3 vec3d = this.mantaRay.getDeltaMovement();
+        if (vec3d.y * vec3d.y < 0.029999999329447746 && this.mantaRay.getXRot() != 0.0F) {
+            this.mantaRay.setXRot(Mth.rotLerp(0.2F, this.mantaRay.getXRot(), 0.0F));
         } else if (vec3d.length() > 9.999999747378752E-6) {
-            double d = vec3d.horizontalLength();
+            double d = vec3d.horizontalDistance();
             double e = Math.atan2(-vec3d.y, d) * 57.2957763671875;
-            this.mantaRay.setPitch((float) e);
+            this.mantaRay.setXRot((float) e);
         }
 
     }
 
     private boolean isAirAbove(BlockPos pos, int offsetX, int offsetZ, int multiplier) {
-        return this.mantaRay.getWorld().getBlockState(pos.add(offsetX * multiplier, 1, offsetZ * multiplier)).isAir() && this.mantaRay.getWorld().getBlockState(pos.add(offsetX * multiplier, 2, offsetZ * multiplier)).isAir();
+        return this.mantaRay.level().getBlockState(pos.offset(offsetX * multiplier, 1, offsetZ * multiplier)).isAir() && this.mantaRay.level().getBlockState(pos.offset(offsetX * multiplier, 2, offsetZ * multiplier)).isAir();
     }
 
     private boolean isWater(BlockPos pos, int offsetX, int offsetZ, int multiplier) {
-        BlockPos blockPos = pos.add(offsetX * multiplier, 0, offsetZ * multiplier);
-        return this.mantaRay.getWorld().getFluidState(blockPos).isIn(FluidTags.WATER) && !this.mantaRay.getWorld().getBlockState(blockPos).blocksMovement();
+        BlockPos blockPos = pos.offset(offsetX * multiplier, 0, offsetZ * multiplier);
+        return this.mantaRay.level().getFluidState(blockPos).is(FluidTags.WATER) && !this.mantaRay.level().getBlockState(blockPos).isSolid();
     }
 }

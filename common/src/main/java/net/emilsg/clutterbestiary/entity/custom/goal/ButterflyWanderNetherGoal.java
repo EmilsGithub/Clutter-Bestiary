@@ -1,11 +1,10 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.ButterflyEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.dimension.DimensionTypes;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
+import net.minecraft.world.level.pathfinder.Path;
 import java.util.EnumSet;
 
 public class ButterflyWanderNetherGoal extends Goal {
@@ -14,41 +13,41 @@ public class ButterflyWanderNetherGoal extends Goal {
 
     public ButterflyWanderNetherGoal(ButterflyEntity butterfly) {
         this.butterfly = butterfly;
-        this.setControls(EnumSet.of(Control.MOVE));
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override
-    public boolean canStart() {
-        return !this.butterfly.isInFluid()
-                && !this.butterfly.getWorld().getDimensionEntry().matchesKey(DimensionTypes.OVERWORLD)
-                && this.butterfly.getNavigation().isIdle() && this.butterfly.getRandom().nextInt(3) == 0;
+    public boolean canUse() {
+        return !this.butterfly.isInLiquid()
+                && !this.butterfly.level().dimensionTypeRegistration().is(BuiltinDimensionTypes.OVERWORLD)
+                && this.butterfly.getNavigation().isDone() && this.butterfly.getRandom().nextInt(3) == 0;
     }
 
     @Override
-    public boolean shouldContinue() {
-        return !this.butterfly.isInFluid() && this.butterfly.getNavigation().isFollowingPath();
+    public boolean canContinueToUse() {
+        return !this.butterfly.isInLiquid() && this.butterfly.getNavigation().isInProgress();
     }
 
     @Override
     public void start() {
-        BlockPos origin = this.butterfly.getBlockPos();
+        BlockPos origin = this.butterfly.blockPosition();
         for (int attempt = 0; attempt < TARGET_ATTEMPTS; attempt++) {
             BlockPos targetPos = this.getRandomPos(origin);
             if (!this.butterfly.isSafeFlightTarget(targetPos)) continue;
 
-            Path path = this.butterfly.getNavigation().findPathTo(targetPos, 1);
+            Path path = this.butterfly.getNavigation().createPath(targetPos, 1);
             if (path != null) {
-                this.butterfly.getNavigation().startMovingAlong(path, 1.0);
+                this.butterfly.getNavigation().moveTo(path, 1.0);
                 return;
             }
         }
     }
 
     private BlockPos getRandomPos(BlockPos center) {
-        return center.add(
-                this.butterfly.getRandom().nextBetween(-24, 24),
-                this.butterfly.getRandom().nextBetween(-8, 8),
-                this.butterfly.getRandom().nextBetween(-24, 24)
+        return center.offset(
+                this.butterfly.getRandom().nextIntBetweenInclusive(-24, 24),
+                this.butterfly.getRandom().nextIntBetweenInclusive(-8, 8),
+                this.butterfly.getRandom().nextIntBetweenInclusive(-24, 24)
         );
     }
 }

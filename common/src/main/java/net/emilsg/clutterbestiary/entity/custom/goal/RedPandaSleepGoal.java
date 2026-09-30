@@ -1,8 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.RedPandaEntity;
-import net.minecraft.entity.ai.goal.Goal;
-
+import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.EnumSet;
 
 public class RedPandaSleepGoal extends Goal {
@@ -10,12 +9,12 @@ public class RedPandaSleepGoal extends Goal {
 
     public RedPandaSleepGoal(RedPandaEntity redPandaEntity) {
         this.redPandaEntity = redPandaEntity;
-        this.setControls(EnumSet.of(Control.JUMP, Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Flag.JUMP, Flag.MOVE, Flag.LOOK));
     }
 
     @Override
-    public boolean canStart() {
-        if (this.redPandaEntity.isInsideWaterOrBubbleColumn() || !this.redPandaEntity.isOnGround()) {
+    public boolean canUse() {
+        if (this.redPandaEntity.isInWater() || !this.redPandaEntity.onGround()) {
             return false;
         }
 
@@ -23,7 +22,7 @@ public class RedPandaSleepGoal extends Goal {
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         return this.redPandaEntity.isSleeping();
     }
 

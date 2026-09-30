@@ -3,23 +3,22 @@ package net.emilsg.clutterbestiary.entity.variants;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.resources.Identifier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 public enum SeahorseVariant implements BestiaryBasicVariant {
-    YELLOW("yellow", Formatting.YELLOW),
-    LIGHT_BLUE("light_blue", Formatting.AQUA),
-    RED("red", Formatting.RED),
-    PURPLE("purple", Formatting.DARK_PURPLE);
+    YELLOW("yellow", ChatFormatting.YELLOW),
+    LIGHT_BLUE("light_blue", ChatFormatting.AQUA),
+    RED("red", ChatFormatting.RED),
+    PURPLE("purple", ChatFormatting.DARK_PURPLE);
 
     private static final Map<Identifier, SeahorseVariant> BY_ID =
             Arrays.stream(values()).collect(java.util.stream.Collectors.toMap(
-                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName()),
+                    v -> Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, v.getName()),
                     v -> v
             ));
     public static final Codec<SeahorseVariant> CODEC =
@@ -30,12 +29,12 @@ public enum SeahorseVariant implements BestiaryBasicVariant {
                                 ? DataResult.success(v)
                                 : DataResult.error(() -> "Unknown seahorse variant: " + id);
                     },
-                    v -> Identifier.of(ClutterBestiary.MOD_ID, v.getName())
+                    v -> Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, v.getName())
             );
     private final String name;
-    private final Formatting formatting;
+    private final ChatFormatting formatting;
 
-    SeahorseVariant(String name, Formatting formatting) {
+    SeahorseVariant(String name, ChatFormatting formatting) {
         this.name = name;
         this.formatting = formatting;
     }
@@ -54,7 +53,7 @@ public enum SeahorseVariant implements BestiaryBasicVariant {
     }
 
     @Override
-    public Formatting getFormatting() {
+    public ChatFormatting getFormatting() {
         return this.formatting;
     }
 
@@ -63,6 +62,6 @@ public enum SeahorseVariant implements BestiaryBasicVariant {
     }
 
     public Identifier getTextureLocation() {
-        return Identifier.of(ClutterBestiary.MOD_ID, "textures/entity/seahorse/" + getName() + "_seahorse.png");
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/seahorse/" + getName() + "_seahorse.png");
     }
 }

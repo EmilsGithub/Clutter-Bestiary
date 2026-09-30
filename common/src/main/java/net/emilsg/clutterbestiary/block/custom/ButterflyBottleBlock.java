@@ -1,87 +1,87 @@
 package net.emilsg.clutterbestiary.block.custom;
 
-import com.mojang.serialization.MapCodec;
 import net.emilsg.clutterbestiary.block.entity.ButterflyBottleBlockEntity;
 import net.emilsg.clutterbestiary.item.ModItems;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.DirectionProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-public class ButterflyBottleBlock extends HorizontalFacingBlock implements BlockEntityProvider {
-    public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
+public class ButterflyBottleBlock extends HorizontalDirectionalBlock implements EntityBlock {
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
-    public final VoxelShape SHAPE = VoxelShapes.union(
-            Block.createCuboidShape(2.5, 0, 2.5, 13.5, 11.5, 13.5),
-            Block.createCuboidShape(4.5, 11, 4.5, 11.5, 12, 11.5),
-            Block.createCuboidShape(3.5, 11.5, 3.5, 12.5, 15.5, 12.5),
-            Block.createCuboidShape(4.5, 15, 4.5, 11.5, 16, 11.5)
+    public final VoxelShape SHAPE = Shapes.or(
+            Block.box(2.5, 0, 2.5, 13.5, 11.5, 13.5),
+            Block.box(4.5, 11, 4.5, 11.5, 12, 11.5),
+            Block.box(3.5, 11.5, 3.5, 12.5, 15.5, 12.5),
+            Block.box(4.5, 15, 4.5, 11.5, 16, 11.5)
     );
 
-    public ButterflyBottleBlock(Settings settings) {
-        super(settings.nonOpaque());
-        this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH));
+    public ButterflyBottleBlock(Properties settings) {
+        super(settings.noOcclusion());
+        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     @Override
-    public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity be, ItemStack tool) {
-        super.afterBreak(world, player, pos, state, be, tool);
+    public void playerDestroy(ServerLevel world, ServerPlayer player, BlockPos pos, BlockState state, @Nullable BlockEntity be, ItemStack tool) {
+        super.playerDestroy(world, player, pos, state, be, tool);
 
-        if (!world.isClient && be instanceof ButterflyBottleBlockEntity bottleBe) {
+        if (!world.isClientSide() && be instanceof ButterflyBottleBlockEntity bottleBe) {
             ItemStack stack = new ItemStack(ModItems.BUTTERFLY_IN_A_BOTTLE.get());
 
-            NbtCompound data = bottleBe.getButterflyData();
+            CompoundTag data = bottleBe.getButterflyData();
             if (data != null) {
-                NbtComponent.set(DataComponentTypes.BUCKET_ENTITY_DATA, stack, data);
+                CustomData.set(DataComponents.BUCKET_ENTITY_DATA, stack, data);
             }
-            stack.applyComponentsFrom(bottleBe.createComponentMap());
+            stack.applyComponents(bottleBe.collectComponents());
 
-            dropStack(world, pos, stack);
+            popResource(world, pos, stack);
         }
     }
 
     @Override
-    public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new ButterflyBottleBlockEntity(pos, state);
     }
 
     @Override
-    public @Nullable BlockState getPlacementState(ItemPlacementContext ctx) {
-        return this.getDefaultState().with(FACING, ctx.getHorizontalPlayerFacing());
+    public @Nullable BlockState getStateForPlacement(BlockPlaceContext ctx) {
+        return this.defaultBlockState().setValue(FACING, ctx.getHorizontalDirection());
     }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
     }
 
     @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        super.appendProperties(builder);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(FACING);
     }
 
     @Override
-    protected MapCodec<? extends HorizontalFacingBlock> getCodec() {
-        return createCodec(ButterflyBottleBlock::new);
-    }
-
-    @Override
-    protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+    protected VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 }

@@ -1,8 +1,7 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.RedPandaEntity;
-import net.minecraft.entity.ai.goal.Goal;
-
+import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -14,19 +13,19 @@ public class RedPandaChallengeOtherGoal extends Goal {
     public RedPandaChallengeOtherGoal(RedPandaEntity goalOwner, float chancePerTick) {
         this.goalOwner = goalOwner;
         this.chancePerTick = chancePerTick;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK, Control.JUMP));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         if (this.goalOwner.isBaby()) return false;
         if (this.goalOwner.getSleepState()) return false;
         if (this.goalOwner.getPartnerID() != -1) return false;
-        if (this.goalOwner.getWorld().random.nextFloat() > chancePerTick) return false;
+        if (this.goalOwner.level().getRandom().nextFloat() > chancePerTick) return false;
 
-        List<RedPandaEntity> candidates = this.goalOwner.getWorld().getEntitiesByClass(
+        List<RedPandaEntity> candidates = this.goalOwner.level().getEntitiesOfClass(
                 RedPandaEntity.class,
-                this.goalOwner.getBoundingBox().expand(3.0D),
+                this.goalOwner.getBoundingBox().inflate(3.0D),
                 p -> p.canBeChallenged() && p != this.goalOwner
         );
 

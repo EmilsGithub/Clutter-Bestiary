@@ -1,31 +1,26 @@
 package net.emilsg.clutterbestiary.entity.client.render;
 
+import net.emilsg.clutterbestiary.entity.client.render.parent.BestiaryMobRenderer;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.emilsg.clutterbestiary.entity.client.layer.ModModelLayers;
 import net.emilsg.clutterbestiary.entity.client.model.PotionWaspModel;
 import net.emilsg.clutterbestiary.entity.client.render.feature.PotionWaspOuterFeatureRenderer;
 import net.emilsg.clutterbestiary.entity.custom.PotionWaspEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.MobEntityRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.Identifier;
 
-public class PotionWaspRenderer extends MobEntityRenderer<PotionWaspEntity, PotionWaspModel<PotionWaspEntity>> {
+public class PotionWaspRenderer extends BestiaryMobRenderer<PotionWaspEntity, PotionWaspModel<PotionWaspEntity>> {
 
-    public PotionWaspRenderer(EntityRendererFactory.Context ctx) {
-        super(ctx, new PotionWaspModel<>(ctx.getPart(ModModelLayers.POTION_WASP)), 0.4f);
-        this.addFeature(new PotionWaspOuterFeatureRenderer(this));
+    public PotionWaspRenderer(EntityRendererProvider.Context ctx) {
+        super(ctx, new PotionWaspModel<>(ctx.bakeLayer(ModModelLayers.POTION_WASP)), 0.4f);
+        // The outer sac is drawn translucent by its own layer.
+        this.model.setOuterHidden(true);
+        this.addLayer(new PotionWaspOuterFeatureRenderer(this, ctx.getModelSet()));
     }
 
     @Override
-    public Identifier getTexture(PotionWaspEntity potionWasp) {
+    public Identifier getTextureLocation(PotionWaspEntity potionWasp) {
         return potionWasp.getVariant().getTextureLocation();
     }
 
-    @Override
-    public void render(PotionWaspEntity entity, float entityYaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
-        this.model.setOuterHidden(true);
-        super.render(entity, entityYaw, tickDelta, matrices, vertexConsumers, light);
-        this.model.setOuterHidden(false);
-    }
 }

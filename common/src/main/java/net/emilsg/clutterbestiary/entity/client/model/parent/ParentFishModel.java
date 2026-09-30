@@ -1,18 +1,16 @@
 package net.emilsg.clutterbestiary.entity.client.model.parent;
 
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.client.render.entity.model.SinglePartEntityModel;
-import net.minecraft.entity.passive.FishEntity;
-import org.joml.Vector3f;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.world.entity.animal.fish.AbstractFish;
 
-public abstract class ParentFishModel<T extends FishEntity> extends SinglePartEntityModel<T> {
+public abstract class ParentFishModel<T extends AbstractFish> extends BestiaryEntityModel<T> {
 
-    public Vector3f createVec3f(float scale) {
-        return new Vector3f(scale, scale, scale);
+    protected ParentFishModel(ModelPart root) {
+        super(root);
     }
 
     @Override
-    public abstract void setAngles(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch);
+    public abstract void setupAnim(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch);
 
     protected abstract ModelPart getHeadPart();
 }

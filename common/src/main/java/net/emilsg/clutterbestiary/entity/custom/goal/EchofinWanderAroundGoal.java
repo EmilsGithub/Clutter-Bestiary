@@ -1,11 +1,10 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.EchofinEntity;
-import net.minecraft.entity.ai.AboveGroundTargeting;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.util.HoverRandomPos;
+import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
 public class EchofinWanderAroundGoal extends Goal {
@@ -14,44 +13,44 @@ public class EchofinWanderAroundGoal extends Goal {
 
     public EchofinWanderAroundGoal(EchofinEntity echofinEntity) {
         this.echofinEntity = echofinEntity;
-        this.setControls(EnumSet.of(Control.MOVE));
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
-    public boolean canStart() {
-        return echofinEntity.getNavigation().isIdle();
+    public boolean canUse() {
+        return echofinEntity.getNavigation().isDone();
     }
 
-    public boolean shouldContinue() {
-        return echofinEntity.getNavigation().isFollowingPath();
+    public boolean canContinueToUse() {
+        return echofinEntity.getNavigation().isInProgress();
     }
 
     public void start() {
-        Vec3d vec3d = this.getRandomLocation();
+        Vec3 vec3d = this.getRandomLocation();
         if (vec3d != null) {
-            echofinEntity.getNavigation().startMovingAlong(echofinEntity.getNavigation().findPathTo(BlockPos.ofFloored(vec3d), 1), 1.0);
+            echofinEntity.getNavigation().moveTo(echofinEntity.getNavigation().createPath(BlockPos.containing(vec3d), 1), 1.0);
         }
     }
 
-    private Vec3d getRandomLocation() {
+    private Vec3 getRandomLocation() {
         if (this.homePos == null) {
             this.homePos = echofinEntity.getHomePos();
         }
 
-        Vec3d vec3d2 = echofinEntity.getRotationVec(0.0F);
-        Vec3d vec3d3 = AboveGroundTargeting.find(echofinEntity, 24, 7, vec3d2.x, vec3d2.z, 1.5707964F, 3, 2);
+        Vec3 vec3d2 = echofinEntity.getViewVector(0.0F);
+        Vec3 vec3d3 = HoverRandomPos.getPos(echofinEntity, 24, 7, vec3d2.x, vec3d2.z, 1.5707964F, 3, 2);
 
-        if (vec3d3 != null && echofinEntity.getBlockPos().getSquaredDistance(Vec3d.ofCenter(homePos)) > 2 * 2) {
+        if (vec3d3 != null && echofinEntity.blockPosition().distToCenterSqr(Vec3.atCenterOf(homePos)) > 2 * 2) {
             return vec3d3;
         }
 
-        if (echofinEntity.getWorld().isNight() && echofinEntity.getBlockPos().getSquaredDistance(Vec3d.ofCenter(homePos)) > 8 * 8) {
-            return Vec3d.ofCenter(homePos);
+        if (echofinEntity.level().isDarkOutside() && echofinEntity.blockPosition().distToCenterSqr(Vec3.atCenterOf(homePos)) > 8 * 8) {
+            return Vec3.atCenterOf(homePos);
         }
 
-        BlockPos blockpos = homePos.add(-2 + echofinEntity.getRandom().nextInt(5), -1 + echofinEntity.getRandom().nextInt(3), -2 + echofinEntity.getRandom().nextInt(5));
+        BlockPos blockpos = homePos.offset(-2 + echofinEntity.getRandom().nextInt(5), -1 + echofinEntity.getRandom().nextInt(3), -2 + echofinEntity.getRandom().nextInt(5));
 
-        if (!echofinEntity.getWorld().getBlockState(blockpos).isOpaque()) {
-            return Vec3d.ofCenter(blockpos);
+        if (!echofinEntity.level().getBlockState(blockpos).canOcclude()) {
+            return Vec3.atCenterOf(blockpos);
         }
 
         return null;

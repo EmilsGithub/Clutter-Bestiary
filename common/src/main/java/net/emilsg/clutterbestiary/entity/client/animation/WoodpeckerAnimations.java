@@ -1,145 +1,145 @@
 package net.emilsg.clutterbestiary.entity.client.animation;
 
-import net.minecraft.client.render.entity.animation.Animation;
-import net.minecraft.client.render.entity.animation.AnimationHelper;
-import net.minecraft.client.render.entity.animation.Keyframe;
-import net.minecraft.client.render.entity.animation.Transformation;
+import net.minecraft.client.animation.AnimationChannel;
+import net.minecraft.client.animation.AnimationDefinition;
+import net.minecraft.client.animation.Keyframe;
+import net.minecraft.client.animation.KeyframeAnimations;
 
 public class WoodpeckerAnimations {
-	public static final Animation WOODPECKER_FLY = Animation.Builder.create(0.5F).looping()
-			.addBoneAnimation("body", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(45.0F, 0.0F, 0.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.25F, AnimationHelper.createRotationalVector(50.0F, 0.0F, 0.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.5F, AnimationHelper.createRotationalVector(45.0F, 0.0F, 0.0F), Transformation.Interpolations.CUBIC)
+	public static final AnimationDefinition WOODPECKER_FLY = AnimationDefinition.Builder.withLength(0.5F).looping()
+			.addAnimation("body", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(45.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.25F, KeyframeAnimations.degreeVec(50.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.5F, KeyframeAnimations.degreeVec(45.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.CATMULLROM)
 			))
-			.addBoneAnimation("leftWing", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(0.0F, -20.0F, -30.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.1667F, AnimationHelper.createRotationalVector(0.0F, -20.0F, -120.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.3333F, AnimationHelper.createRotationalVector(0.0F, -10.0F, -40.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.5F, AnimationHelper.createRotationalVector(0.0F, -20.0F, -30.0F), Transformation.Interpolations.CUBIC)
+			.addAnimation("leftWing", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(0.0F, -20.0F, -30.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.1667F, KeyframeAnimations.degreeVec(0.0F, -20.0F, -120.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.3333F, KeyframeAnimations.degreeVec(0.0F, -10.0F, -40.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.5F, KeyframeAnimations.degreeVec(0.0F, -20.0F, -30.0F), AnimationChannel.Interpolations.CATMULLROM)
 			))
-			.addBoneAnimation("head", new Transformation(Transformation.Targets.TRANSLATE,
-					new Keyframe(0.0F, AnimationHelper.createTranslationalVector(0.0F, 0.0F, 0.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.25F, AnimationHelper.createTranslationalVector(0.0F, 0.1F, 0.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.5F, AnimationHelper.createTranslationalVector(0.0F, 0.0F, 0.0F), Transformation.Interpolations.CUBIC)
+			.addAnimation("head", new AnimationChannel(AnimationChannel.Targets.POSITION,
+					new Keyframe(0.0F, KeyframeAnimations.posVec(0.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.25F, KeyframeAnimations.posVec(0.0F, 0.1F, 0.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.5F, KeyframeAnimations.posVec(0.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.CATMULLROM)
 			))
-			.addBoneAnimation("tail", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(-25.0F, 0.0F, 0.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.25F, AnimationHelper.createRotationalVector(-22.5F, 0.0F, 0.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.5F, AnimationHelper.createRotationalVector(-25.0F, 0.0F, 0.0F), Transformation.Interpolations.CUBIC)
+			.addAnimation("tail", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(-25.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.25F, KeyframeAnimations.degreeVec(-22.5F, 0.0F, 0.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.5F, KeyframeAnimations.degreeVec(-25.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.CATMULLROM)
 			))
-			.addBoneAnimation("leftLeg", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(42.5F, 0.0F, 0.0F), Transformation.Interpolations.CUBIC)
+			.addAnimation("leftLeg", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(42.5F, 0.0F, 0.0F), AnimationChannel.Interpolations.CATMULLROM)
 			))
-			.addBoneAnimation("rightLeg", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(42.5F, 0.0F, 0.0F), Transformation.Interpolations.CUBIC)
+			.addAnimation("rightLeg", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(42.5F, 0.0F, 0.0F), AnimationChannel.Interpolations.CATMULLROM)
 			))
-			.addBoneAnimation("rightWing", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(0.0F, 20.0F, 30.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.1667F, AnimationHelper.createRotationalVector(0.0F, 20.0F, 120.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.3333F, AnimationHelper.createRotationalVector(0.0F, 10.0F, 40.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.5F, AnimationHelper.createRotationalVector(0.0F, 20.0F, 30.0F), Transformation.Interpolations.CUBIC)
+			.addAnimation("rightWing", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(0.0F, 20.0F, 30.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.1667F, KeyframeAnimations.degreeVec(0.0F, 20.0F, 120.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.3333F, KeyframeAnimations.degreeVec(0.0F, 10.0F, 40.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.5F, KeyframeAnimations.degreeVec(0.0F, 20.0F, 30.0F), AnimationChannel.Interpolations.CATMULLROM)
 			))
-			.addBoneAnimation("all", new Transformation(Transformation.Targets.TRANSLATE,
-					new Keyframe(0.0F, AnimationHelper.createTranslationalVector(0.0F, -2.0F, 0.0F), Transformation.Interpolations.LINEAR)
-			))
-			.build();
-
-	public static final Animation WOODPECKER_ATTACHED = Animation.Builder.create(1.0F).looping()
-			.addBoneAnimation("body", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(57.5F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
-			))
-			.addBoneAnimation("leftWing", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(0.6276F, -19.6835F, -26.1165F), Transformation.Interpolations.LINEAR)
-			))
-			.addBoneAnimation("head", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(55.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
-			))
-			.addBoneAnimation("tail", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(-42.5F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
-			))
-			.addBoneAnimation("leftLeg", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(-57.5F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
-			))
-			.addBoneAnimation("rightLeg", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(-57.5F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
-			))
-			.addBoneAnimation("rightWing", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(0.6276F, 19.6835F, 26.1165F), Transformation.Interpolations.LINEAR)
-			))
-			.addBoneAnimation("all", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(-90.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
-			))
-			.addBoneAnimation("all", new Transformation(Transformation.Targets.TRANSLATE,
-					new Keyframe(0.0F, AnimationHelper.createTranslationalVector(0.0F, 0.0F, -2.0F), Transformation.Interpolations.LINEAR)
+			.addAnimation("all", new AnimationChannel(AnimationChannel.Targets.POSITION,
+					new Keyframe(0.0F, KeyframeAnimations.posVec(0.0F, -2.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
 			))
 			.build();
 
-	public static final Animation WOODPECKER_PECKING = Animation.Builder.create(0.5F).looping()
-			.addBoneAnimation("body", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(57.5F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
+	public static final AnimationDefinition WOODPECKER_ATTACHED = AnimationDefinition.Builder.withLength(1.0F).looping()
+			.addAnimation("body", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(57.5F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
 			))
-			.addBoneAnimation("leftWing", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(0.6276F, -19.6835F, -26.1165F), Transformation.Interpolations.LINEAR)
+			.addAnimation("leftWing", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(0.6276F, -19.6835F, -26.1165F), AnimationChannel.Interpolations.LINEAR)
 			))
-			.addBoneAnimation("head", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(55.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR),
-					new Keyframe(0.125F, AnimationHelper.createRotationalVector(85.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR),
-					new Keyframe(0.25F, AnimationHelper.createRotationalVector(55.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR),
-					new Keyframe(0.375F, AnimationHelper.createRotationalVector(85.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR),
-					new Keyframe(0.5F, AnimationHelper.createRotationalVector(55.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
+			.addAnimation("head", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(55.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
 			))
-			.addBoneAnimation("tail", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(-42.5F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
+			.addAnimation("tail", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(-42.5F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
 			))
-			.addBoneAnimation("leftLeg", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(-57.5F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
+			.addAnimation("leftLeg", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(-57.5F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
 			))
-			.addBoneAnimation("rightLeg", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(-57.5F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
+			.addAnimation("rightLeg", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(-57.5F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
 			))
-			.addBoneAnimation("rightWing", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(0.6276F, 19.6835F, 26.1165F), Transformation.Interpolations.LINEAR)
+			.addAnimation("rightWing", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(0.6276F, 19.6835F, 26.1165F), AnimationChannel.Interpolations.LINEAR)
 			))
-			.addBoneAnimation("all", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(-90.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
+			.addAnimation("all", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(-90.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
 			))
-			.addBoneAnimation("all", new Transformation(Transformation.Targets.TRANSLATE,
-					new Keyframe(0.0F, AnimationHelper.createTranslationalVector(0.0F, 0.0F, -2.0F), Transformation.Interpolations.LINEAR)
+			.addAnimation("all", new AnimationChannel(AnimationChannel.Targets.POSITION,
+					new Keyframe(0.0F, KeyframeAnimations.posVec(0.0F, 0.0F, -2.0F), AnimationChannel.Interpolations.LINEAR)
 			))
 			.build();
 
-	public static final Animation WOODPECKER_GROUND_IDLE = Animation.Builder.create(0.0F).looping()
+	public static final AnimationDefinition WOODPECKER_PECKING = AnimationDefinition.Builder.withLength(0.5F).looping()
+			.addAnimation("body", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(57.5F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
+			))
+			.addAnimation("leftWing", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(0.6276F, -19.6835F, -26.1165F), AnimationChannel.Interpolations.LINEAR)
+			))
+			.addAnimation("head", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(55.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR),
+					new Keyframe(0.125F, KeyframeAnimations.degreeVec(85.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR),
+					new Keyframe(0.25F, KeyframeAnimations.degreeVec(55.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR),
+					new Keyframe(0.375F, KeyframeAnimations.degreeVec(85.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR),
+					new Keyframe(0.5F, KeyframeAnimations.degreeVec(55.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
+			))
+			.addAnimation("tail", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(-42.5F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
+			))
+			.addAnimation("leftLeg", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(-57.5F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
+			))
+			.addAnimation("rightLeg", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(-57.5F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
+			))
+			.addAnimation("rightWing", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(0.6276F, 19.6835F, 26.1165F), AnimationChannel.Interpolations.LINEAR)
+			))
+			.addAnimation("all", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(-90.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
+			))
+			.addAnimation("all", new AnimationChannel(AnimationChannel.Targets.POSITION,
+					new Keyframe(0.0F, KeyframeAnimations.posVec(0.0F, 0.0F, -2.0F), AnimationChannel.Interpolations.LINEAR)
+			))
+			.build();
+
+	public static final AnimationDefinition WOODPECKER_GROUND_IDLE = AnimationDefinition.Builder.withLength(0.0F).looping()
 
 			.build();
 
-	public static final Animation WOODPECKER_HOVERING = Animation.Builder.create(0.5F).looping()
-			.addBoneAnimation("leftWing", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(0.0F, -20.0F, -30.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.1667F, AnimationHelper.createRotationalVector(0.0F, -20.0F, -90.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.3333F, AnimationHelper.createRotationalVector(0.0F, -10.0F, -40.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.5F, AnimationHelper.createRotationalVector(0.0F, -20.0F, -30.0F), Transformation.Interpolations.CUBIC)
+	public static final AnimationDefinition WOODPECKER_HOVERING = AnimationDefinition.Builder.withLength(0.5F).looping()
+			.addAnimation("leftWing", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(0.0F, -20.0F, -30.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.1667F, KeyframeAnimations.degreeVec(0.0F, -20.0F, -90.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.3333F, KeyframeAnimations.degreeVec(0.0F, -10.0F, -40.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.5F, KeyframeAnimations.degreeVec(0.0F, -20.0F, -30.0F), AnimationChannel.Interpolations.CATMULLROM)
 			))
-			.addBoneAnimation("tail", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(-5.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR),
-					new Keyframe(0.25F, AnimationHelper.createRotationalVector(2.5F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR),
-					new Keyframe(0.5F, AnimationHelper.createRotationalVector(-5.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
+			.addAnimation("tail", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(-5.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR),
+					new Keyframe(0.25F, KeyframeAnimations.degreeVec(2.5F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR),
+					new Keyframe(0.5F, KeyframeAnimations.degreeVec(-5.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
 			))
-			.addBoneAnimation("leftLeg", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(55.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR),
-					new Keyframe(0.25F, AnimationHelper.createRotationalVector(45.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR),
-					new Keyframe(0.5F, AnimationHelper.createRotationalVector(55.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
+			.addAnimation("leftLeg", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(55.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR),
+					new Keyframe(0.25F, KeyframeAnimations.degreeVec(45.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR),
+					new Keyframe(0.5F, KeyframeAnimations.degreeVec(55.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
 			))
-			.addBoneAnimation("rightLeg", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(55.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR),
-					new Keyframe(0.25F, AnimationHelper.createRotationalVector(45.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR),
-					new Keyframe(0.5F, AnimationHelper.createRotationalVector(55.0F, 0.0F, 0.0F), Transformation.Interpolations.LINEAR)
+			.addAnimation("rightLeg", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(55.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR),
+					new Keyframe(0.25F, KeyframeAnimations.degreeVec(45.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR),
+					new Keyframe(0.5F, KeyframeAnimations.degreeVec(55.0F, 0.0F, 0.0F), AnimationChannel.Interpolations.LINEAR)
 			))
-			.addBoneAnimation("rightWing", new Transformation(Transformation.Targets.ROTATE,
-					new Keyframe(0.0F, AnimationHelper.createRotationalVector(0.0F, 20.0F, 30.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.1667F, AnimationHelper.createRotationalVector(0.0F, 20.0F, 90.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.3333F, AnimationHelper.createRotationalVector(0.0F, 10.0F, 40.0F), Transformation.Interpolations.CUBIC),
-					new Keyframe(0.5F, AnimationHelper.createRotationalVector(0.0F, 20.0F, 30.0F), Transformation.Interpolations.CUBIC)
+			.addAnimation("rightWing", new AnimationChannel(AnimationChannel.Targets.ROTATION,
+					new Keyframe(0.0F, KeyframeAnimations.degreeVec(0.0F, 20.0F, 30.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.1667F, KeyframeAnimations.degreeVec(0.0F, 20.0F, 90.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.3333F, KeyframeAnimations.degreeVec(0.0F, 10.0F, 40.0F), AnimationChannel.Interpolations.CATMULLROM),
+					new Keyframe(0.5F, KeyframeAnimations.degreeVec(0.0F, 20.0F, 30.0F), AnimationChannel.Interpolations.CATMULLROM)
 			))
 			.build();
 }

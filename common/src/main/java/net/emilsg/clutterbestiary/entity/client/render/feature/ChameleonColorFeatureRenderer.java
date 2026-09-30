@@ -1,48 +1,59 @@
 package net.emilsg.clutterbestiary.entity.client.render.feature;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.emilsg.clutterbestiary.entity.client.layer.ModModelLayers;
+import net.emilsg.clutterbestiary.entity.client.model.BabyChameleonModel;
 import net.emilsg.clutterbestiary.entity.client.model.ChameleonModel;
+import net.emilsg.clutterbestiary.entity.client.model.parent.ParentTameableModel;
+import net.emilsg.clutterbestiary.entity.client.render.state.ChameleonRenderState;
 import net.emilsg.clutterbestiary.entity.custom.ChameleonEntity;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.FlowerBlock;
-import net.minecraft.block.MapColor;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRendererContext;
-import net.minecraft.client.render.entity.model.EntityModelLoader;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.FlowerBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.MapColor;
 
 import java.util.Map;
 import java.util.WeakHashMap;
 
-public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEntity, ChameleonModel<ChameleonEntity>> {
-    private final ChameleonModel<ChameleonEntity> layerModel;
-    private final Map<ChameleonEntity, CachedColor> colorCache = new WeakHashMap<>();
+public class ChameleonColorFeatureRenderer extends RenderLayer<ChameleonRenderState, ParentTameableModel<ChameleonEntity>> {
+    private static final Map<ChameleonEntity, CachedColor> COLOR_CACHE = new WeakHashMap<>();
+    private final ChameleonModel<ChameleonEntity> adultLayerModel;
+    private final BabyChameleonModel<ChameleonEntity> babyLayerModel;
+    private final Identifier adultTexture;
+    private final Identifier babyTexture;
 
-    public ChameleonColorFeatureRenderer(FeatureRendererContext<ChameleonEntity, ChameleonModel<ChameleonEntity>> ctx, EntityModelLoader loader) {
+    public ChameleonColorFeatureRenderer(RenderLayerParent<ChameleonRenderState, ParentTameableModel<ChameleonEntity>> ctx, EntityModelSet loader, Identifier adultTexture, Identifier babyTexture) {
         super(ctx);
-        this.layerModel = new ChameleonModel<>(loader.getModelPart(ModModelLayers.CHAMELEON));
+        this.adultLayerModel = new ChameleonModel<>(loader.bakeLayer(ModModelLayers.CHAMELEON));
+        this.babyLayerModel = new BabyChameleonModel<>(loader.bakeLayer(ModModelLayers.BABY_CHAMELEON));
+        this.adultTexture = adultTexture;
+        this.babyTexture = babyTexture;
     }
 
-    private int getColor(ChameleonEntity chameleonEntity) {
-        if (chameleonEntity.isDead()) return 0xFF7070;
+    /**
+     * Samples the colour of the block the chameleon stands on; used while extracting the render state.
+     */
+    public static int getEnvironmentColor(ChameleonEntity chameleonEntity) {
+        if (chameleonEntity.isDeadOrDying()) return 0xFF7070;
 
-        World world = chameleonEntity.getWorld();
-        BlockPos entityPos = chameleonEntity.getBlockPos();
+        Level world = chameleonEntity.level();
+        BlockPos entityPos = chameleonEntity.blockPosition();
 
         BlockState blockState = world.getBlockState(entityPos);
         BlockPos blockColorPos = entityPos;
 
         if (blockState.isAir() || blockState.getBlock() instanceof FlowerBlock) {
-            BlockPos belowPos = entityPos.down();
+            BlockPos belowPos = entityPos.below();
             BlockState belowState = world.getBlockState(belowPos);
 
             if (belowState.isAir()) {
@@ -53,58 +64,39 @@ public class ChameleonColorFeatureRenderer extends FeatureRenderer<ChameleonEnti
             blockColorPos = belowPos;
         }
 
-        CachedColor cachedColor = this.colorCache.get(chameleonEntity);
+        CachedColor cachedColor = COLOR_CACHE.get(chameleonEntity);
         if (cachedColor != null && cachedColor.pos.equals(blockColorPos) && cachedColor.state == blockState) {
             return cachedColor.color;
         }
 
-        BlockColors blockColorProvider = MinecraftClient.getInstance().getBlockColors();
+        BlockColors blockColorProvider = Minecraft.getInstance().getBlockColors();
         int color = -1;
 
         if (blockColorProvider != null) {
-            color = blockColorProvider.getColor(blockState, world, blockColorPos, 1);
+            BlockTintSource tintSource = blockColorProvider.getTintSource(blockState, 0);
+            if (tintSource != null && world instanceof BlockAndTintGetter tintGetter) {
+                color = tintSource.colorInWorld(blockState, tintGetter, blockColorPos);
+            }
         }
 
         if (color == -1 || color == 0) {
             MapColor mapColor = blockState.getMapColor(world, blockColorPos);
-            color = (mapColor != null && mapColor.color != 0) ? mapColor.color : 0x90C47C;
+            color = (mapColor != null && mapColor.col != 0) ? mapColor.col : 0x90C47C;
         }
-        this.colorCache.put(chameleonEntity, new CachedColor(blockColorPos, blockState, color));
+        COLOR_CACHE.put(chameleonEntity, new CachedColor(blockColorPos, blockState, color));
         return color;
     }
 
     private record CachedColor(BlockPos pos, BlockState state, int color) {
     }
 
-
     @Override
-    public void render(MatrixStack matrices, VertexConsumerProvider providers, int light, ChameleonEntity entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
-        int envColor = getColor(entity);
-
-        if (envColor != entity.getTargetColor()) {
-            entity.setTargetColor(envColor);
+    public void submit(PoseStack matrices, SubmitNodeCollector submitNodeCollector, int light, ChameleonRenderState state, float yRot, float xRot) {
+        int argb = 0xFF000000 | (state.color & 0x00FFFFFF);
+        if (state.isBaby) {
+            coloredCutoutModelCopyLayerRender(this.babyLayerModel, this.babyTexture, matrices, submitNodeCollector, light, state, argb, 1);
+        } else {
+            coloredCutoutModelCopyLayerRender(this.adultLayerModel, this.adultTexture, matrices, submitNodeCollector, light, state, argb, 1);
         }
-
-        int rgb = entity.getCurrentColor();
-        int argb = 0xFF000000 | (rgb & 0x00FFFFFF);
-        Identifier texture = getTexture(entity);
-
-        if (entity.isInvisible()) {
-            var mc = MinecraftClient.getInstance();
-            if (mc.hasOutline(entity)) {
-                getContextModel().copyStateTo(layerModel);
-                layerModel.animateModel(entity, limbAngle, limbDistance, tickDelta);
-                layerModel.setAngles(entity, limbAngle, limbDistance, animationProgress, headYaw, headPitch);
-                VertexConsumer vc = providers.getBuffer(RenderLayer.getOutline(texture));
-
-                layerModel.render(matrices, vc, light, LivingEntityRenderer.getOverlay(entity, 0.0F), 0xFF000000);
-            }
-            return;
-        }
-
-        render(getContextModel(), layerModel, texture,
-                matrices, providers, light, entity,
-                limbAngle, limbDistance, animationProgress, headYaw, headPitch,
-                tickDelta, argb);
     }
 }

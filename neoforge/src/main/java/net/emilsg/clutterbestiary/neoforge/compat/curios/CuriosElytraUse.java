@@ -4,27 +4,26 @@ import dev.architectury.platform.Platform;
 import net.emilsg.clutterbestiary.ClutterBestiary;
 import net.emilsg.clutterbestiary.config.Configs;
 import net.emilsg.clutterbestiary.config.ModConfigManager;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ElytraItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.event.GameEvent;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.SlotResult;
-import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
-import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
 
 import java.util.Optional;
 
+/**
+ * Lets gliders (the vanilla Elytra and every Butterfly Elytra) work from the Curios back slot. Only reference this
+ * class after checking {@link ClutterBestiary#IS_CURIOS_LOADED}.
+ */
 public final class CuriosElytraUse {
     private static final String BACK_SLOT = "back";
     private static final String ELYTRA_SLOT_MOD_ID = "elytraslot";
 
     private CuriosElytraUse() {
-    }
-
-    public static ItemStack getEquippedElytra(LivingEntity livingEntity) {
-        return findEquippedElytra(livingEntity).map(SlotResult::stack).orElse(ItemStack.EMPTY);
     }
 
     public static ItemStack getVisibleEquippedElytra(LivingEntity livingEntity) {
@@ -34,47 +33,37 @@ public final class CuriosElytraUse {
                 .orElse(ItemStack.EMPTY);
     }
 
-    public static ItemStack getFlightElytra(LivingEntity livingEntity) {
-        if (!isFlightEnabled()) return ItemStack.EMPTY;
-        return getEquippedElytra(livingEntity);
+    /**
+     * Whether a usable glider is worn in the back slot and back-slot flight is enabled.
+     */
+    public static boolean canGlide(LivingEntity livingEntity) {
+        if (!isFlightEnabled()) return false;
+        return findEquippedElytra(livingEntity).isPresent();
     }
 
-    public static boolean tickFlight(LivingEntity livingEntity, ItemStack itemStack) {
-        if (!itemStack.canElytraFly(livingEntity)) return false;
+    /**
+     * Applies the periodic glide durability loss to the back-slot glider, mirroring vanilla's chest-slot handling.
+     */
+    public static void damageGlider(LivingEntity livingEntity) {
+        if (!(livingEntity.level() instanceof ServerLevel serverWorld)) return;
 
-        int nextFlightTick = livingEntity.getFallFlyingTicks() + 1;
-        if (livingEntity.getWorld() instanceof ServerWorld serverWorld && nextFlightTick % 10 == 0) {
-            if (nextFlightTick % 20 == 0) {
-                findEquippedElytra(livingEntity).ifPresent(result ->
-                        itemStack.hurtAndBreak(1, serverWorld, livingEntity, item -> CuriosApi.broadcastCurioBreakEvent(result.slotContext()))
-                );
-            }
-
-            livingEntity.emitGameEvent(GameEvent.ELYTRA_GLIDE);
-        }
-
-        return true;
+        findEquippedElytra(livingEntity).ifPresent(result -> {
+            SlotContext slotContext = result.slotContext();
+            ItemStack damaged = result.stack().copy();
+            damaged.hurtAndBreak(1, serverWorld, livingEntity instanceof ServerPlayer player ? player : null, item -> CuriosApi.broadcastCurioBreakEvent(slotContext));
+            CuriosApi.getCuriosInventory(livingEntity).ifPresent(inventory -> inventory.setEquippedCurio(slotContext.identifier(), slotContext.index(), damaged));
+        });
     }
 
     private static Optional<SlotResult> findEquippedElytra(LivingEntity livingEntity) {
         if (!isCompatibilityAvailable()) return Optional.empty();
 
-        Optional<ICuriosItemHandler> optionalInventory = CuriosApi.getCuriosInventory(livingEntity);
-        if (optionalInventory.isEmpty()) return Optional.empty();
+        return CuriosApi.getCuriosInventory(livingEntity)
+                .flatMap(inventory -> inventory.findFirstCurio(CuriosElytraUse::isUsableGlider, BACK_SLOT));
+    }
 
-        ICuriosItemHandler inventory = optionalInventory.get();
-        Optional<ICurioStacksHandler> optionalStacks = inventory.getStacksHandler(BACK_SLOT);
-        if (optionalStacks.isEmpty()) return Optional.empty();
-
-        ICurioStacksHandler stacks = optionalStacks.get();
-        for (int index = 0; index < stacks.getSlots(); index++) {
-            Optional<SlotResult> optionalResult = inventory.findCurio(BACK_SLOT, index);
-            if (optionalResult.isPresent() && optionalResult.get().stack().getItem() instanceof ElytraItem) {
-                return optionalResult;
-            }
-        }
-
-        return Optional.empty();
+    private static boolean isUsableGlider(ItemStack stack) {
+        return stack.has(DataComponents.GLIDER) && !stack.nextDamageWillBreak();
     }
 
     private static boolean isCompatibilityAvailable() {

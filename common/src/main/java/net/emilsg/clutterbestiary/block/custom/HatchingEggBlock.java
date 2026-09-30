@@ -1,42 +1,42 @@
 package net.emilsg.clutterbestiary.block.custom;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.IntProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
-import net.minecraft.world.event.GameEvent;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.function.Supplier;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class HatchingEggBlock extends Block {
-    public static final IntProperty HATCH = Properties.HATCH;
+    public static final IntegerProperty HATCH = BlockStateProperties.HATCH;
     private final Supplier<? extends EntityType<?>> type;
     private final float averageHatchTimeInMinutes;
     private final TagKey<Block> hatchBoostTag;
     private final double height;
     private final double width;
 
-    public HatchingEggBlock(Settings settings, Supplier<? extends EntityType<?>> type, float averageHatchTimeInMinutes, @Nullable TagKey<Block> hatchBoostTag, double height, double width) {
+    public HatchingEggBlock(Properties settings, Supplier<? extends EntityType<?>> type, float averageHatchTimeInMinutes, @Nullable TagKey<Block> hatchBoostTag, double height, double width) {
         super(settings);
-        this.setDefaultState((this.stateManager.getDefaultState()).with(HATCH, 0));
+        this.registerDefaultState((this.stateDefinition.any()).setValue(HATCH, 0));
         this.type = type;
         this.averageHatchTimeInMinutes = averageHatchTimeInMinutes;
         this.hatchBoostTag = hatchBoostTag;
@@ -45,65 +45,67 @@ public class HatchingEggBlock extends Block {
     }
 
     public int getHatchStage(BlockState state) {
-        return state.get(HATCH);
+        return state.getValue(HATCH);
     }
 
     @Override
-    public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-        if (width <= 0 || height <= 0) return VoxelShapes.fullCube();
-        return Block.createCuboidShape(8 - (width / 2), 0, 8 - (width / 2), 8 + (width / 2), height, 8 + (width / 2));
+    public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+        if (width <= 0 || height <= 0) return Shapes.block();
+        return Block.box(8 - (width / 2), 0, 8 - (width / 2), 8 + (width / 2), height, 8 + (width / 2));
     }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
-        return BlockRenderType.MODEL;
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
     }
 
     @Override
-    public boolean hasRandomTicks(BlockState state) {
+    public boolean isRandomlyTicking(BlockState state) {
         return true;
     }
 
-    public boolean isAboveHatchBooster(BlockView world, BlockPos pos) {
+    public boolean isAboveHatchBooster(BlockGetter world, BlockPos pos) {
         if (hatchBoostTag == null) return false;
-        return world.getBlockState(pos.down()).isIn(hatchBoostTag);
+        return world.getBlockState(pos.below()).is(hatchBoostTag);
     }
 
-    public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
+    @Override
+    protected void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean notify) {
         boolean aboveHatchBooster = isAboveHatchBooster(world, pos);
-        if (!world.isClient() && aboveHatchBooster) {
-            world.syncWorldEvent(3009, pos, 0);
+        if (!world.isClientSide() && aboveHatchBooster) {
+            world.levelEvent(3009, pos, 0);
         }
         var hatchTime = aboveHatchBooster ? (averageHatchTimeInMinutes * 600) : (averageHatchTimeInMinutes * 1200);
         int hatchEventTime = (int) hatchTime / 3;
-        world.emitGameEvent(GameEvent.BLOCK_PLACE, pos, GameEvent.Emitter.of(state));
-        world.scheduleBlockTick(pos, this, hatchEventTime + world.random.nextInt(300));
+        world.gameEvent(GameEvent.BLOCK_PLACE, pos, GameEvent.Context.of(state));
+        world.scheduleTick(pos, this, hatchEventTime + world.getRandom().nextInt(300));
     }
 
-    public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+    @Override
+    protected void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
         if (!this.isReadyToHatch(state)) {
-            world.playSound(null, pos, SoundEvents.BLOCK_SNIFFER_EGG_CRACK, SoundCategory.BLOCKS, 0.7F, 0.9F + random.nextFloat() * 0.2F);
-            world.setBlockState(pos, state.with(HATCH, this.getHatchStage(state) + 1), 2);
+            world.playSound(null, pos, SoundEvents.SNIFFER_EGG_CRACK, SoundSource.BLOCKS, 0.7F, 0.9F + random.nextFloat() * 0.2F);
+            world.setBlock(pos, state.setValue(HATCH, this.getHatchStage(state) + 1), 2);
             boolean aboveHatchBooster = this.isAboveHatchBooster(world, pos);
             float hatchTime = aboveHatchBooster ? this.averageHatchTimeInMinutes * 600 : this.averageHatchTimeInMinutes * 1200;
-            world.scheduleBlockTick(pos, this, (int) hatchTime / 3 + random.nextInt(300));
+            world.scheduleTick(pos, this, (int) hatchTime / 3 + random.nextInt(300));
         } else {
-            world.playSound(null, pos, SoundEvents.BLOCK_SNIFFER_EGG_HATCH, SoundCategory.BLOCKS, 0.7F, 0.9F + random.nextFloat() * 0.2F);
-            world.breakBlock(pos, false);
+            world.playSound(null, pos, SoundEvents.SNIFFER_EGG_HATCH, SoundSource.BLOCKS, 0.7F, 0.9F + random.nextFloat() * 0.2F);
+            world.destroyBlock(pos, false);
             for (int i = 0; i < this.getHatchlingCount(state); i++) {
-                AnimalEntity animalEntity = (AnimalEntity) type.get().create(world);
+                Animal animalEntity = (Animal) type.get().create(world, EntitySpawnReason.BREEDING);
                 if (animalEntity != null) {
-                    Vec3d vec3d = pos.toCenterPos();
+                    Vec3 vec3d = Vec3.atCenterOf(pos);
                     animalEntity.setBaby(true);
-                    animalEntity.refreshPositionAndAngles(vec3d.getX(), vec3d.getY(), vec3d.getZ(), MathHelper.wrapDegrees(world.random.nextFloat() * 360.0F), 0.0F);
-                    world.spawnEntity(animalEntity);
+                    animalEntity.snapTo(vec3d.x(), vec3d.y(), vec3d.z(), Mth.wrapDegrees(world.getRandom().nextFloat() * 360.0F), 0.0F);
+                    world.addFreshEntity(animalEntity);
                 }
             }
         }
     }
 
     @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(HATCH);
     }
 

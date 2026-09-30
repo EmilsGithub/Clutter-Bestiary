@@ -1,9 +1,9 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.CapybaraEntity;
-import net.minecraft.entity.ai.goal.LookAroundGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 
-public class CapybaraLookAroundGoal extends LookAroundGoal {
+public class CapybaraLookAroundGoal extends RandomLookAroundGoal {
     private final CapybaraEntity capybara;
 
     public CapybaraLookAroundGoal(CapybaraEntity capybara) {
@@ -12,7 +12,7 @@ public class CapybaraLookAroundGoal extends LookAroundGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return super.canStart() && !this.capybara.isSleeping();
+    public boolean canUse() {
+        return super.canUse() && !this.capybara.isSleeping();
     }
 }

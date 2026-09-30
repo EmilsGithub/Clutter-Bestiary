@@ -1,16 +1,9 @@
 {
   "type": "minecraft:smithing_transform",
-  "addition": {
-    "item": "minecraft:red_dye"
-  },
-  "base": {
-    "tag": "c:elytra"
-  },
+  "addition": "minecraft:red_dye",
+  "base": "#c:elytra",
   "result": {
-    "count": 1,
     "id": "clutterbestiary:red_butterfly_elytra"
   },
-  "template": {
-    "item": "clutterbestiary:butterfly_elytra_smithing_template"
-  }
+  "template": "clutterbestiary:butterfly_elytra_smithing_template"
 }

@@ -1,20 +1,30 @@
 package net.emilsg.clutterbestiary.entity.client.render;
 
+import net.emilsg.clutterbestiary.entity.client.model.BabyMossbloomModel;
+import net.emilsg.clutterbestiary.entity.client.model.parent.ParentTameableModel;
+import net.emilsg.clutterbestiary.entity.client.render.parent.BestiaryMobRenderer;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.emilsg.clutterbestiary.entity.client.layer.ModModelLayers;
 import net.emilsg.clutterbestiary.entity.client.model.MossbloomModel;
 import net.emilsg.clutterbestiary.entity.client.render.feature.EmissiveRenderer;
+import net.emilsg.clutterbestiary.entity.client.render.state.BestiaryRenderState;
 import net.emilsg.clutterbestiary.entity.custom.MossbloomEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.MobEntityRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.resources.Identifier;
 
-public class MossbloomRenderer extends MobEntityRenderer<MossbloomEntity, MossbloomModel<MossbloomEntity>> {
+public class MossbloomRenderer extends BestiaryMobRenderer<MossbloomEntity, ParentTameableModel<MossbloomEntity>> {
 
-    public MossbloomRenderer(EntityRendererFactory.Context ctx) {
-        super(ctx, new MossbloomModel<>(ctx.getPart(ModModelLayers.MOSSBLOOM)), 0.5f);
-        this.addFeature(new EmissiveRenderer<>(this, MossbloomRenderer::getEmissiveTexture));
+    private final MossbloomModel<MossbloomEntity> adultModel;
+    private final BabyMossbloomModel<MossbloomEntity> babyModel;
+
+    public MossbloomRenderer(EntityRendererProvider.Context ctx) {
+        super(ctx, new MossbloomModel<>(ctx.bakeLayer(ModModelLayers.MOSSBLOOM)), 0.5f);
+        this.addLayer(new EmissiveRenderer<>(this, MossbloomRenderer::getEmissiveTexture));
+
+        this.adultModel = new MossbloomModel<>(ctx.bakeLayer(ModModelLayers.MOSSBLOOM));
+        this.babyModel = new BabyMossbloomModel<>(ctx.bakeLayer(ModModelLayers.BABY_MOSSBLOOM));
     }
 
     private static Identifier getEmissiveTexture(MossbloomEntity mossbloomEntity) {
@@ -22,14 +32,15 @@ public class MossbloomRenderer extends MobEntityRenderer<MossbloomEntity, Mossbl
     }
 
     @Override
-    public Identifier getTexture(MossbloomEntity mossbloomEntity) {
-        return mossbloomEntity.getVariant().getTextureLocation();
+    public Identifier getTextureLocation(MossbloomEntity mossbloomEntity) {
+        return mossbloomEntity.isBaby() ? mossbloomEntity.getVariant().getBabyTextureLocation() : mossbloomEntity.getVariant().getTextureLocation();
     }
+
 
     @Override
-    public void render(MossbloomEntity mossbloomEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i) {
-        this.shadowRadius = 0.5f;
-
-        super.render(mossbloomEntity, f, g, matrixStack, vertexConsumerProvider, i);
+    public void submit(BestiaryRenderState<MossbloomEntity> state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+        this.model = state.isBaby ? babyModel : adultModel;
+        super.submit(state, poseStack, submitNodeCollector, camera);
     }
+
 }

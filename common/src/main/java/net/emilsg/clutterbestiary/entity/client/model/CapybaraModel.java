@@ -1,13 +1,20 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.emilsg.clutterbestiary.animation_handling.animation_states.CapybaraEntityAnimationState;
 import net.emilsg.clutterbestiary.entity.client.animation.AnimationBindings;
 import net.emilsg.clutterbestiary.entity.client.animation.CapybaraEntityAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.ParentTameableModel;
 import net.emilsg.clutterbestiary.entity.custom.CapybaraEntity;
 import net.minecraft.client.model.*;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
 public class CapybaraModel<T extends CapybaraEntity> extends ParentTameableModel<T> {
     private static final AnimationBindings<CapybaraEntity, CapybaraEntityAnimationState> ANIMATIONS = new AnimationBindings<CapybaraEntity, CapybaraEntityAnimationState>()
@@ -17,81 +24,85 @@ public class CapybaraModel<T extends CapybaraEntity> extends ParentTameableModel
     private final ModelPart all;
     private final ModelPart torso;
     private final ModelPart head;
-    private final ModelPart root;
 
     public CapybaraModel(ModelPart root) {
-        this.root = root;
+        super(root);
         this.all = root.getChild("all");
         this.torso = this.all.getChild("torso");
         this.head = this.torso.getChild("head");
     }
 
-    public static TexturedModelData getTexturedModelData() {
-        ModelData modelData = new ModelData();
-        ModelPartData modelPartData = modelData.getRoot();
-        ModelPartData all = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.pivot(2.25F, 19.5F, -4.5F));
+    public static LayerDefinition getTexturedModelData() {
+        MeshDefinition modelData = new MeshDefinition();
+        PartDefinition modelPartData = modelData.getRoot();
+        PartDefinition all = modelPartData.addOrReplaceChild("all", CubeListBuilder.create(), PartPose.offset(2.25F, 19.5F, -4.5F));
 
-        ModelPartData torso = all.addChild("torso", ModelPartBuilder.create(), ModelTransform.pivot(-2.25F, 4.5F, 3.5F));
+        PartDefinition torso = all.addOrReplaceChild("torso", CubeListBuilder.create(), PartPose.offset(-2.25F, 4.5F, 3.5F));
 
-        ModelPartData body = torso.addChild("body", ModelPartBuilder.create().uv(0, 16).cuboid(-4.5F, -4.5F, -7.0F, 9.0F, 9.0F, 14.0F, new Dilation(0.0F))
-                .uv(0, 39).cuboid(-4.5F, -4.5F, -7.0F, 9.0F, 5.0F, 14.0F, new Dilation(0.125F))
-                .uv(0, 61).cuboid(-4.5F, 4.5F, -7.0F, 9.0F, 1.0F, 0.0F, new Dilation(0.0F))
-                .uv(0, 60).cuboid(-4.5F, 4.5F, 7.0F, 9.0F, 1.0F, 0.0F, new Dilation(0.0F))
-                .uv(0, 49).cuboid(-4.5F, 4.5F, -7.0F, 0.0F, 1.0F, 14.0F, new Dilation(0.0F))
-                .uv(0, 48).cuboid(4.5F, 4.5F, -7.0F, 0.0F, 1.0F, 14.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -8.5F, 1.0F));
+        PartDefinition body = torso.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 16).addBox(-4.5F, -4.5F, -7.0F, 9.0F, 9.0F, 14.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 39).addBox(-4.5F, -4.5F, -7.0F, 9.0F, 5.0F, 14.0F, new CubeDeformation(0.125F))
+                .texOffs(0, 61).addBox(-4.5F, 4.5F, -7.0F, 9.0F, 1.0F, 0.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 60).addBox(-4.5F, 4.5F, 7.0F, 9.0F, 1.0F, 0.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 49).addBox(-4.5F, 4.5F, -7.0F, 0.0F, 1.0F, 14.0F, new CubeDeformation(0.0F))
+                .texOffs(0, 48).addBox(4.5F, 4.5F, -7.0F, 0.0F, 1.0F, 14.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -8.5F, 1.0F));
 
-        ModelPartData head = torso.addChild("head", ModelPartBuilder.create().uv(0, 0).cuboid(-3.0F, -3.0F, -7.5F, 6.0F, 6.0F, 9.0F, new Dilation(0.0F))
-                .uv(33, 23).cuboid(-3.0F, -4.0F, -3.5F, 6.0F, 1.0F, 5.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -12.25F, -5.5F));
+        PartDefinition head = torso.addOrReplaceChild("head", CubeListBuilder.create().texOffs(0, 0).addBox(-3.0F, -3.0F, -7.5F, 6.0F, 6.0F, 9.0F, new CubeDeformation(0.0F))
+                .texOffs(33, 23).addBox(-3.0F, -4.0F, -3.5F, 6.0F, 1.0F, 5.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -12.25F, -5.5F));
 
-        ModelPartData rightEar = head.addChild("rightEar", ModelPartBuilder.create(), ModelTransform.pivot(-2.5F, -4.0F, 0.5F));
+        PartDefinition rightEar = head.addOrReplaceChild("rightEar", CubeListBuilder.create(), PartPose.offset(-2.5F, -4.0F, 0.5F));
 
-        ModelPartData rightEar_r1 = rightEar.addChild("rightEar_r1", ModelPartBuilder.create().uv(49, 19).cuboid(-2.0F, -2.0F, -0.5F, 2.0F, 2.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(0.5F, 1.0F, 0.0F, 0.0F, 0.4363F, 0.0F));
+        PartDefinition rightEar_r1 = rightEar.addOrReplaceChild("rightEar_r1", CubeListBuilder.create().texOffs(49, 19).addBox(-2.0F, -2.0F, -0.5F, 2.0F, 2.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.5F, 1.0F, 0.0F, 0.0F, 0.4363F, 0.0F));
 
-        ModelPartData leftEar = head.addChild("leftEar", ModelPartBuilder.create(), ModelTransform.pivot(2.5F, -4.0F, 0.5F));
+        PartDefinition leftEar = head.addOrReplaceChild("leftEar", CubeListBuilder.create(), PartPose.offset(2.5F, -4.0F, 0.5F));
 
-        ModelPartData leftEar_r1 = leftEar.addChild("leftEar_r1", ModelPartBuilder.create().uv(33, 19).cuboid(0.0F, -2.0F, -0.5F, 2.0F, 2.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(-0.5F, 1.0F, 0.0F, 0.0F, -0.4363F, 0.0F));
+        PartDefinition leftEar_r1 = leftEar.addOrReplaceChild("leftEar_r1", CubeListBuilder.create().texOffs(33, 19).addBox(0.0F, -2.0F, -0.5F, 2.0F, 2.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-0.5F, 1.0F, 0.0F, 0.0F, -0.4363F, 0.0F));
 
-        ModelPartData frontRightLeg = torso.addChild("frontRightLeg", ModelPartBuilder.create().uv(52, 0).cuboid(-1.5F, -0.5F, -1.5F, 3.0F, 5.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(-2.25F, -4.5F, -3.5F));
+        PartDefinition frontRightLeg = torso.addOrReplaceChild("frontRightLeg", CubeListBuilder.create().texOffs(52, 0).addBox(-1.5F, -0.5F, -1.5F, 3.0F, 5.0F, 3.0F, new CubeDeformation(0.0F)), PartPose.offset(-2.25F, -4.5F, -3.5F));
 
-        ModelPartData frontLeftLeg = torso.addChild("frontLeftLeg", ModelPartBuilder.create().uv(40, 0).cuboid(-1.5F, -0.5F, -1.5F, 3.0F, 5.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(2.25F, -4.5F, -3.5F));
+        PartDefinition frontLeftLeg = torso.addOrReplaceChild("frontLeftLeg", CubeListBuilder.create().texOffs(40, 0).addBox(-1.5F, -0.5F, -1.5F, 3.0F, 5.0F, 3.0F, new CubeDeformation(0.0F)), PartPose.offset(2.25F, -4.5F, -3.5F));
 
-        ModelPartData backLeftLeg = torso.addChild("backLeftLeg", ModelPartBuilder.create().uv(40, 8).cuboid(-1.5F, -0.5F, -1.5F, 3.0F, 5.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(2.25F, -4.5F, 6.25F));
+        PartDefinition backLeftLeg = torso.addOrReplaceChild("backLeftLeg", CubeListBuilder.create().texOffs(40, 8).addBox(-1.5F, -0.5F, -1.5F, 3.0F, 5.0F, 3.0F, new CubeDeformation(0.0F)), PartPose.offset(2.25F, -4.5F, 6.25F));
 
-        ModelPartData backRightLeg = torso.addChild("backRightLeg", ModelPartBuilder.create().uv(52, 8).cuboid(-1.5F, -0.5F, -1.5F, 3.0F, 5.0F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(-2.25F, -4.5F, 6.25F));
-        return TexturedModelData.of(modelData, 64, 64);
+        PartDefinition backRightLeg = torso.addOrReplaceChild("backRightLeg", CubeListBuilder.create().texOffs(52, 8).addBox(-1.5F, -0.5F, -1.5F, 3.0F, 5.0F, 3.0F, new CubeDeformation(0.0F)), PartPose.offset(-2.25F, -4.5F, 6.25F));
+        return LayerDefinition.create(modelData, 64, 64);
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
-    }
-
-    @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        this.setBabyHeadSizeAndRender(matrices, vertices, light, overlay, color);
-    }
-
-    @Override
-    public void setAngles(CapybaraEntity entity, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
+    public void setupAnim(CapybaraEntity entity, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
+        this.root().getAllParts().forEach(ModelPart::resetPose);
 
         if (!entity.isSleeping() && !entity.isForceSleeping()) {
             this.setHeadAngles(entity, netHeadYaw, headPitch, animationProgress);
         }
 
-        if (!entity.isTouchingWater()) {
-            this.animateMovement(CapybaraEntityAnimations.CAPYBARA_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
+        if (!entity.isInWater()) {
+            this.animateWalk(CapybaraEntityAnimations.CAPYBARA_WALK, limbSwing, limbSwingAmount, 1.5f, 2f);
         }
 
-        this.updateAnimation(entity.earTwitchAnimationStateOne, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_ONE, animationProgress, 1f);
-        this.updateAnimation(entity.earTwitchAnimationStateTwo, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_TWO, animationProgress, 1f);
-        ANIMATIONS.apply(entity, entity.getAnimationController(), animationProgress, this::updateAnimation);
-        this.updateAnimation(entity.swimAnimationState, CapybaraEntityAnimations.CAPYBARA_SWIM, animationProgress, 1f);
+        this.animate(entity.earTwitchAnimationStateOne, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_ONE, animationProgress, 1f);
+        this.animate(entity.earTwitchAnimationStateTwo, CapybaraEntityAnimations.CAPYBARA_EAR_TWITCH_TWO, animationProgress, 1f);
+        ANIMATIONS.apply(entity, entity.getAnimationController(), animationProgress, this::animate);
+        this.animate(entity.swimAnimationState, CapybaraEntityAnimations.CAPYBARA_SWIM, animationProgress, 1f);
 
     }
 
     @Override
     protected ModelPart getHeadPart() {
         return head;
+    }
+
+    @Override
+    public float getBabyScale() {
+        return DEFAULT_BABY_SCALE;
+    }
+
+    @Override
+    public float getBabyYOffset() {
+        return DEFAULT_BABY_Y_OFFSET;
+    }
+
+    @Override
+    protected ModelPart getBabyHead() {
+        return this.getHeadPart();
     }
 }

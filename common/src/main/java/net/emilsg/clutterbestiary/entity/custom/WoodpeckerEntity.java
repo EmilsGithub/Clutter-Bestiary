@@ -10,53 +10,53 @@ import net.emilsg.clutterbestiary.entity.custom.goal.WoodpeckerPerchOnLeavesGoal
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.entity.variants.ButterflyVariant;
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.ai.control.FlightMoveControl;
-import net.minecraft.entity.ai.control.MoveControl;
-import net.minecraft.entity.ai.goal.AnimalMateGoal;
-import net.minecraft.entity.ai.goal.EscapeDangerGoal;
-import net.minecraft.entity.ai.goal.FollowParentGoal;
-import net.minecraft.entity.ai.goal.LookAroundGoal;
-import net.minecraft.entity.ai.goal.LookAtEntityGoal;
-import net.minecraft.entity.ai.goal.SwimGoal;
-import net.minecraft.entity.ai.pathing.BirdNavigation;
-import net.minecraft.entity.ai.pathing.EntityNavigation;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.tag.DamageTypeTags;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldAccess;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.FlyingMoveControl;
+import net.minecraft.world.entity.ai.control.MoveControl;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 public class WoodpeckerEntity extends ParentAnimalEntity implements HandledEntityAnimations<WoodpeckerEntity, WoodpeckerAnimationState> {
     private static final int LARVA_SPAWN_CHANCE = 3;
-    private static final Ingredient BREEDING_INGREDIENT = Ingredient.ofItems(Items.WHEAT_SEEDS, Items.MELON_SEEDS, Items.PUMPKIN_SEEDS, Items.BEETROOT_SEEDS, Items.TORCHFLOWER_SEEDS);
+    private static final Ingredient BREEDING_INGREDIENT = Ingredient.of(Items.WHEAT_SEEDS, Items.MELON_SEEDS, Items.PUMPKIN_SEEDS, Items.BEETROOT_SEEDS, Items.TORCHFLOWER_SEEDS);
     private static final double HOVER_SPEED_SQUARED = 0.0025;
-    private static final TrackedData<Boolean> FLYING = DataTracker.registerData(WoodpeckerEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
-    private static final TrackedData<Integer> ANIMATION_STATE = DataTracker.registerData(WoodpeckerEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Integer> ANIMATION_REVISION = DataTracker.registerData(WoodpeckerEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Long> ANIMATION_START = DataTracker.registerData(WoodpeckerEntity.class, TrackedDataHandlerRegistry.LONG);
+    private static final EntityDataAccessor<Boolean> FLYING = SynchedEntityData.defineId(WoodpeckerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> ANIMATION_STATE = SynchedEntityData.defineId(WoodpeckerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> ANIMATION_REVISION = SynchedEntityData.defineId(WoodpeckerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Long> ANIMATION_START = SynchedEntityData.defineId(WoodpeckerEntity.class, EntityDataSerializers.LONG);
 
-    private final EntityNavigation landNavigation;
-    private final EntityNavigation flightNavigation;
+    private final PathNavigation landNavigation;
+    private final PathNavigation flightNavigation;
     private final MoveControl landMoveControl;
     private final MoveControl flightMoveControl;
     private final EntityAnimationController<WoodpeckerEntity, WoodpeckerAnimationState> animationController = new EntityAnimationController<>(
@@ -64,89 +64,89 @@ public class WoodpeckerEntity extends ParentAnimalEntity implements HandledEntit
     private boolean attached;
     private boolean pecking;
     private boolean peckingInterrupted;
-    @Nullable private Vec3d attachmentPos;
+    @Nullable private Vec3 attachmentPos;
     @Nullable private Direction attachmentFace;
 
-    public WoodpeckerEntity(EntityType<? extends ParentAnimalEntity> entityType, World world) {
+    public WoodpeckerEntity(EntityType<? extends ParentAnimalEntity> entityType, Level world) {
         super(entityType, world);
         this.landNavigation = this.navigation;
         this.flightNavigation = this.createFlightNavigation(world);
         this.landMoveControl = this.moveControl;
-        this.flightMoveControl = new FlightMoveControl(this, 20, true);
+        this.flightMoveControl = new FlyingMoveControl(this, 20, true);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(FLYING, false);
-        builder.add(ANIMATION_STATE, WoodpeckerAnimationState.GROUND_IDLE.getIndex());
-        builder.add(ANIMATION_REVISION, 0);
-        builder.add(ANIMATION_START, -1L);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(FLYING, false);
+        builder.define(ANIMATION_STATE, WoodpeckerAnimationState.GROUND_IDLE.getIndex());
+        builder.define(ANIMATION_REVISION, 0);
+        builder.define(ANIMATION_START, -1L);
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(0, new SwimGoal(this));
-        this.goalSelector.add(1, new EscapeDangerGoal(this, 1.25));
-        this.goalSelector.add(2, new AnimalMateGoal(this, 1.0));
-        this.goalSelector.add(3, new FollowParentGoal(this, 1.1));
-        this.goalSelector.add(4, new WoodpeckerPeckLogGoal(this, 1.0));
-        this.goalSelector.add(5, new WoodpeckerPerchOnLeavesGoal(this, 1.0));
-        this.goalSelector.add(6, new WoodpeckerFlyAroundGoal(this, 1.0));
-        this.goalSelector.add(7, new LookAtEntityGoal(this, PlayerEntity.class, 6.0f));
-        this.goalSelector.add(8, new LookAroundGoal(this));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
+        this.goalSelector.addGoal(2, new BreedGoal(this, 1.0));
+        this.goalSelector.addGoal(3, new FollowParentGoal(this, 1.1));
+        this.goalSelector.addGoal(4, new WoodpeckerPeckLogGoal(this, 1.0));
+        this.goalSelector.addGoal(5, new WoodpeckerPerchOnLeavesGoal(this, 1.0));
+        this.goalSelector.addGoal(6, new WoodpeckerFlyAroundGoal(this, 1.0));
+        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 6.0f));
+        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentAnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 8.0)
-                .add(EntityAttributes.GENERIC_FLYING_SPEED, 0.45)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.2)
-                .add(EntityAttributes.GENERIC_FOLLOW_RANGE, 16.0);
+    public static AttributeSupplier.Builder setAttributes() {
+        return ParentAnimalEntity.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 8.0)
+                .add(Attributes.FLYING_SPEED, 0.45)
+                .add(Attributes.MOVEMENT_SPEED, 0.2)
+                .add(Attributes.FOLLOW_RANGE, 16.0);
     }
 
-    public static boolean isValidNaturalSpawn(EntityType<? extends AnimalEntity> type, WorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return world.getBlockState(pos.down()).isIn(ModBlockTags.WOODPECKERS_SPAWN_ON);
+    public static boolean checkAnimalSpawnRules(EntityType<? extends Animal> type, LevelAccessor world, EntitySpawnReason spawnReason, BlockPos pos, RandomSource random) {
+        return world.getBlockState(pos.below()).is(ModBlockTags.WOODPECKERS_SPAWN_ON);
     }
 
     @Nullable
     @Override
-    public PassiveEntity createChild(ServerWorld world, PassiveEntity entity) {
-        return ModEntityTypes.WOODPECKER.get().create(world);
+    public AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
+        return ModEntityTypes.WOODPECKER.get().create(world, EntitySpawnReason.BREEDING);
     }
 
     @Override
     protected @Nullable SoundEvent getAmbientSound() {
-        return SoundEvents.ENTITY_PARROT_AMBIENT;
+        return SoundEvents.PARROT_AMBIENT;
     }
 
     @Override
     protected SoundEvent getHurtSound(DamageSource source) {
-        return SoundEvents.ENTITY_PARROT_HURT;
+        return SoundEvents.PARROT_HURT;
     }
 
     @Override
     protected SoundEvent getDeathSound() {
-        return SoundEvents.ENTITY_PARROT_DEATH;
+        return SoundEvents.PARROT_DEATH;
     }
 
     @Override
-    public int getMinAmbientSoundDelay() {
+    public int getAmbientSoundInterval() {
         return 200;
     }
 
     @Override
-    public float getSoundPitch() {
-        return super.getSoundPitch() * 1.2f;
+    public float getVoicePitch() {
+        return super.getVoicePitch() * 1.2f;
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
+    public boolean isFood(ItemStack stack) {
         return BREEDING_INGREDIENT.test(stack);
     }
 
     public boolean isFlying() {
-        return this.dataTracker.get(FLYING);
+        return this.entityData.get(FLYING);
     }
 
     public boolean isAttached() {
@@ -160,21 +160,21 @@ public class WoodpeckerEntity extends ParentAnimalEntity implements HandledEntit
     public void setFlying(boolean flying) {
         if (this.isFlying() == flying) return;
         this.navigation.stop();
-        this.dataTracker.set(FLYING, flying);
+        this.entityData.set(FLYING, flying);
         this.setNoGravity(flying);
         this.navigation = flying ? this.flightNavigation : this.landNavigation;
         this.moveControl = flying ? this.flightMoveControl : this.landMoveControl;
     }
 
-    public void attachToLog(Vec3d position, Direction face) {
+    public void attachToLog(Vec3 position, Direction face) {
         this.navigation.stop();
         this.attached = true;
         this.pecking = false;
         this.attachmentPos = position;
         this.attachmentFace = face;
         this.setNoGravity(true);
-        this.setVelocity(Vec3d.ZERO);
-        this.setPosition(position);
+        this.setDeltaMovement(Vec3.ZERO);
+        this.setPos(position);
         this.faceLog();
     }
 
@@ -199,13 +199,13 @@ public class WoodpeckerEntity extends ParentAnimalEntity implements HandledEntit
     }
 
     @Override
-    public boolean damage(DamageSource source, float amount) {
+    public boolean hurtServer(ServerLevel serverLevel, DamageSource source, float amount) {
         boolean wasPeckingAtLog = this.pecking && this.attached;
-        boolean projectileHit = source.isIn(DamageTypeTags.IS_PROJECTILE);
-        boolean damaged = super.damage(source, amount);
+        boolean projectileHit = source.is(DamageTypeTags.IS_PROJECTILE);
+        boolean damaged = super.hurtServer(serverLevel, source, amount);
         if (wasPeckingAtLog && (damaged || projectileHit)) this.interruptPecking();
         if (!damaged || !wasPeckingAtLog || !projectileHit) return damaged;
-        if (!(this.getWorld() instanceof ServerWorld serverWorld)) return true;
+        if (!(this.level() instanceof ServerLevel serverWorld)) return true;
         if (this.random.nextInt(LARVA_SPAWN_CHANCE) == 0) this.spawnButterflyLarva(serverWorld);
         return true;
     }
@@ -213,10 +213,10 @@ public class WoodpeckerEntity extends ParentAnimalEntity implements HandledEntit
     @Override
     public void tick() {
         super.tick();
-        if (!this.getWorld().isClient) {
+        if (!this.level().isClientSide()) {
             if (this.attached && this.attachmentPos != null) {
-                this.setPosition(this.attachmentPos);
-                this.setVelocity(Vec3d.ZERO);
+                this.setPos(this.attachmentPos);
+                this.setDeltaMovement(Vec3.ZERO);
                 this.fallDistance = 0.0f;
                 this.faceLog();
             }
@@ -224,7 +224,7 @@ public class WoodpeckerEntity extends ParentAnimalEntity implements HandledEntit
             WoodpeckerAnimationState state = !this.isFlying() ? WoodpeckerAnimationState.GROUND_IDLE
                     : this.pecking ? WoodpeckerAnimationState.PECKING
                     : this.attached ? WoodpeckerAnimationState.ATTACHED
-                    : this.getVelocity().lengthSquared() <= HOVER_SPEED_SQUARED ? WoodpeckerAnimationState.HOVERING
+                    : this.getDeltaMovement().lengthSqr() <= HOVER_SPEED_SQUARED ? WoodpeckerAnimationState.HOVERING
                     : WoodpeckerAnimationState.FLYING;
             this.animationController.requestState(state);
         }
@@ -233,31 +233,31 @@ public class WoodpeckerEntity extends ParentAnimalEntity implements HandledEntit
 
     private void faceLog() {
         if (this.attachmentFace == null) return;
-        float yaw = this.attachmentFace.getOpposite().asRotation();
-        this.setYaw(yaw);
-        this.bodyYaw = yaw;
-        this.headYaw = yaw;
+        float yaw = this.attachmentFace.getOpposite().toYRot();
+        this.setYRot(yaw);
+        this.yBodyRot = yaw;
+        this.yHeadRot = yaw;
     }
 
-    private void spawnButterflyLarva(ServerWorld world) {
-        ButterflyLarvaEntity larva = ModEntityTypes.BUTTERFLY_LARVA.get().create(world);
+    private void spawnButterflyLarva(ServerLevel world) {
+        ButterflyLarvaEntity larva = ModEntityTypes.BUTTERFLY_LARVA.get().create(world, EntitySpawnReason.BREEDING);
         if (larva == null) return;
-        larva.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), this.getYaw(), 0.0f);
-        larva.setHomePos(this.getBlockPos());
+        larva.snapTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0.0f);
+        larva.setHomePos(this.blockPosition());
         larva.setVariant(ButterflyVariant.getRandom(true));
-        larva.setPersistent();
-        world.spawnEntity(larva);
+        larva.setPersistenceRequired();
+        world.addFreshEntity(larva);
     }
 
-    private EntityNavigation createFlightNavigation(World world) {
-        BirdNavigation navigation = new BirdNavigation(this, world);
-        navigation.setCanPathThroughDoors(false);
-        navigation.setCanSwim(false);
+    private PathNavigation createFlightNavigation(Level world) {
+        FlyingPathNavigation navigation = new FlyingPathNavigation(this, world);
+        navigation.setCanOpenDoors(false);
+        navigation.setCanFloat(false);
         return navigation;
     }
 
     @Override
-    public boolean handleFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+    public boolean causeFallDamage(double fallDistance, float damageMultiplier, DamageSource damageSource) {
         return false;
     }
 

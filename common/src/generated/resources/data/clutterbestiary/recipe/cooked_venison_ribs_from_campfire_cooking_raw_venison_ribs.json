@@ -4,9 +4,7 @@
   "cookingtime": 600,
   "experience": 0.35,
   "group": "venison_ribs",
-  "ingredient": {
-    "item": "clutterbestiary:raw_venison_ribs"
-  },
+  "ingredient": "clutterbestiary:raw_venison_ribs",
   "result": {
     "id": "clutterbestiary:cooked_venison_ribs"
   }

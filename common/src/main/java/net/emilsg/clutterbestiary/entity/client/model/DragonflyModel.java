@@ -1,78 +1,79 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.emilsg.clutterbestiary.entity.client.animation.DragonflyEntityAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutterbestiary.entity.custom.DragonflyEntity;
 import net.minecraft.client.model.*;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
 
 public class DragonflyModel<T extends DragonflyEntity> extends BestiaryModel<T> {
-    private final ModelPart root;
     private final ModelPart all;
     private final ModelPart head;
 
     public DragonflyModel(ModelPart root) {
-        this.root = root;
+        super(root);
         this.all = root.getChild("all");
         this.head = this.all.getChild("head");
     }
 
-    public static TexturedModelData getTexturedModelData() {
-        ModelData modelData = new ModelData();
-        ModelPartData modelPartData = modelData.getRoot();
-        ModelPartData all = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 22.0F, -4.1F));
+    public static LayerDefinition getTexturedModelData() {
+        MeshDefinition modelData = new MeshDefinition();
+        PartDefinition modelPartData = modelData.getRoot();
+        PartDefinition all = modelPartData.addOrReplaceChild("all", CubeListBuilder.create(), PartPose.offset(0.0F, 22.0F, -4.1F));
 
-        ModelPartData head = all.addChild("head", ModelPartBuilder.create().uv(8, 25).cuboid(0.5F, -0.5F, -1.475F, 1.0F, 1.0F, 1.0F, new Dilation(0.25F))
-                .uv(0, 25).cuboid(-1.0F, -1.0F, -2.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.125F))
-                .uv(12, 25).cuboid(-1.5F, -0.5F, -1.475F, 1.0F, 1.0F, 1.0F, new Dilation(0.25F)), ModelTransform.pivot(0.0F, -1.0F, -0.9F));
+        PartDefinition head = all.addOrReplaceChild("head", CubeListBuilder.create().texOffs(8, 25).addBox(0.5F, -0.5F, -1.475F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.25F))
+                .texOffs(0, 25).addBox(-1.0F, -1.0F, -2.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.125F))
+                .texOffs(12, 25).addBox(-1.5F, -0.5F, -1.475F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.25F)), PartPose.offset(0.0F, -1.0F, -0.9F));
 
-        ModelPartData body = all.addChild("body", ModelPartBuilder.create().uv(0, 16).cuboid(-1.0F, -2.0F, -0.9F, 2.0F, 2.0F, 7.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+        PartDefinition body = all.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 16).addBox(-1.0F, -2.0F, -0.9F, 2.0F, 2.0F, 7.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 0.0F));
 
-        ModelPartData tail = body.addChild("tail", ModelPartBuilder.create().uv(18, 16).cuboid(-0.5F, -0.5F, 0.0F, 1.0F, 1.0F, 5.0F, new Dilation(0.0F))
-                .uv(18, 22).cuboid(-1.5F, 0.0F, 4.0F, 3.0F, 0.0F, 4.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -1.0F, 6.1F));
+        PartDefinition tail = body.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(18, 16).addBox(-0.5F, -0.5F, 0.0F, 1.0F, 1.0F, 5.0F, new CubeDeformation(0.0F))
+                .texOffs(18, 22).addBox(-1.5F, 0.0F, 4.0F, 3.0F, 0.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -1.0F, 6.1F));
 
-        ModelPartData rightFrontWing = body.addChild("rightFrontWing", ModelPartBuilder.create().uv(0, 0).cuboid(-10.0F, 0.0F, -1.0F, 10.0F, 0.0F, 4.0F, new Dilation(0.0F)), ModelTransform.pivot(-0.75F, -1.75F, 1.1F));
+        PartDefinition rightFrontWing = body.addOrReplaceChild("rightFrontWing", CubeListBuilder.create().texOffs(0, 0).addBox(-10.0F, 0.0F, -1.0F, 10.0F, 0.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(-0.75F, -1.75F, 1.1F));
 
-        ModelPartData leftFrontWing = body.addChild("leftFrontWing", ModelPartBuilder.create().uv(0, 12).cuboid(0.0F, 0.0F, -1.0F, 10.0F, 0.0F, 4.0F, new Dilation(0.0F)), ModelTransform.pivot(0.75F, -1.75F, 1.1F));
+        PartDefinition leftFrontWing = body.addOrReplaceChild("leftFrontWing", CubeListBuilder.create().texOffs(0, 12).addBox(0.0F, 0.0F, -1.0F, 10.0F, 0.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(0.75F, -1.75F, 1.1F));
 
-        ModelPartData rightBackWing = body.addChild("rightBackWing", ModelPartBuilder.create().uv(0, 4).cuboid(-10.0F, 0.0F, -2.0F, 10.0F, 0.0F, 4.0F, new Dilation(0.0F)), ModelTransform.pivot(-0.75F, -1.75F, 4.1F));
+        PartDefinition rightBackWing = body.addOrReplaceChild("rightBackWing", CubeListBuilder.create().texOffs(0, 4).addBox(-10.0F, 0.0F, -2.0F, 10.0F, 0.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(-0.75F, -1.75F, 4.1F));
 
-        ModelPartData leftBackWing = body.addChild("leftBackWing", ModelPartBuilder.create().uv(0, 8).cuboid(0.0F, 0.0F, -2.0F, 10.0F, 0.0F, 4.0F, new Dilation(0.0F)), ModelTransform.pivot(0.75F, -1.75F, 4.1F));
-        return TexturedModelData.of(modelData, 32, 32);
+        PartDefinition leftBackWing = body.addOrReplaceChild("leftBackWing", CubeListBuilder.create().texOffs(0, 8).addBox(0.0F, 0.0F, -2.0F, 10.0F, 0.0F, 4.0F, new CubeDeformation(0.0F)), PartPose.offset(0.75F, -1.75F, 4.1F));
+        return LayerDefinition.create(modelData, 32, 32);
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
-    }
-
-    @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        matrices.push();
-
-        if (this.child) {
-            float babyScale = 0.5f;
-            matrices.scale(babyScale, babyScale, babyScale);
-            matrices.translate(0.0D, 1.5D, 0D);
-            this.head.scale(createVec3f(0.6f));
-        }
-
-        this.getPart().render(matrices, vertices, light, overlay, color);
-        matrices.pop();
-    }
-
-    @Override
-    public void setAngles(DragonflyEntity dragonfly, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
+    public void setupAnim(DragonflyEntity dragonfly, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
+        this.root().getAllParts().forEach(ModelPart::resetPose);
         this.setHeadAngles(dragonfly, netHeadYaw, headPitch, animationProgress);
 
-        this.updateAnimation(dragonfly.flyingAnimState, DragonflyEntityAnimations.DRAGONFLY_FLY, animationProgress, 2.5f);
+        this.animate(dragonfly.flyingAnimState, DragonflyEntityAnimations.DRAGONFLY_FLY, animationProgress, 2.5f);
     }
 
     @Override
     protected ModelPart getHeadPart() {
         return head;
+    }
+
+    @Override
+    public float getBabyScale() {
+        return 0.5F;
+    }
+
+    @Override
+    public float getBabyYOffset() {
+        return 1.5F;
+    }
+
+    @Override
+    protected ModelPart getBabyHead() {
+        return this.head;
     }
 }

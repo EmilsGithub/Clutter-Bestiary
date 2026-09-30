@@ -1,19 +1,19 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
-import net.minecraft.entity.ai.goal.WanderAroundGoal;
-import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
+import net.minecraft.world.phys.Vec3;
 
-public class WanderAroundFarOftenGoal extends WanderAroundGoal {
-    private final PathAwareEntity pathAwareEntity;
+public class WanderAroundFarOftenGoal extends RandomStrollGoal {
+    private final PathfinderMob pathAwareEntity;
 
-    public WanderAroundFarOftenGoal(PathAwareEntity pathAwareEntity, float speed) {
+    public WanderAroundFarOftenGoal(PathfinderMob pathAwareEntity, float speed) {
         super(pathAwareEntity, speed);
         this.pathAwareEntity = pathAwareEntity;
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         if (this.mob.hasControllingPassenger()) {
             return false;
         } else {
@@ -21,21 +21,21 @@ public class WanderAroundFarOftenGoal extends WanderAroundGoal {
                 return false;
             }
 
-            Vec3d vec3d = this.getWanderTarget();
+            Vec3 vec3d = this.getPosition();
             if (vec3d == null) {
                 return false;
             } else {
-                this.targetX = vec3d.x;
-                this.targetY = vec3d.y;
-                this.targetZ = vec3d.z;
-                this.ignoringChance = false;
+                this.wantedX = vec3d.x;
+                this.wantedY = vec3d.y;
+                this.wantedZ = vec3d.z;
+                this.forceTrigger = false;
                 return true;
             }
         }
     }
 
-    public boolean shouldContinue() {
-        return !this.pathAwareEntity.getNavigation().isIdle() && !this.pathAwareEntity.hasPassengers() && this.pathAwareEntity.getNavigation().isFollowingPath();
+    public boolean canContinueToUse() {
+        return !this.pathAwareEntity.getNavigation().isDone() && !this.pathAwareEntity.isVehicle() && this.pathAwareEntity.getNavigation().isInProgress();
     }
 
 }

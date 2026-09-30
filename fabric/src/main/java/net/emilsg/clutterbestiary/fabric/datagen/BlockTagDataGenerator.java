@@ -1,171 +1,170 @@
 package net.emilsg.clutterbestiary.fabric.datagen;
 
 import net.emilsg.clutterbestiary.util.ModBlockTags;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
-import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
-import net.minecraft.block.Blocks;
-import net.minecraft.registry.RegistryWrapper;
-
+import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagsProvider;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.world.level.block.Blocks;
 import java.util.concurrent.CompletableFuture;
 
-public class BlockTagDataGenerator extends FabricTagProvider.BlockTagProvider {
+public class BlockTagDataGenerator extends FabricTagsProvider.BlockTagsProvider {
 
-    public BlockTagDataGenerator(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
+    public BlockTagDataGenerator(FabricPackOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
         super(output, registriesFuture);
     }
 
     @Override
-    protected void configure(RegistryWrapper.WrapperLookup arg) {
-        getOrCreateTagBuilder(ModBlockTags.KIWI_EGG_HATCH_BOOST)
-                .add(Blocks.HAY_BLOCK)
+    protected void addTags(HolderLookup.Provider arg) {
+        builder(ModBlockTags.KIWI_EGG_HATCH_BOOST)
+                .add(Blocks.HAY_BLOCK.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.EMPEROR_PENGUIN_EGG_HATCH_BOOST)
-                .add(Blocks.SNOW_BLOCK)
+        builder(ModBlockTags.EMPEROR_PENGUIN_EGG_HATCH_BOOST)
+                .add(Blocks.SNOW_BLOCK.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.CROCODILE_EGG_HATCH_BOOST)
-                .add(Blocks.SAND)
-                .add(Blocks.RED_SAND)
+        builder(ModBlockTags.CROCODILE_EGG_HATCH_BOOST)
+                .add(Blocks.SAND.builtInRegistryHolder().key())
+                .add(Blocks.RED_SAND.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.BEAVERS_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.SAND)
-                .add(Blocks.WATER)
+        builder(ModBlockTags.BEAVERS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.SAND.builtInRegistryHolder().key())
+                .add(Blocks.WATER.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.COATIS_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.PODZOL)
+        builder(ModBlockTags.COATIS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.PODZOL.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.RED_PANDAS_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.PODZOL)
-                .add(Blocks.SNOW_BLOCK)
+        builder(ModBlockTags.RED_PANDAS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.PODZOL.builtInRegistryHolder().key())
+                .add(Blocks.SNOW_BLOCK.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.RIVER_TURTLES_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.SAND)
-                .add(Blocks.WATER)
+        builder(ModBlockTags.RIVER_TURTLES_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.SAND.builtInRegistryHolder().key())
+                .add(Blocks.WATER.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.BOOPLETS_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.SNOW_BLOCK)
+        builder(ModBlockTags.BOOPLETS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.SNOW_BLOCK.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.BUTTERFLIES_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.SOUL_SAND)
-                .add(Blocks.SOUL_SOIL)
-                .add(Blocks.WARPED_NYLIUM)
-                .add(Blocks.CRIMSON_NYLIUM)
-                .add(Blocks.NETHERRACK)
+        builder(ModBlockTags.BUTTERFLIES_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.SOUL_SAND.builtInRegistryHolder().key())
+                .add(Blocks.SOUL_SOIL.builtInRegistryHolder().key())
+                .add(Blocks.WARPED_NYLIUM.builtInRegistryHolder().key())
+                .add(Blocks.CRIMSON_NYLIUM.builtInRegistryHolder().key())
+                .add(Blocks.NETHERRACK.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.CAPYBARAS_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.SNOW_BLOCK)
+        builder(ModBlockTags.CAPYBARAS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.SNOW_BLOCK.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.CHAMELEONS_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
+        builder(ModBlockTags.CHAMELEONS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.CRIMSON_NEWTS_SPAWN_ON)
-                .add(Blocks.NETHERRACK)
-                .add(Blocks.CRIMSON_NYLIUM)
+        builder(ModBlockTags.CRIMSON_NEWTS_SPAWN_ON)
+                .add(Blocks.NETHERRACK.builtInRegistryHolder().key())
+                .add(Blocks.CRIMSON_NYLIUM.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.DRAGONFLIES_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.SAND)
-                .add(Blocks.LILY_PAD)
+        builder(ModBlockTags.DRAGONFLIES_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.SAND.builtInRegistryHolder().key())
+                .add(Blocks.LILY_PAD.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.ECHOFINS_SPAWN_ON)
-                .add(Blocks.CHORUS_FLOWER)
-                .add(Blocks.CHORUS_PLANT)
-                .add(Blocks.END_STONE)
+        builder(ModBlockTags.ECHOFINS_SPAWN_ON)
+                .add(Blocks.CHORUS_FLOWER.builtInRegistryHolder().key())
+                .add(Blocks.CHORUS_PLANT.builtInRegistryHolder().key())
+                .add(Blocks.END_STONE.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.EMBER_TORTOISES_SPAWN_ON)
-                .add(Blocks.NETHERRACK)
-                .add(Blocks.BASALT)
-                .add(Blocks.BLACKSTONE)
+        builder(ModBlockTags.EMBER_TORTOISES_SPAWN_ON)
+                .add(Blocks.NETHERRACK.builtInRegistryHolder().key())
+                .add(Blocks.BASALT.builtInRegistryHolder().key())
+                .add(Blocks.BLACKSTONE.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.EMPEROR_PENGUINS_SPAWN_ON)
-                .add(Blocks.SNOW_BLOCK)
-                .add(Blocks.GRASS_BLOCK)
+        builder(ModBlockTags.EMPEROR_PENGUINS_SPAWN_ON)
+                .add(Blocks.SNOW_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.JELLYFISHES_SPAWN_ON)
-                .add(Blocks.WATER)
+        builder(ModBlockTags.JELLYFISHES_SPAWN_ON)
+                .add(Blocks.WATER.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.KIWIS_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
+        builder(ModBlockTags.KIWIS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.KOI_SPAWN_ON)
-                .add(Blocks.WATER)
+        builder(ModBlockTags.KOI_SPAWN_ON)
+                .add(Blocks.WATER.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.MANTA_RAYS_SPAWN_ON)
-                .add(Blocks.WATER)
+        builder(ModBlockTags.MANTA_RAYS_SPAWN_ON)
+                .add(Blocks.WATER.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.MOSSBLOOMS_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.MOSS_BLOCK)
-                .add(Blocks.CLAY)
-                .add(Blocks.STONE)
-                .add(Blocks.DEEPSLATE)
+        builder(ModBlockTags.MOSSBLOOMS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.MOSS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.CLAY.builtInRegistryHolder().key())
+                .add(Blocks.STONE.builtInRegistryHolder().key())
+                .add(Blocks.DEEPSLATE.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.POTION_WASPS_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.SAND)
+        builder(ModBlockTags.POTION_WASPS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.SAND.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.SEAHORSES_SPAWN_ON)
-                .add(Blocks.WATER)
+        builder(ModBlockTags.SEAHORSES_SPAWN_ON)
+                .add(Blocks.WATER.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.WARPED_NEWTS_SPAWN_ON)
-                .add(Blocks.NETHERRACK)
-                .add(Blocks.WARPED_NYLIUM)
+        builder(ModBlockTags.WARPED_NEWTS_SPAWN_ON)
+                .add(Blocks.NETHERRACK.builtInRegistryHolder().key())
+                .add(Blocks.WARPED_NYLIUM.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.STOATS_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.PODZOL)
-                .add(Blocks.SNOW_BLOCK)
+        builder(ModBlockTags.STOATS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.PODZOL.builtInRegistryHolder().key())
+                .add(Blocks.SNOW_BLOCK.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.CROCODILES_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.MUD)
-                .add(Blocks.SAND)
+        builder(ModBlockTags.CROCODILES_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.MUD.builtInRegistryHolder().key())
+                .add(Blocks.SAND.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.CHORUS_BEETLES_SPAWN_ON)
-                .add(Blocks.END_STONE)
-                .add(Blocks.CHORUS_PLANT)
-                .add(Blocks.CHORUS_FLOWER)
+        builder(ModBlockTags.CHORUS_BEETLES_SPAWN_ON)
+                .add(Blocks.END_STONE.builtInRegistryHolder().key())
+                .add(Blocks.CHORUS_PLANT.builtInRegistryHolder().key())
+                .add(Blocks.CHORUS_FLOWER.builtInRegistryHolder().key())
         ;
 
-        getOrCreateTagBuilder(ModBlockTags.WOODPECKERS_SPAWN_ON)
-                .add(Blocks.GRASS_BLOCK)
-                .add(Blocks.PODZOL);
+        builder(ModBlockTags.WOODPECKERS_SPAWN_ON)
+                .add(Blocks.GRASS_BLOCK.builtInRegistryHolder().key())
+                .add(Blocks.PODZOL.builtInRegistryHolder().key());
 
-        getOrCreateTagBuilder(ModBlockTags.ARROWFISH_SPAWN_ON)
-                .add(Blocks.WATER)
-                .add(Blocks.SAND)
+        builder(ModBlockTags.ARROWFISH_SPAWN_ON)
+                .add(Blocks.WATER.builtInRegistryHolder().key())
+                .add(Blocks.SAND.builtInRegistryHolder().key())
         ;
 
     }

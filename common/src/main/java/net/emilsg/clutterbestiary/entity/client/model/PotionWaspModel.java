@@ -1,24 +1,31 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.emilsg.clutterbestiary.entity.client.animation.PotionWaspEntityAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutterbestiary.entity.custom.PotionWaspEntity;
 import net.minecraft.client.model.*;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
 
 public class PotionWaspModel<T extends PotionWaspEntity> extends BestiaryModel<T> {
-    private final ModelPart root;
     private final ModelPart all;
     private final ModelPart body;
     private final ModelPart potionSac;
     private final ModelPart inner;
     private final ModelPart outer;
+    private boolean outerOnly;
     private final ModelPart head;
 
     public PotionWaspModel(ModelPart root) {
-        this.root = root;
+        super(root);
         this.all = root.getChild("all");
         this.body = this.all.getChild("body");
         this.potionSac = this.body.getChild("potionSac");
@@ -27,97 +34,90 @@ public class PotionWaspModel<T extends PotionWaspEntity> extends BestiaryModel<T
         this.head = this.body.getChild("head");
     }
 
-    public static TexturedModelData getTexturedModelData() {
-        ModelData modelData = new ModelData();
-        ModelPartData modelPartData = modelData.getRoot();
-        ModelPartData all = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.pivot(2.5F, 15.0F, 0.0F));
+    public static LayerDefinition getTexturedModelData() {
+        MeshDefinition modelData = new MeshDefinition();
+        PartDefinition modelPartData = modelData.getRoot();
+        PartDefinition all = modelPartData.addOrReplaceChild("all", CubeListBuilder.create(), PartPose.offset(2.5F, 15.0F, 0.0F));
 
-        ModelPartData body = all.addChild("body", ModelPartBuilder.create().uv(24, 15).cuboid(-2.0F, -1.5F, -3.0F, 4.0F, 3.0F, 6.0F, new Dilation(0.0F)), ModelTransform.pivot(-2.5F, -0.5F, -0.5F));
+        PartDefinition body = all.addOrReplaceChild("body", CubeListBuilder.create().texOffs(24, 15).addBox(-2.0F, -1.5F, -3.0F, 4.0F, 3.0F, 6.0F, new CubeDeformation(0.0F)), PartPose.offset(-2.5F, -0.5F, -0.5F));
 
-        ModelPartData potionSac = body.addChild("potionSac", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 1.5F, 0.5F));
+        PartDefinition potionSac = body.addOrReplaceChild("potionSac", CubeListBuilder.create(), PartPose.offset(0.0F, 1.5F, 0.5F));
 
-        ModelPartData inner = potionSac.addChild("inner", ModelPartBuilder.create().uv(2, 35).cuboid(-3.0F, -7.5F, -4.0F, 5.0F, 7.0F, 5.0F, new Dilation(0.0F)), ModelTransform.pivot(0.5F, 8.0F, 1.5F));
+        PartDefinition inner = potionSac.addOrReplaceChild("inner", CubeListBuilder.create().texOffs(2, 35).addBox(-3.0F, -7.5F, -4.0F, 5.0F, 7.0F, 5.0F, new CubeDeformation(0.0F)), PartPose.offset(0.5F, 8.0F, 1.5F));
 
-        ModelPartData outer = potionSac.addChild("outer", ModelPartBuilder.create().uv(0, 0).cuboid(-4.0F, -8.0F, -5.0F, 7.0F, 8.0F, 7.0F, new Dilation(0.0F)), ModelTransform.pivot(0.5F, 8.0F, 1.5F));
+        PartDefinition outer = potionSac.addOrReplaceChild("outer", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, -8.0F, -5.0F, 7.0F, 8.0F, 7.0F, new CubeDeformation(0.0F)), PartPose.offset(0.5F, 8.0F, 1.5F));
 
-        ModelPartData tail = body.addChild("tail", ModelPartBuilder.create().uv(24, 24).cuboid(-1.5F, -1.0F, -1.0F, 3.0F, 2.0F, 3.0F, new Dilation(0.0F)), ModelTransform.of(0.0F, 0.0F, 3.0F, -0.5236F, 0.0F, 0.0F));
+        PartDefinition tail = body.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(24, 24).addBox(-1.5F, -1.0F, -1.0F, 3.0F, 2.0F, 3.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.0F, 0.0F, 3.0F, -0.5236F, 0.0F, 0.0F));
 
-        ModelPartData leftWing = body.addChild("leftWing", ModelPartBuilder.create().uv(-1, 15).cuboid(-1.0F, 0.0F, 0.0F, 4.0F, 0.0F, 9.0F, new Dilation(0.0F)), ModelTransform.pivot(1.0F, -1.5F, -2.0F));
+        PartDefinition leftWing = body.addOrReplaceChild("leftWing", CubeListBuilder.create().texOffs(-1, 15).addBox(-1.0F, 0.0F, 0.0F, 4.0F, 0.0F, 9.0F, new CubeDeformation(0.0F)), PartPose.offset(1.0F, -1.5F, -2.0F));
 
-        ModelPartData rightWing = body.addChild("rightWing", ModelPartBuilder.create().uv(0, 24).cuboid(-3.0F, 0.0F, 0.0F, 4.0F, 0.0F, 9.0F, new Dilation(0.0F)), ModelTransform.pivot(-1.0F, -1.5F, -2.0F));
+        PartDefinition rightWing = body.addOrReplaceChild("rightWing", CubeListBuilder.create().texOffs(0, 24).addBox(-3.0F, 0.0F, 0.0F, 4.0F, 0.0F, 9.0F, new CubeDeformation(0.0F)), PartPose.offset(-1.0F, -1.5F, -2.0F));
 
-        ModelPartData head = body.addChild("head", ModelPartBuilder.create().uv(28, 0).cuboid(-1.0F, -1.0F, -2.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.5F, -3.0F));
+        PartDefinition head = body.addOrReplaceChild("head", CubeListBuilder.create().texOffs(28, 0).addBox(-1.0F, -1.0F, -2.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.5F, -3.0F));
 
-        ModelPartData leftInnerMandible = head.addChild("leftInnerMandible", ModelPartBuilder.create().uv(24, 30).cuboid(0.0F, -0.5F, -1.0F, 0.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(1.0F, 0.5F, -1.5F, 0.0F, -0.1309F, 0.0F));
+        PartDefinition leftInnerMandible = head.addOrReplaceChild("leftInnerMandible", CubeListBuilder.create().texOffs(24, 30).addBox(0.0F, -0.5F, -1.0F, 0.0F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(1.0F, 0.5F, -1.5F, 0.0F, -0.1309F, 0.0F));
 
-        ModelPartData leftOuterMandible = leftInnerMandible.addChild("leftOuterMandible", ModelPartBuilder.create().uv(26, 30).cuboid(0.0F, -0.5F, -1.0F, 0.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(0.0F, 0.0F, -1.0F, 0.0F, 0.3927F, 0.0F));
+        PartDefinition leftOuterMandible = leftInnerMandible.addOrReplaceChild("leftOuterMandible", CubeListBuilder.create().texOffs(26, 30).addBox(0.0F, -0.5F, -1.0F, 0.0F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.0F, 0.0F, -1.0F, 0.0F, 0.3927F, 0.0F));
 
-        ModelPartData rightInnerMandible = head.addChild("rightInnerMandible", ModelPartBuilder.create().uv(28, 30).cuboid(0.0F, -0.5F, -1.0F, 0.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(-1.0F, 0.5F, -1.5F, 0.0F, 0.1309F, 0.0F));
+        PartDefinition rightInnerMandible = head.addOrReplaceChild("rightInnerMandible", CubeListBuilder.create().texOffs(28, 30).addBox(0.0F, -0.5F, -1.0F, 0.0F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-1.0F, 0.5F, -1.5F, 0.0F, 0.1309F, 0.0F));
 
-        ModelPartData rightOuterMandible = rightInnerMandible.addChild("rightOuterMandible", ModelPartBuilder.create().uv(30, 29).cuboid(0.0F, -0.5F, -1.0F, 0.0F, 1.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(0.0F, 0.0F, -1.0F, 0.0F, -0.4363F, 0.0F));
+        PartDefinition rightOuterMandible = rightInnerMandible.addOrReplaceChild("rightOuterMandible", CubeListBuilder.create().texOffs(30, 29).addBox(0.0F, -0.5F, -1.0F, 0.0F, 1.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(0.0F, 0.0F, -1.0F, 0.0F, -0.4363F, 0.0F));
 
-        ModelPartData innerRightFrontLeg = body.addChild("innerRightFrontLeg", ModelPartBuilder.create().uv(28, 10).cuboid(-2.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(-2.0F, 0.5F, -1.5F, 0.0F, 0.0F, -0.3491F));
+        PartDefinition innerRightFrontLeg = body.addOrReplaceChild("innerRightFrontLeg", CubeListBuilder.create().texOffs(28, 10).addBox(-2.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-2.0F, 0.5F, -1.5F, 0.0F, 0.0F, -0.3491F));
 
-        ModelPartData outerRightFrontLeg = innerRightFrontLeg.addChild("outerRightFrontLeg", ModelPartBuilder.create().uv(28, 11).cuboid(-2.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(-2.0F, 0.0F, 0.0F, 0.0F, 0.0F, -1.3963F));
+        PartDefinition outerRightFrontLeg = innerRightFrontLeg.addOrReplaceChild("outerRightFrontLeg", CubeListBuilder.create().texOffs(28, 11).addBox(-2.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-2.0F, 0.0F, 0.0F, 0.0F, 0.0F, -1.3963F));
 
-        ModelPartData innerRightMiddleLeg = body.addChild("innerRightMiddleLeg", ModelPartBuilder.create().uv(28, 12).cuboid(-2.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(-2.0F, 0.5F, 0.5F, 0.0F, 0.0F, -0.2618F));
+        PartDefinition innerRightMiddleLeg = body.addOrReplaceChild("innerRightMiddleLeg", CubeListBuilder.create().texOffs(28, 12).addBox(-2.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-2.0F, 0.5F, 0.5F, 0.0F, 0.0F, -0.2618F));
 
-        ModelPartData outerRightMiddleLeg = innerRightMiddleLeg.addChild("outerRightMiddleLeg", ModelPartBuilder.create().uv(28, 13).cuboid(-2.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(-2.0F, 0.0F, 0.0F, 0.0F, 0.0F, -1.5272F));
+        PartDefinition outerRightMiddleLeg = innerRightMiddleLeg.addOrReplaceChild("outerRightMiddleLeg", CubeListBuilder.create().texOffs(28, 13).addBox(-2.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-2.0F, 0.0F, 0.0F, 0.0F, 0.0F, -1.5272F));
 
-        ModelPartData innerRightBackLeg = body.addChild("innerRightBackLeg", ModelPartBuilder.create().uv(28, 14).cuboid(-2.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(-2.0F, 0.5F, 2.5F, 0.0F, 0.0F, -0.3491F));
+        PartDefinition innerRightBackLeg = body.addOrReplaceChild("innerRightBackLeg", CubeListBuilder.create().texOffs(28, 14).addBox(-2.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-2.0F, 0.5F, 2.5F, 0.0F, 0.0F, -0.3491F));
 
-        ModelPartData outerRightBackLeg = innerRightBackLeg.addChild("outerRightBackLeg", ModelPartBuilder.create().uv(24, 29).cuboid(-2.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(-2.0F, 0.0F, 0.0F, 0.0F, 0.0F, -1.3963F));
+        PartDefinition outerRightBackLeg = innerRightBackLeg.addOrReplaceChild("outerRightBackLeg", CubeListBuilder.create().texOffs(24, 29).addBox(-2.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(-2.0F, 0.0F, 0.0F, 0.0F, 0.0F, -1.3963F));
 
-        ModelPartData innerLeftFrontLeg = body.addChild("innerLeftFrontLeg", ModelPartBuilder.create().uv(28, 4).cuboid(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(2.0F, 0.5F, -1.5F, 0.0F, 0.0F, 0.3491F));
+        PartDefinition innerLeftFrontLeg = body.addOrReplaceChild("innerLeftFrontLeg", CubeListBuilder.create().texOffs(28, 4).addBox(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(2.0F, 0.5F, -1.5F, 0.0F, 0.0F, 0.3491F));
 
-        ModelPartData outerLeftFrontLeg = innerLeftFrontLeg.addChild("outerLeftFrontLeg", ModelPartBuilder.create().uv(28, 5).cuboid(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(2.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.3963F));
+        PartDefinition outerLeftFrontLeg = innerLeftFrontLeg.addOrReplaceChild("outerLeftFrontLeg", CubeListBuilder.create().texOffs(28, 5).addBox(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(2.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.3963F));
 
-        ModelPartData innerLeftMiddleLeg = body.addChild("innerLeftMiddleLeg", ModelPartBuilder.create().uv(28, 6).cuboid(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(2.0F, 0.5F, 0.5F, 0.0F, 0.0F, 0.2618F));
+        PartDefinition innerLeftMiddleLeg = body.addOrReplaceChild("innerLeftMiddleLeg", CubeListBuilder.create().texOffs(28, 6).addBox(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(2.0F, 0.5F, 0.5F, 0.0F, 0.0F, 0.2618F));
 
-        ModelPartData outerLeftMiddleLeg = innerLeftMiddleLeg.addChild("outerLeftMiddleLeg", ModelPartBuilder.create().uv(28, 7).cuboid(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(2.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.5272F));
+        PartDefinition outerLeftMiddleLeg = innerLeftMiddleLeg.addOrReplaceChild("outerLeftMiddleLeg", CubeListBuilder.create().texOffs(28, 7).addBox(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(2.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.5272F));
 
-        ModelPartData innerLeftBackLeg = body.addChild("innerLeftBackLeg", ModelPartBuilder.create().uv(28, 8).cuboid(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(2.0F, 0.5F, 2.5F, 0.0F, 0.0F, 0.3491F));
+        PartDefinition innerLeftBackLeg = body.addOrReplaceChild("innerLeftBackLeg", CubeListBuilder.create().texOffs(28, 8).addBox(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(2.0F, 0.5F, 2.5F, 0.0F, 0.0F, 0.3491F));
 
-        ModelPartData outerLeftBackLeg = innerLeftBackLeg.addChild("outerLeftBackLeg", ModelPartBuilder.create().uv(28, 9).cuboid(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new Dilation(0.0F)), ModelTransform.of(2.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.3963F));
-        return TexturedModelData.of(modelData, 64, 64);
-    }
-
-    @Override
-    public ModelPart getPart() {
-        return root;
-    }
-
-    @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        this.getPart().render(matrices, vertices, light, overlay, color);
+        PartDefinition outerLeftBackLeg = innerLeftBackLeg.addOrReplaceChild("outerLeftBackLeg", CubeListBuilder.create().texOffs(28, 9).addBox(0.0F, 0.0F, -0.5F, 2.0F, 0.0F, 1.0F, new CubeDeformation(0.0F)), PartPose.offsetAndRotation(2.0F, 0.0F, 0.0F, 0.0F, 0.0F, 1.3963F));
+        return LayerDefinition.create(modelData, 64, 64);
     }
 
     public void setAllPartsHidden(boolean hidden) {
-        this.root.traverse().forEach(part -> part.hidden = hidden);
+        this.root.getAllParts().forEach(part -> part.skipDraw = hidden);
     }
 
     @Override
-    public void setAngles(PotionWaspEntity potionWasp, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
+    public void setupAnim(PotionWaspEntity potionWasp, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
+        this.root().getAllParts().forEach(ModelPart::resetPose);
         this.setHeadAngles(potionWasp, netHeadYaw, headPitch, animationProgress);
 
-        this.inner.hidden = !potionWasp.hasPotionSac();
+        if (!this.outerOnly) {
+            this.inner.skipDraw = !potionWasp.hasPotionSac();
+        }
 
-        this.updateAnimation(potionWasp.flyingAnimState, potionWasp.hasPotionSac() ? PotionWaspEntityAnimations.POTIONWASP_FLY : PotionWaspEntityAnimations.POTIONWASP_FLY_NO_SAC, animationProgress, 1f);
+        this.animate(potionWasp.flyingAnimState, potionWasp.hasPotionSac() ? PotionWaspEntityAnimations.POTIONWASP_FLY : PotionWaspEntityAnimations.POTIONWASP_FLY_NO_SAC, animationProgress, 1f);
     }
 
     public void setOuterHidden(boolean hidden) {
-        this.outer.hidden = hidden;
+        this.outer.skipDraw = hidden;
     }
 
     public void showOnlyOuter() {
+        this.outerOnly = true;
         this.setAllPartsHidden(true);
 
-        this.root.hidden = false;
-        this.all.hidden = false;
-        this.body.hidden = false;
-        this.potionSac.hidden = false;
-        this.outer.hidden = false;
+        this.root.skipDraw = false;
+        this.all.skipDraw = false;
+        this.body.skipDraw = false;
+        this.potionSac.skipDraw = false;
+        this.outer.skipDraw = false;
     }
 
     @Override

@@ -1,13 +1,19 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import net.emilsg.clutterbestiary.entity.client.model.parent.BestiaryEntityModel;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.emilsg.clutterbestiary.entity.custom.KoiEggsEntity;
 import net.minecraft.client.model.*;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.entity.model.SinglePartEntityModel;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
-public class KoiEggsModel<T extends KoiEggsEntity> extends SinglePartEntityModel<T> {
-    private final ModelPart root;
+public class KoiEggsModel<T extends KoiEggsEntity> extends BestiaryEntityModel<T> {
     private final ModelPart all;
     private final ModelPart egg;
     private final ModelPart eggTwo;
@@ -20,7 +26,7 @@ public class KoiEggsModel<T extends KoiEggsEntity> extends SinglePartEntityModel
 
 
     public KoiEggsModel(ModelPart root) {
-        this.root = root;
+        super(root);
         this.all = root.getChild("all");
         this.egg = this.all.getChild("egg");
         this.eggTwo = this.all.getChild("eggTwo");
@@ -32,50 +38,40 @@ public class KoiEggsModel<T extends KoiEggsEntity> extends SinglePartEntityModel
         this.eggEight = this.all.getChild("eggEight");
     }
 
-    public static TexturedModelData getTexturedModelData() {
-        ModelData modelData = new ModelData();
-        ModelPartData modelPartData = modelData.getRoot();
-        ModelPartData all = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 21.0F, 0.0F));
+    public static LayerDefinition getTexturedModelData() {
+        MeshDefinition modelData = new MeshDefinition();
+        PartDefinition modelPartData = modelData.getRoot();
+        PartDefinition all = modelPartData.addOrReplaceChild("all", CubeListBuilder.create(), PartPose.offset(0.0F, 21.0F, 0.0F));
 
-        ModelPartData egg = all.addChild("egg", ModelPartBuilder.create().uv(1, 1).cuboid(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F))
-                .uv(7, 1).cuboid(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 2.0F, -4.0F));
+        PartDefinition egg = all.addOrReplaceChild("egg", CubeListBuilder.create().texOffs(1, 1).addBox(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(7, 1).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 2.0F, -4.0F));
 
-        ModelPartData eggTwo = all.addChild("eggTwo", ModelPartBuilder.create().uv(1, 1).cuboid(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F))
-                .uv(7, 1).cuboid(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 1.0F, 4.0F));
+        PartDefinition eggTwo = all.addOrReplaceChild("eggTwo", CubeListBuilder.create().texOffs(1, 1).addBox(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(7, 1).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 1.0F, 4.0F));
 
-        ModelPartData eggThree = all.addChild("eggThree", ModelPartBuilder.create().uv(1, 1).cuboid(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F))
-                .uv(7, 1).cuboid(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(3.0F, -2.0F, 1.0F));
+        PartDefinition eggThree = all.addOrReplaceChild("eggThree", CubeListBuilder.create().texOffs(1, 1).addBox(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(7, 1).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(3.0F, -2.0F, 1.0F));
 
-        ModelPartData eggFour = all.addChild("eggFour", ModelPartBuilder.create().uv(11, 13).cuboid(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F))
-                .uv(1, 11).cuboid(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(-3.0F, 0.0F, -2.0F));
+        PartDefinition eggFour = all.addOrReplaceChild("eggFour", CubeListBuilder.create().texOffs(11, 13).addBox(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(1, 11).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(-3.0F, 0.0F, -2.0F));
 
-        ModelPartData eggFive = all.addChild("eggFive", ModelPartBuilder.create().uv(11, 13).cuboid(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F))
-                .uv(1, 11).cuboid(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(-4.0F, 3.0F, 0.0F));
+        PartDefinition eggFive = all.addOrReplaceChild("eggFive", CubeListBuilder.create().texOffs(11, 13).addBox(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(1, 11).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(-4.0F, 3.0F, 0.0F));
 
-        ModelPartData eggSix = all.addChild("eggSix", ModelPartBuilder.create().uv(11, 13).cuboid(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F))
-                .uv(1, 11).cuboid(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(2.0F, -1.0F, -3.0F));
+        PartDefinition eggSix = all.addOrReplaceChild("eggSix", CubeListBuilder.create().texOffs(11, 13).addBox(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(1, 11).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(2.0F, -1.0F, -3.0F));
 
-        ModelPartData eggSeven = all.addChild("eggSeven", ModelPartBuilder.create().uv(1, 1).cuboid(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F))
-                .uv(7, 1).cuboid(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(-1.0F, -4.0F, 1.0F));
+        PartDefinition eggSeven = all.addOrReplaceChild("eggSeven", CubeListBuilder.create().texOffs(1, 1).addBox(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(7, 1).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(-1.0F, -4.0F, 1.0F));
 
-        ModelPartData eggEight = all.addChild("eggEight", ModelPartBuilder.create().uv(11, 13).cuboid(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new Dilation(0.0F))
-                .uv(1, 11).cuboid(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(4.0F, 4.0F, 0.0F));
-        return TexturedModelData.of(modelData, 16, 16);
+        PartDefinition eggEight = all.addOrReplaceChild("eggEight", CubeListBuilder.create().texOffs(11, 13).addBox(-0.5F, -0.5F, -0.5F, 1.0F, 1.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(1, 11).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(4.0F, 4.0F, 0.0F));
+        return LayerDefinition.create(modelData, 16, 16);
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
-    }
-
-    @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        this.getPart().render(matrices, vertices, light, overlay, color);
-    }
-
-    @Override
-    public void setAngles(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
+    public void setupAnim(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
+        this.root().getAllParts().forEach(ModelPart::resetPose);
         applyBob(egg, animationProgress, 0.012f, 0.5f, 0f);
         applyBob(eggTwo, animationProgress, 0.01f, 0.4f, 0.5f);
         applyBob(eggThree, animationProgress, 0.008f, 0.35f, 1.0f);
@@ -87,6 +83,6 @@ public class KoiEggsModel<T extends KoiEggsEntity> extends SinglePartEntityModel
     }
 
     private void applyBob(ModelPart part, float time, float speed, float amplitude, float offset) {
-        part.pivotY += (float) (Math.sin((time + offset) * speed * Math.PI * 2) * amplitude);
+        part.y += (float) (Math.sin((time + offset) * speed * Math.PI * 2) * amplitude);
     }
 }

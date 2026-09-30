@@ -1,57 +1,63 @@
 package net.emilsg.clutterbestiary.entity.client.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.emilsg.clutterbestiary.entity.client.animation.BeaverEntityAnimations;
 import net.emilsg.clutterbestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutterbestiary.entity.custom.BeaverEntity;
 import net.minecraft.client.model.*;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 
 public class BeaverModel<T extends BeaverEntity> extends BestiaryModel<T> {
-    private final ModelPart root;
     private final ModelPart all;
     private final ModelPart head;
     private final ModelPart frontRightLeg;
     private final ModelPart heldItem;
 
     public BeaverModel(ModelPart root) {
-        this.root = root;
+        super(root);
         this.all = root.getChild("all");
         this.head = this.all.getChild("head");
         this.frontRightLeg = this.all.getChild("frontRightLeg");
         this.heldItem = this.frontRightLeg.getChild("heldItem");
     }
 
-    public static TexturedModelData getTexturedModelData() {
-        ModelData modelData = new ModelData();
-        ModelPartData modelPartData = modelData.getRoot();
-        ModelPartData all = modelPartData.addChild("all", ModelPartBuilder.create(), ModelTransform.pivot(0.0F, 20.5F, 0.0F));
+    public static LayerDefinition getTexturedModelData() {
+        MeshDefinition modelData = new MeshDefinition();
+        PartDefinition modelPartData = modelData.getRoot();
+        PartDefinition all = modelPartData.addOrReplaceChild("all", CubeListBuilder.create(), PartPose.offset(0.0F, 20.5F, 0.0F));
 
-        ModelPartData body = all.addChild("body", ModelPartBuilder.create().uv(0, 0).cuboid(-4.0F, -2.0F, -10.0F, 8.0F, 7.0F, 12.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -3.5F, 4.0F));
+        PartDefinition body = all.addOrReplaceChild("body", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, -2.0F, -10.0F, 8.0F, 7.0F, 12.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -3.5F, 4.0F));
 
-        ModelPartData tail = body.addChild("tail", ModelPartBuilder.create().uv(0, 19).cuboid(-4.0F, 0.0F, 1.0F, 8.0F, 2.0F, 10.0F, new Dilation(0.0F))
-                .uv(28, 0).cuboid(-3.0F, 0.0F, -1.0F, 6.0F, 2.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 0.0F, 3.0F));
+        PartDefinition tail = body.addOrReplaceChild("tail", CubeListBuilder.create().texOffs(0, 19).addBox(-4.0F, 0.0F, 1.0F, 8.0F, 2.0F, 10.0F, new CubeDeformation(0.0F))
+                .texOffs(28, 0).addBox(-3.0F, 0.0F, -1.0F, 6.0F, 2.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 0.0F, 3.0F));
 
-        ModelPartData frontRightLeg = all.addChild("frontRightLeg", ModelPartBuilder.create().uv(0, 31).cuboid(-1.0F, -1.0F, -1.0F, 2.0F, 3.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(-2.0F, 1.5F, -4.0F));
+        PartDefinition frontRightLeg = all.addOrReplaceChild("frontRightLeg", CubeListBuilder.create().texOffs(0, 31).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(-2.0F, 1.5F, -4.0F));
 
-        ModelPartData heldItem = frontRightLeg.addChild("heldItem", ModelPartBuilder.create(), ModelTransform.pivot(1.0F, 2.0F, 0.0F));
+        PartDefinition heldItem = frontRightLeg.addOrReplaceChild("heldItem", CubeListBuilder.create(), PartPose.offset(1.0F, 2.0F, 0.0F));
 
-        ModelPartData backRightLeg = all.addChild("backRightLeg", ModelPartBuilder.create().uv(28, 4).cuboid(-1.0F, -1.0F, -1.0F, 2.0F, 3.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(-2.0F, 1.5F, 4.0F));
+        PartDefinition backRightLeg = all.addOrReplaceChild("backRightLeg", CubeListBuilder.create().texOffs(28, 4).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(-2.0F, 1.5F, 4.0F));
 
-        ModelPartData rightFlipper = backRightLeg.addChild("rightFlipper", ModelPartBuilder.create().uv(14, 19).cuboid(-1.5F, -0.125F, -2.5F, 3.0F, 0.25F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(-0.5F, 1.865F, -0.5F));
+        PartDefinition rightFlipper = backRightLeg.addOrReplaceChild("rightFlipper", CubeListBuilder.create().texOffs(14, 19).addBox(-1.5F, -0.125F, -2.5F, 3.0F, 0.25F, 3.0F, new CubeDeformation(0.0F)), PartPose.offset(-0.5F, 1.865F, -0.5F));
 
-        ModelPartData backLeftLeg = all.addChild("backLeftLeg", ModelPartBuilder.create().uv(0, 24).cuboid(-1.0F, -1.0F, -1.0F, 2.0F, 3.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(2.0F, 1.5F, 4.0F));
+        PartDefinition backLeftLeg = all.addOrReplaceChild("backLeftLeg", CubeListBuilder.create().texOffs(0, 24).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(2.0F, 1.5F, 4.0F));
 
-        ModelPartData leftFlipper = backLeftLeg.addChild("leftFlipper", ModelPartBuilder.create().uv(10, 19).cuboid(-1.5F, -0.125F, -2.5F, 3.0F, 0.25F, 3.0F, new Dilation(0.0F)), ModelTransform.pivot(0.5F, 1.865F, -0.5F));
+        PartDefinition leftFlipper = backLeftLeg.addOrReplaceChild("leftFlipper", CubeListBuilder.create().texOffs(10, 19).addBox(-1.5F, -0.125F, -2.5F, 3.0F, 0.25F, 3.0F, new CubeDeformation(0.0F)), PartPose.offset(0.5F, 1.865F, -0.5F));
 
-        ModelPartData frontLeftLeg = all.addChild("frontLeftLeg", ModelPartBuilder.create().uv(0, 19).cuboid(-1.0F, -1.0F, -1.0F, 2.0F, 3.0F, 2.0F, new Dilation(0.0F)), ModelTransform.pivot(2.0F, 1.5F, -4.0F));
+        PartDefinition frontLeftLeg = all.addOrReplaceChild("frontLeftLeg", CubeListBuilder.create().texOffs(0, 19).addBox(-1.0F, -1.0F, -1.0F, 2.0F, 3.0F, 2.0F, new CubeDeformation(0.0F)), PartPose.offset(2.0F, 1.5F, -4.0F));
 
-        ModelPartData head = all.addChild("head", ModelPartBuilder.create().uv(26, 19).cuboid(-3.0F, -2.0F, -5.0F, 6.0F, 5.0F, 5.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, -2.5F, -6.0F));
+        PartDefinition head = all.addOrReplaceChild("head", CubeListBuilder.create().texOffs(26, 19).addBox(-3.0F, -2.0F, -5.0F, 6.0F, 5.0F, 5.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, -2.5F, -6.0F));
 
-        ModelPartData nose = head.addChild("nose", ModelPartBuilder.create().uv(0, 6).cuboid(-2.0F, -2.0F, -1.0F, 4.0F, 2.0F, 1.0F, new Dilation(0.0F))
-                .uv(3, 9).cuboid(0.0F, 0.0F, -0.75F, 1.0F, 1.0F, 0.25F, new Dilation(0.0F))
-                .uv(0, 9).cuboid(-1.0F, 0.0F, -0.75F, 1.0F, 1.0F, 0.25F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 2.0F, -5.0F));
-        return TexturedModelData.of(modelData, 64, 64);
+        PartDefinition nose = head.addOrReplaceChild("nose", CubeListBuilder.create().texOffs(0, 6).addBox(-2.0F, -2.0F, -1.0F, 4.0F, 2.0F, 1.0F, new CubeDeformation(0.0F))
+                .texOffs(3, 9).addBox(0.0F, 0.0F, -0.75F, 1.0F, 1.0F, 0.25F, new CubeDeformation(0.0F))
+                .texOffs(0, 9).addBox(-1.0F, 0.0F, -0.75F, 1.0F, 1.0F, 0.25F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 2.0F, -5.0F));
+        return LayerDefinition.create(modelData, 64, 64);
     }
 
     public ModelPart getHeldItemModelPart() {
@@ -59,47 +65,42 @@ public class BeaverModel<T extends BeaverEntity> extends BestiaryModel<T> {
     }
 
     @Override
-    public ModelPart getPart() {
-        return root;
-    }
-
-    @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {
-        matrices.push();
-
-        if (this.child) {
-            float babyScale = 0.5f;
-            matrices.scale(babyScale, babyScale, babyScale);
-            matrices.translate(0.0D, 1.5D, 0D);
-            this.head.scale(createVec3f(0.6f));
-        }
-
-        this.getPart().render(matrices, vertices, light, overlay, color);
-        matrices.pop();
-    }
-
-    @Override
-    public void setAngles(BeaverEntity beaverEntity, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
-        this.getPart().traverse().forEach(ModelPart::resetTransform);
+    public void setupAnim(BeaverEntity beaverEntity, float limbSwing, float limbSwingAmount, float animationProgress, float netHeadYaw, float headPitch) {
+        this.root().getAllParts().forEach(ModelPart::resetPose);
         this.setHeadAngles(beaverEntity, netHeadYaw, headPitch, animationProgress);
-        boolean isTouchingWater = beaverEntity.isTouchingWater();
+        boolean isTouchingWater = beaverEntity.isInWater();
 
         if (!isTouchingWater) {
-            this.animateMovement(BeaverEntityAnimations.BEAVER_WALK, limbSwing, limbSwingAmount, 2.0f, 2.5f);
-            this.updateAnimation(beaverEntity.idleAnimationState, BeaverEntityAnimations.BEAVER_IDLE, animationProgress, 1.0f);
+            this.animateWalk(BeaverEntityAnimations.BEAVER_WALK, limbSwing, limbSwingAmount, 2.0f, 2.5f);
+            this.animate(beaverEntity.idleAnimationState, BeaverEntityAnimations.BEAVER_IDLE, animationProgress, 1.0f);
         } else {
-            float animationSpeed = (float) (beaverEntity.getVelocity().length() * 5) + Math.abs(0.5f);
+            float animationSpeed = (float) (beaverEntity.getDeltaMovement().length() * 5) + Math.abs(0.5f);
             if (animationSpeed >= 1.2f) animationSpeed = 1.2f;
-            this.updateAnimation(beaverEntity.waterAnimationState, BeaverEntityAnimations.BEAVER_SWIM, animationProgress, animationSpeed);
+            this.animate(beaverEntity.waterAnimationState, BeaverEntityAnimations.BEAVER_SWIM, animationProgress, animationSpeed);
         }
 
-        this.updateAnimation(beaverEntity.strippingItemsAnimationState, BeaverEntityAnimations.BEAVER_STRIP_ITEMS, animationProgress, 1.0f);
-        this.updateAnimation(beaverEntity.idleAnimationState, BeaverEntityAnimations.BEAVER_SNIFF_IDLE, animationProgress, 1.0f);
-        this.updateAnimation(beaverEntity.idlingAnimationState, BeaverEntityAnimations.BEAVER_IDLE, animationProgress, 1.0f);
+        this.animate(beaverEntity.strippingItemsAnimationState, BeaverEntityAnimations.BEAVER_STRIP_ITEMS, animationProgress, 1.0f);
+        this.animate(beaverEntity.idleAnimationState, BeaverEntityAnimations.BEAVER_SNIFF_IDLE, animationProgress, 1.0f);
+        this.animate(beaverEntity.idlingAnimationState, BeaverEntityAnimations.BEAVER_IDLE, animationProgress, 1.0f);
     }
 
     @Override
     protected ModelPart getHeadPart() {
         return head;
+    }
+
+    @Override
+    public float getBabyScale() {
+        return 0.5F;
+    }
+
+    @Override
+    public float getBabyYOffset() {
+        return 1.5F;
+    }
+
+    @Override
+    protected ModelPart getBabyHead() {
+        return this.head;
     }
 }

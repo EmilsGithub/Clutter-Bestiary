@@ -1,13 +1,13 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.ButterflyEntity;
-import net.minecraft.entity.ai.AboveGroundTargeting;
-import net.minecraft.entity.ai.NoPenaltySolidTargeting;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.dimension.DimensionTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.util.AirAndWaterRandomPos;
+import net.minecraft.world.entity.ai.util.HoverRandomPos;
+import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -16,42 +16,42 @@ public class ButterflyWanderOverworldGoal extends Goal {
     private final ButterflyEntity butterfly;
 
     public ButterflyWanderOverworldGoal(ButterflyEntity butterfly) {
-        this.setControls(EnumSet.of(Control.MOVE));
+        this.setFlags(EnumSet.of(Flag.MOVE));
         this.butterfly = butterfly;
     }
 
     @Override
-    public boolean canStart() {
-        return !this.butterfly.isInFluid()
-                && this.butterfly.getWorld().getDimensionEntry().matchesKey(DimensionTypes.OVERWORLD)
-                && this.butterfly.getNavigation().isIdle() && this.butterfly.getRandom().nextInt(10) == 0;
+    public boolean canUse() {
+        return !this.butterfly.isInLiquid()
+                && this.butterfly.level().dimensionTypeRegistration().is(BuiltinDimensionTypes.OVERWORLD)
+                && this.butterfly.getNavigation().isDone() && this.butterfly.getRandom().nextInt(10) == 0;
     }
 
     @Override
-    public boolean shouldContinue() {
-        return !this.butterfly.isInFluid() && this.butterfly.getNavigation().isFollowingPath();
+    public boolean canContinueToUse() {
+        return !this.butterfly.isInLiquid() && this.butterfly.getNavigation().isInProgress();
     }
 
     @Override
     public void start() {
-        Vec3d vec3d = this.getRandomLocation();
+        Vec3 vec3d = this.getRandomLocation();
         if (vec3d == null) return;
 
-        BlockPos targetPos = BlockPos.ofFloored(vec3d);
+        BlockPos targetPos = BlockPos.containing(vec3d);
         if (!this.butterfly.isSafeFlightTarget(targetPos)) return;
 
-        Path path = this.butterfly.getNavigation().findPathTo(targetPos, 1);
-        if (path != null) this.butterfly.getNavigation().startMovingAlong(path, 1.0);
+        Path path = this.butterfly.getNavigation().createPath(targetPos, 1);
+        if (path != null) this.butterfly.getNavigation().moveTo(path, 1.0);
     }
 
     @Nullable
-    private Vec3d getRandomLocation() {
-        Vec3d vec3d2 = this.butterfly.getRotationVec(0.0f);
+    private Vec3 getRandomLocation() {
+        Vec3 vec3d2 = this.butterfly.getViewVector(0.0f);
 
-        Vec3d vec3d3 = AboveGroundTargeting.find(this.butterfly, 8, 7, vec3d2.x, vec3d2.z, 1.5707964f, 4, 2);
+        Vec3 vec3d3 = HoverRandomPos.getPos(this.butterfly, 8, 7, vec3d2.x, vec3d2.z, 1.5707964f, 4, 2);
         if (vec3d3 != null) {
             return vec3d3;
         }
-        return NoPenaltySolidTargeting.find(this.butterfly, 8, 4, -2, vec3d2.x, vec3d2.z, 1.5707963705062866);
+        return AirAndWaterRandomPos.getPos(this.butterfly, 8, 4, -2, vec3d2.x, vec3d2.z, 1.5707963705062866);
     }
 }

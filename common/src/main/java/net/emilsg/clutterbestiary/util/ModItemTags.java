@@ -1,10 +1,10 @@
 package net.emilsg.clutterbestiary.util;
 
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.TagKey;
-import net.minecraft.util.Identifier;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 
 public class ModItemTags {
 
@@ -21,6 +21,6 @@ public class ModItemTags {
     }
 
     private static TagKey<Item> create(String namespace, String path) {
-        return TagKey.of(Registries.ITEM.getKey(), Identifier.of(namespace, path));
+        return TagKey.create(BuiltInRegistries.ITEM.key(), Identifier.fromNamespaceAndPath(namespace, path));
     }
 }

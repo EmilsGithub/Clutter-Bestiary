@@ -1,9 +1,8 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.ChorusBeetleEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.player.PlayerEntity;
-
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.player.Player;
 import java.util.EnumSet;
 
 public class ChorusBeetleReturnFlowerGoal extends Goal {
@@ -14,16 +13,16 @@ public class ChorusBeetleReturnFlowerGoal extends Goal {
     public ChorusBeetleReturnFlowerGoal(ChorusBeetleEntity chorusBeetle, double speed) {
         this.chorusBeetle = chorusBeetle;
         this.speed = speed;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         return this.canReturnToRequester();
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         return this.canReturnToRequester();
     }
 
@@ -41,19 +40,19 @@ public class ChorusBeetleReturnFlowerGoal extends Goal {
     }
 
     @Override
-    public boolean shouldRunEveryTick() {
+    public boolean requiresUpdateEveryTick() {
         return true;
     }
 
     @Override
     public void tick() {
-        PlayerEntity player = this.chorusBeetle.getFlowerRequester();
+        Player player = this.chorusBeetle.getFlowerRequester();
         if (player == null) return;
 
-        this.chorusBeetle.getLookControl().lookAt(player, 30.0f, 30.0f);
+        this.chorusBeetle.getLookControl().setLookAt(player, 30.0f, 30.0f);
         if (--this.pathUpdateCountdown <= 0) {
             this.pathUpdateCountdown = 10;
-            this.chorusBeetle.getNavigation().startMovingTo(player, this.speed);
+            this.chorusBeetle.getNavigation().moveTo(player, this.speed);
         }
     }
 

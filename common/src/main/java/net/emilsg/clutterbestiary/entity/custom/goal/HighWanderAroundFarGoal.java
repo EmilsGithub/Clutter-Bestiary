@@ -1,21 +1,21 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
-import net.minecraft.entity.ai.FuzzyTargeting;
-import net.minecraft.entity.ai.goal.WanderAroundGoal;
-import net.minecraft.entity.mob.PathAwareEntity;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
+import net.minecraft.world.entity.ai.util.LandRandomPos;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-public class HighWanderAroundFarGoal extends WanderAroundGoal {
+public class HighWanderAroundFarGoal extends RandomStrollGoal {
     protected final float probability;
 
-    public HighWanderAroundFarGoal(PathAwareEntity mob, double speed, float probability) {
+    public HighWanderAroundFarGoal(PathfinderMob mob, double speed, float probability) {
         super(mob, speed);
         this.probability = probability;
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         if (this.mob.hasControllingPassenger()) {
             return false;
         } else {
@@ -23,26 +23,26 @@ public class HighWanderAroundFarGoal extends WanderAroundGoal {
                 return false;
             }
 
-            Vec3d vec3d = this.getWanderTarget();
+            Vec3 vec3d = this.getPosition();
             if (vec3d == null) {
                 return false;
             } else {
-                this.targetX = vec3d.x;
-                this.targetY = vec3d.y;
-                this.targetZ = vec3d.z;
-                this.ignoringChance = false;
+                this.wantedX = vec3d.x;
+                this.wantedY = vec3d.y;
+                this.wantedZ = vec3d.z;
+                this.forceTrigger = false;
                 return true;
             }
         }
     }
 
-    public boolean shouldContinue() {
-        return !this.mob.getNavigation().isIdle() && !this.mob.hasPassengers() && this.mob.getNavigation().isFollowingPath();
+    public boolean canContinueToUse() {
+        return !this.mob.getNavigation().isDone() && !this.mob.isVehicle() && this.mob.getNavigation().isInProgress();
     }
 
     @Nullable
-    protected Vec3d getWanderTarget() {
-        Vec3d vec3d = FuzzyTargeting.find(this.mob, 15, 9);
-        return vec3d == null ? super.getWanderTarget() : vec3d;
+    protected Vec3 getPosition() {
+        Vec3 vec3d = LandRandomPos.getPos(this.mob, 15, 9);
+        return vec3d == null ? super.getPosition() : vec3d;
     }
 }

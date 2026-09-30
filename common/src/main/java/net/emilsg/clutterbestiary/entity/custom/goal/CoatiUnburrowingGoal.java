@@ -2,8 +2,7 @@ package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.animation_handling.animation_states.CoatiEntityAnimationState;
 import net.emilsg.clutterbestiary.entity.custom.CoatiEntity;
-import net.minecraft.entity.ai.goal.Goal;
-
+import net.minecraft.world.entity.ai.goal.Goal;
 import java.util.EnumSet;
 
 public class CoatiUnburrowingGoal extends Goal {
@@ -12,18 +11,18 @@ public class CoatiUnburrowingGoal extends Goal {
 
     public CoatiUnburrowingGoal(CoatiEntity coatiEntity) {
         this.coatiEntity = coatiEntity;
-        this.setControls(EnumSet.of(Control.JUMP, Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Flag.JUMP, Flag.MOVE, Flag.LOOK));
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         return this.coatiEntity.isUnBurrowing();
     }
 
     @Override
     public void start() {
         this.coatiEntity.getNavigation().stop();
-        this.unBurrowingTicker = this.getTickCount(CoatiEntity.UNBURROW_DURATION_TICKS);
+        this.unBurrowingTicker = this.adjustedTickDelay(CoatiEntity.UNBURROW_DURATION_TICKS);
         this.coatiEntity.startState(CoatiEntityAnimationState.UNBURROWING);
     }
 

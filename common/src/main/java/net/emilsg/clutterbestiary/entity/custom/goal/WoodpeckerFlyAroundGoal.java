@@ -1,11 +1,10 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.WoodpeckerEntity;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.Heightmap;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
 import java.util.EnumSet;
 
 public class WoodpeckerFlyAroundGoal extends Goal {
@@ -20,19 +19,19 @@ public class WoodpeckerFlyAroundGoal extends Goal {
     public WoodpeckerFlyAroundGoal(WoodpeckerEntity woodpecker, double speed) {
         this.woodpecker = woodpecker;
         this.speed = speed;
-        this.setControls(EnumSet.of(Control.MOVE, Control.LOOK));
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         return this.woodpecker.isAlive() && !this.woodpecker.isAttached()
-                && !this.woodpecker.isTouchingWater();
+                && !this.woodpecker.isInWater();
     }
 
     @Override
-    public boolean shouldContinue() {
+    public boolean canContinueToUse() {
         return this.woodpecker.isAlive() && this.woodpecker.isFlying()
-                && !this.woodpecker.isAttached() && !this.woodpecker.isTouchingWater();
+                && !this.woodpecker.isAttached() && !this.woodpecker.isInWater();
     }
 
     @Override
@@ -44,40 +43,40 @@ public class WoodpeckerFlyAroundGoal extends Goal {
     @Override
     public void stop() {
         this.woodpecker.getNavigation().stop();
-        if (this.woodpecker.isTouchingWater()) this.woodpecker.setFlying(false);
+        if (this.woodpecker.isInWater()) this.woodpecker.setFlying(false);
     }
 
     @Override
-    public boolean shouldRunEveryTick() {
+    public boolean requiresUpdateEveryTick() {
         return true;
     }
 
     @Override
     public void tick() {
-        if (this.woodpecker.getNavigation().isIdle()) this.startMovingToNextPosition();
+        if (this.woodpecker.getNavigation().isDone()) this.startMovingToNextPosition();
     }
 
     private boolean startMovingToNextPosition() {
-        return this.tryStartMovingToSurfaceTarget(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES)
-                || this.tryStartMovingToSurfaceTarget(Heightmap.Type.MOTION_BLOCKING);
+        return this.tryStartMovingToSurfaceTarget(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES)
+                || this.tryStartMovingToSurfaceTarget(Heightmap.Types.MOTION_BLOCKING);
     }
 
-    private boolean tryStartMovingToSurfaceTarget(Heightmap.Type heightmapType) {
-        BlockPos origin = this.woodpecker.getBlockPos();
+    private boolean tryStartMovingToSurfaceTarget(Heightmap.Types heightmapType) {
+        BlockPos origin = this.woodpecker.blockPosition();
         for (int attempt = 0; attempt < TARGET_ATTEMPTS; attempt++) {
-            int targetX = origin.getX() + this.woodpecker.getRandom().nextBetween(-HORIZONTAL_RANGE, HORIZONTAL_RANGE);
-            int targetZ = origin.getZ() + this.woodpecker.getRandom().nextBetween(-HORIZONTAL_RANGE, HORIZONTAL_RANGE);
-            int surfaceY = this.woodpecker.getWorld().getTopY(heightmapType, targetX, targetZ);
-            int targetY = surfaceY + this.woodpecker.getRandom().nextBetween(MIN_HEIGHT_ABOVE_SURFACE, MAX_HEIGHT_ABOVE_SURFACE);
-            Vec3d target = Vec3d.ofBottomCenter(new BlockPos(targetX, targetY, targetZ));
+            int targetX = origin.getX() + this.woodpecker.getRandom().nextIntBetweenInclusive(-HORIZONTAL_RANGE, HORIZONTAL_RANGE);
+            int targetZ = origin.getZ() + this.woodpecker.getRandom().nextIntBetweenInclusive(-HORIZONTAL_RANGE, HORIZONTAL_RANGE);
+            int surfaceY = this.woodpecker.level().getHeight(heightmapType, targetX, targetZ);
+            int targetY = surfaceY + this.woodpecker.getRandom().nextIntBetweenInclusive(MIN_HEIGHT_ABOVE_SURFACE, MAX_HEIGHT_ABOVE_SURFACE);
+            Vec3 target = Vec3.atBottomCenterOf(new BlockPos(targetX, targetY, targetZ));
             if (!this.isTargetSpaceEmpty(target)) continue;
-            if (this.woodpecker.getNavigation().startMovingTo(target.x, target.y, target.z, this.speed)) return true;
+            if (this.woodpecker.getNavigation().moveTo(target.x, target.y, target.z, this.speed)) return true;
         }
         return false;
     }
 
-    private boolean isTargetSpaceEmpty(Vec3d target) {
-        Vec3d offset = target.subtract(this.woodpecker.getPos());
-        return this.woodpecker.getWorld().isSpaceEmpty(this.woodpecker, this.woodpecker.getBoundingBox().offset(offset));
+    private boolean isTargetSpaceEmpty(Vec3 target) {
+        Vec3 offset = target.subtract(this.woodpecker.position());
+        return this.woodpecker.level().noCollision(this.woodpecker, this.woodpecker.getBoundingBox().move(offset));
     }
 }

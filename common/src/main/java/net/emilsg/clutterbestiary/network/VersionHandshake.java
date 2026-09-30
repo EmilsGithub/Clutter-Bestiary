@@ -5,14 +5,14 @@ import dev.architectury.networking.NetworkManager;
 import dev.architectury.platform.Platform;
 import dev.architectury.utils.Env;
 import net.emilsg.clutterbestiary.ClutterBestiary;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,7 +32,7 @@ public final class VersionHandshake {
     public static void register() {
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, ClientVersionPayload.ID, ClientVersionPayload.CODEC, (payload, context) ->
                 context.queue(() -> {
-                    if (context.getPlayer() instanceof ServerPlayerEntity player) checkClientVersion(player, payload.version());
+                    if (context.getPlayer() instanceof ServerPlayer player) checkClientVersion(player, payload.version());
                 })
         );
 
@@ -53,7 +53,7 @@ public final class VersionHandshake {
         return loaderSuffix == -1 ? version : version.substring(0, loaderSuffix);
     }
 
-    private static void onPlayerJoin(ServerPlayerEntity player) {
+    private static void onPlayerJoin(ServerPlayer player) {
         if (!NetworkManager.canPlayerReceive(player, ServerVersionPayload.ID)) {
             disconnect(player, "This server requires " + MOD_NAME + " " + getModVersion() + ".\nYou are missing the mod or running an older version.");
             return;
@@ -62,7 +62,7 @@ public final class VersionHandshake {
         NetworkManager.sendToPlayer(player, new ServerVersionPayload(getModVersion()));
     }
 
-    private static void checkClientVersion(ServerPlayerEntity player, String clientVersion) {
+    private static void checkClientVersion(ServerPlayer player, String clientVersion) {
         String serverVersion = getModVersion();
         if (serverVersion.equals(clientVersion)) return;
 
@@ -70,26 +70,26 @@ public final class VersionHandshake {
         disconnect(player, MOD_NAME + " version mismatch.\nServer: " + serverVersion + "\nYou: " + clientVersion);
     }
 
-    private static void disconnect(ServerPlayerEntity player, String message) {
-        player.networkHandler.disconnect(Text.literal(message).formatted(Formatting.RED));
+    private static void disconnect(ServerPlayer player, String message) {
+        player.connection.disconnect(Component.literal(message).withStyle(ChatFormatting.RED));
     }
 
-    public record ServerVersionPayload(String version) implements CustomPayload {
-        public static final Id<ServerVersionPayload> ID = new Id<>(Identifier.of(ClutterBestiary.MOD_ID, "server_version"));
-        public static final PacketCodec<RegistryByteBuf, ServerVersionPayload> CODEC = PacketCodecs.STRING.xmap(ServerVersionPayload::new, ServerVersionPayload::version).cast();
+    public record ServerVersionPayload(String version) implements CustomPacketPayload {
+        public static final Type<ServerVersionPayload> ID = new Type<>(Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "server_version"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, ServerVersionPayload> CODEC = ByteBufCodecs.STRING_UTF8.map(ServerVersionPayload::new, ServerVersionPayload::version).cast();
 
         @Override
-        public Id<? extends CustomPayload> getId() {
+        public Type<? extends CustomPacketPayload> type() {
             return ID;
         }
     }
 
-    public record ClientVersionPayload(String version) implements CustomPayload {
-        public static final Id<ClientVersionPayload> ID = new Id<>(Identifier.of(ClutterBestiary.MOD_ID, "client_version"));
-        public static final PacketCodec<RegistryByteBuf, ClientVersionPayload> CODEC = PacketCodecs.STRING.xmap(ClientVersionPayload::new, ClientVersionPayload::version).cast();
+    public record ClientVersionPayload(String version) implements CustomPacketPayload {
+        public static final Type<ClientVersionPayload> ID = new Type<>(Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "client_version"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, ClientVersionPayload> CODEC = ByteBufCodecs.STRING_UTF8.map(ClientVersionPayload::new, ClientVersionPayload::version).cast();
 
         @Override
-        public Id<? extends CustomPayload> getId() {
+        public Type<? extends CustomPacketPayload> type() {
             return ID;
         }
     }

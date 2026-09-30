@@ -1,73 +1,100 @@
 package net.emilsg.clutterbestiary.entity.custom;
+import net.minecraft.world.entity.EntityReference;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.entity.custom.goal.TamedEscapeDangerGoal;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentAnimalEntity;
 import net.emilsg.clutterbestiary.entity.custom.parent.ParentTameableEntity;
 import net.emilsg.clutterbestiary.sound.ModSoundEvents;
-import net.minecraft.block.BlockState;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.FoodComponent;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.ai.pathing.PathNodeType;
-import net.minecraft.entity.attribute.DefaultAttributeContainer;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.data.DataTracker;
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.mob.Angerable;
-import net.minecraft.entity.passive.AnimalEntity;
-import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ShearsItem;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TimeHelper;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.intprovider.UniformIntProvider;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.util.TimeUtil;
+import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.*;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.AnimationState;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityEvent;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.NeutralMob;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.FollowOwnerGoal;
+import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.ai.goal.LeapAtTargetGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.ResetUniversalAngerTargetGoal;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ShearsItem;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.gamerules.GameRules;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.PathType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.UUID;
 
-public abstract class AbstractNetherNewtEntity extends ParentTameableEntity implements Angerable {
-    private static final TrackedData<Integer> ANGER_TIME = DataTracker.registerData(AbstractNetherNewtEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final UniformIntProvider ANGER_TIME_RANGE = TimeHelper.betweenSeconds(20, 39);
-    private static final TrackedData<Float> SIZE = DataTracker.registerData(AbstractNetherNewtEntity.class, TrackedDataHandlerRegistry.FLOAT);
-    private static final TrackedData<Integer> FUNGI = DataTracker.registerData(AbstractNetherNewtEntity.class, TrackedDataHandlerRegistry.INTEGER);
-    private static final TrackedData<Boolean> SITTING = DataTracker.registerData(AbstractNetherNewtEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+public abstract class AbstractNetherNewtEntity extends ParentTameableEntity implements NeutralMob {
+    private static final UniformInt ANGER_TIME_RANGE = TimeUtil.rangeOfSeconds(20, 39);
+    private static final EntityDataAccessor<Float> SIZE = SynchedEntityData.defineId(AbstractNetherNewtEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Integer> FUNGI = SynchedEntityData.defineId(AbstractNetherNewtEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> SITTING = SynchedEntityData.defineId(AbstractNetherNewtEntity.class, EntityDataSerializers.BOOLEAN);
 
     public final AnimationState idleAnimationState = new AnimationState();
     public final AnimationState sittingAnimationState = new AnimationState();
 
     int ticker = 6000;
+    private long persistentAngerEndTime = NO_ANGER_END_TIME;
     @Nullable
-    private UUID angryAt;
+    private EntityReference<LivingEntity> persistentAngerTarget;
     private int idleAnimationTimeout = 0;
 
-    public AbstractNetherNewtEntity(EntityType<? extends ParentTameableEntity> entityType, World world) {
+    public AbstractNetherNewtEntity(EntityType<? extends ParentTameableEntity> entityType, Level world) {
         super(entityType, world);
-        this.setPathfindingPenalty(PathNodeType.WATER, -1.0F);
-        this.setPathfindingPenalty(PathNodeType.WATER_BORDER, 16.0F);
+        this.setPathfindingMalus(PathType.WATER, -1.0F);
+        this.setPathfindingMalus(PathType.WATER_BORDER, 16.0F);
     }
 
     @Override
-    public EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty, SpawnReason spawnReason, @Nullable EntityData entityData) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData entityData) {
         float scaledSize;
         switch (random.nextInt(3) + 1) {
             case 2 -> scaledSize = 1f;
@@ -75,67 +102,66 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
             default -> scaledSize = 0.85f;
         }
         this.setNewtSize(scaledSize);
-        this.refreshPosition();
-        this.calculateDimensions();
+        this.reapplyPosition();
+        this.refreshDimensions();
         this.setFungiCount(random.nextInt(5) + 1);
 
-        return super.initialize(world, difficulty, spawnReason, entityData);
+        return super.finalizeSpawn(world, difficulty, spawnReason, entityData);
     }
 
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(ANGER_TIME, 0);
-        builder.add(SIZE, 1f);
-        builder.add(FUNGI, 1);
-        builder.add(SITTING, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(SIZE, 1f);
+        builder.define(FUNGI, 1);
+        builder.define(SITTING, false);
     }
 
     @Override
-    protected void initGoals() {
-        this.goalSelector.add(1, new SwimGoal(this));
-        this.goalSelector.add(2, new TamedEscapeDangerGoal(this, 1.5D));
-        this.goalSelector.add(2, new SitGoal(this));
-        this.goalSelector.add(2, new PounceAtTargetGoal(this, 0.4f));
-        this.goalSelector.add(3, new MeleeAttackGoal(this, 1.0f, true));
-        this.goalSelector.add(4, new AnimalMateGoal(this, 1.2f));
-        this.goalSelector.add(5, new TemptGoal(this, 1.2f, this.getBreedingIngredient(), false));
-        this.goalSelector.add(6, new FollowOwnerGoal(this, 1.2, 10.0F, 2.0F));
-        this.goalSelector.add(7, new FollowParentGoal(this, 1.2f));
-        this.goalSelector.add(8, new WanderAroundFarGoal(this, 1.0f));
-        this.goalSelector.add(9, new LookAtEntityGoal(this, PlayerEntity.class, 6.0f));
-        this.goalSelector.add(10, new LookAroundGoal(this));
-        this.targetSelector.add(1, (new RevengeGoal(this)).setGroupRevenge());
-        this.targetSelector.add(2, new AttackWithOwnerGoal(this));
-        this.targetSelector.add(3, new UniversalAngerGoal<>(this, true));
+    protected void registerGoals() {
+        this.goalSelector.addGoal(1, new FloatGoal(this));
+        this.goalSelector.addGoal(2, new TamedEscapeDangerGoal(this, 1.5D));
+        this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
+        this.goalSelector.addGoal(2, new LeapAtTargetGoal(this, 0.4f));
+        this.goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.0f, true));
+        this.goalSelector.addGoal(4, new BreedGoal(this, 1.2f));
+        this.goalSelector.addGoal(5, new TemptGoal(this, 1.2f, this.getBreedingIngredient(), false));
+        this.goalSelector.addGoal(6, new FollowOwnerGoal(this, 1.2, 10.0F, 2.0F));
+        this.goalSelector.addGoal(7, new FollowParentGoal(this, 1.2f));
+        this.goalSelector.addGoal(8, new WaterAvoidingRandomStrollGoal(this, 1.0f));
+        this.goalSelector.addGoal(9, new LookAtPlayerGoal(this, Player.class, 6.0f));
+        this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
+        this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)).setAlertOthers());
+        this.targetSelector.addGoal(2, new OwnerHurtTargetGoal(this));
+        this.targetSelector.addGoal(3, new ResetUniversalAngerTargetGoal<>(this, true));
     }
 
-    public void readCustomDataFromNbt(NbtCompound nbt) {
-        super.readCustomDataFromNbt(nbt);
-        this.readAngerFromNbt(this.getWorld(), nbt);
-        this.setNewtSize(nbt.getFloat("Size"));
-        this.setFungiCount(nbt.getInt("Fungi"));
-        this.dataTracker.set(SITTING, nbt.getBoolean("isSitting"));
+    public void readAdditionalSaveData(ValueInput nbt) {
+        super.readAdditionalSaveData(nbt);
+        this.readPersistentAngerSaveData(this.level(), nbt);
+        this.setNewtSize(nbt.getFloatOr("Size", 0.0F));
+        this.setFungiCount(nbt.getIntOr("Fungi", 0));
+        this.entityData.set(SITTING, nbt.getBooleanOr("isSitting", false));
     }
 
-    public void writeCustomDataToNbt(NbtCompound nbt) {
-        super.writeCustomDataToNbt(nbt);
-        this.writeAngerToNbt(nbt);
+    public void addAdditionalSaveData(ValueOutput nbt) {
+        super.addAdditionalSaveData(nbt);
+        this.addPersistentAngerSaveData(nbt);
         nbt.putFloat("Size", this.getNewtSize());
         nbt.putInt("Fungi", this.getFungiCount());
-        nbt.putBoolean("isSitting", this.dataTracker.get(SITTING));
+        nbt.putBoolean("isSitting", this.entityData.get(SITTING));
     }
 
-    public static DefaultAttributeContainer.Builder setAttributes() {
-        return ParentAnimalEntity.createMobAttributes()
-                .add(EntityAttributes.GENERIC_MAX_HEALTH, 10.0D)
-                .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, 0.3f)
-                .add(EntityAttributes.GENERIC_ATTACK_DAMAGE, 3.0f);
+    public static AttributeSupplier.Builder setAttributes() {
+        return ParentAnimalEntity.createAnimalAttributes()
+                .add(Attributes.MAX_HEALTH, 10.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.3f)
+                .add(Attributes.ATTACK_DAMAGE, 3.0f);
     }
 
     @Override
-    public void breed(ServerWorld world, AnimalEntity other) {
-        AbstractNetherNewtEntity netherNewtEntity = (AbstractNetherNewtEntity) this.createChild(world, other);
+    public void spawnChildFromBreeding(ServerLevel world, Animal other) {
+        AbstractNetherNewtEntity netherNewtEntity = (AbstractNetherNewtEntity) this.getBreedOffspring(world, other);
 
         if (netherNewtEntity == null) return;
 
@@ -148,22 +174,22 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
 
         netherNewtEntity.setBaby(true);
         netherNewtEntity.setNewtSize(scaledSize);
-        netherNewtEntity.refreshPositionAndAngles(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
+        netherNewtEntity.snapTo(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
         netherNewtEntity.setFungiCount(random.nextInt(5) + 1);
-        this.breed(world, other, netherNewtEntity);
-        world.spawnEntityAndPassengers(netherNewtEntity);
+        this.finalizeSpawnChildFromBreeding(world, other, netherNewtEntity);
+        world.addFreshEntityWithPassengers(netherNewtEntity);
     }
 
     @Override
-    public boolean canBreedWith(AnimalEntity other) {
+    public boolean canMate(Animal other) {
         if (other == this) {
             return false;
-        } else if (!this.isTamed()) {
+        } else if (!this.isTame()) {
             return false;
         } else if (!(other instanceof AbstractNetherNewtEntity netherNewtEntity)) {
             return false;
         } else {
-            if (!netherNewtEntity.isTamed()) {
+            if (!netherNewtEntity.isTame()) {
                 return false;
             } else if (netherNewtEntity.isInSittingPose()) {
                 return false;
@@ -173,77 +199,80 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
         }
     }
 
-    public boolean canSpawn(WorldView world) {
-        return world.doesNotIntersectEntities(this);
+    public boolean checkSpawnObstruction(LevelReader world) {
+        return world.isUnobstructed(this);
     }
 
     @Override
-    public boolean canSpawn(WorldAccess world, SpawnReason spawnReason) {
+    public boolean checkSpawnRules(LevelAccessor world, EntitySpawnReason spawnReason) {
         return true;
     }
 
-    public void chooseRandomAngerTime() {
-        this.setAngerTime(ANGER_TIME_RANGE.get(this.random));
+    @Override
+    public void startPersistentAngerTimer() {
+        this.setTimeToRemainAngry(ANGER_TIME_RANGE.sample(this.random));
     }
 
     @Override
-    public abstract @Nullable PassiveEntity createChild(ServerWorld world, PassiveEntity entity);
+    public abstract @Nullable AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity);
 
     @Override
-    public int getAngerTime() {
-        return this.dataTracker.get(ANGER_TIME);
+    public long getPersistentAngerEndTime() {
+        return this.persistentAngerEndTime;
     }
 
     @Override
-    public void setAngerTime(int angerTime) {
-        this.dataTracker.set(ANGER_TIME, angerTime);
+    public void setPersistentAngerEndTime(long endTime) {
+        this.persistentAngerEndTime = endTime;
     }
 
     @Nullable
-    public UUID getAngryAt() {
-        return this.angryAt;
+    @Override
+    public EntityReference<LivingEntity> getPersistentAngerTarget() {
+        return this.persistentAngerTarget;
     }
 
-    public void setAngryAt(@Nullable UUID angryAt) {
-        this.angryAt = angryAt;
+    @Override
+    public void setPersistentAngerTarget(@Nullable EntityReference<LivingEntity> angryAt) {
+        this.persistentAngerTarget = angryAt;
     }
 
     public abstract Item getBreedingItem();
 
     public int getFungiCount() {
-        return this.dataTracker.get(FUNGI);
+        return this.entityData.get(FUNGI);
     }
 
     public void setFungiCount(int count) {
-        this.dataTracker.set(FUNGI, MathHelper.clamp(count, 0, 5));
+        this.entityData.set(FUNGI, Mth.clamp(count, 0, 5));
     }
 
     public float getNewtSize() {
-        return this.dataTracker.get(SIZE);
+        return this.entityData.get(SIZE);
     }
 
     public void setNewtSize(float size) {
-        this.dataTracker.set(SIZE, size);
-        Objects.requireNonNull(getAttributeInstance(EntityAttributes.GENERIC_SCALE)).setBaseValue(size);
-        this.refreshPosition();
-        this.calculateDimensions();
+        this.entityData.set(SIZE, size);
+        Objects.requireNonNull(getAttribute(Attributes.SCALE)).setBaseValue(size);
+        this.reapplyPosition();
+        this.refreshDimensions();
     }
 
     @Nullable
-    public abstract RegistryEntry<StatusEffect> getOnAttackEffect();
+    public abstract Holder<MobEffect> getOnAttackEffect();
 
     @Override
-    public boolean tryAttack(Entity target) {
-        if (!super.tryAttack(target)) return false;
-        RegistryEntry<StatusEffect> effect = this.getOnAttackEffect();
-        if (effect != null && target instanceof LivingEntity livingEntity && !this.getWorld().isClient) {
-            livingEntity.addStatusEffect(new StatusEffectInstance(effect, 100), this);
+    public boolean doHurtTarget(ServerLevel serverLevel, Entity target) {
+        if (!super.doHurtTarget(serverLevel, target)) return false;
+        Holder<MobEffect> effect = this.getOnAttackEffect();
+        if (effect != null && target instanceof LivingEntity livingEntity && !this.level().isClientSide()) {
+            livingEntity.addEffect(new MobEffectInstance(effect, 100), this);
         }
         return true;
     }
 
     @Override
-    public float getSoundPitch() {
+    public float getVoicePitch() {
         float multiplier = this.getNewtSize() > 1.0f ? 1.05f : 1.2f;
         return this.isBaby() ? ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.5F) * multiplier : ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F) * multiplier;
     }
@@ -251,109 +280,104 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
     public abstract Item getTamingItem();
 
     @Override
-    public ActionResult interactMob(PlayerEntity player, Hand hand) {
-        ItemStack stackInHand = player.getStackInHand(hand);
-        World world = this.getWorld();
-        BlockPos pos = this.getBlockPos();
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack stackInHand = player.getItemInHand(hand);
+        Level world = this.level();
+        BlockPos pos = this.blockPosition();
         int fungiCount = this.getFungiCount();
 
-        if (stackInHand.getItem() instanceof ShearsItem && !world.isClient && fungiCount != 0) {
-            if (!player.getAbilities().creativeMode) stackInHand.damage(1, player, LivingEntity.getSlotForHand(hand));
-            this.dropStack(new ItemStack(this.getFungusItem(), fungiCount));
-            world.playSound(null, pos, SoundEvents.BLOCK_GROWING_PLANT_CROP, SoundCategory.BLOCKS, 1.0F, 1.0F);
+        if (stackInHand.getItem() instanceof ShearsItem && !world.isClientSide() && fungiCount != 0) {
+            if (!player.getAbilities().instabuild) stackInHand.hurtAndBreak(1, player, hand.asEquipmentSlot());
+            this.spawnAtLocation((ServerLevel) this.level(), new ItemStack(this.getFungusItem(), fungiCount));
+            world.playSound(null, pos, SoundEvents.GROWING_PLANT_CROP, SoundSource.BLOCKS, 1.0F, 1.0F);
             this.setFungiCount(0);
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        if (this.isBreedingItem(stackInHand) && this.getHealth() < this.getMaxHealth()) {
-            if (!player.getAbilities().creativeMode) {
-                stackInHand.decrementUnlessCreative(1, player);
+        if (this.isFood(stackInHand) && this.getHealth() < this.getMaxHealth()) {
+            if (!player.getAbilities().instabuild) {
+                stackInHand.consume(1, player);
             }
-            FoodComponent foodComponent = stackInHand.get(DataComponentTypes.FOOD);
+            FoodProperties foodComponent = stackInHand.get(DataComponents.FOOD);
             float nutrition = foodComponent != null ? (float) foodComponent.nutrition() : 1.0F;
             this.heal(2.0F * nutrition);
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
 
-        if (this.isTamingItem(stackInHand) && !isTamed()) {
-            this.playSound(SoundEvents.ENTITY_STRIDER_EAT, 1.0F, 1.5F);
-            if (this.getWorld().isClient()) {
-                return ActionResult.CONSUME;
+        if (this.isTamingItem(stackInHand) && !isTame()) {
+            this.playSound(SoundEvents.STRIDER_EAT, 1.0F, 1.5F);
+            if (this.level().isClientSide()) {
+                return InteractionResult.CONSUME;
             } else {
-                if (!player.getAbilities().creativeMode) {
-                    stackInHand.decrement(1);
+                if (!player.getAbilities().instabuild) {
+                    stackInHand.shrink(1);
                 }
 
-                if (this.random.nextInt(3) == 0 && !this.getWorld().isClient()) {
-                    super.setOwner(player);
-                    this.navigation.recalculatePath();
+                if (this.random.nextInt(3) == 0 && !this.level().isClientSide()) {
+                    super.tame(player);
+                    this.navigation.recomputePath();
                     this.setHealth(this.getMaxHealth());
-                    this.setTamed(true, true);
+                    this.setTame(true, true);
                     this.setTarget(null);
-                    this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_POSITIVE_PLAYER_REACTION_PARTICLES);
+                    this.level().broadcastEntityEvent(this, EntityEvent.TAMING_SUCCEEDED);
                     setSit(true);
                 } else {
-                    this.getWorld().sendEntityStatus(this, EntityStatuses.ADD_NEGATIVE_PLAYER_REACTION_PARTICLES);
+                    this.level().broadcastEntityEvent(this, EntityEvent.TAMING_FAILED);
                 }
 
-                return ActionResult.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
         }
 
-        if (isTamed() && !this.getWorld().isClient() && hand == Hand.MAIN_HAND && isOwner(player) && !isBreedingItem(stackInHand)) {
-            setSit(!isSitting());
-            return ActionResult.SUCCESS;
+        if (isTame() && !this.level().isClientSide() && hand == InteractionHand.MAIN_HAND && isOwnedBy(player) && !isFood(stackInHand)) {
+            setSit(!isOrderedToSit());
+            return InteractionResult.SUCCESS;
         }
 
-        return super.interactMob(player, hand);
+        return super.mobInteract(player, hand);
     }
 
     @Override
-    public boolean isBreedingItem(ItemStack stack) {
-        return stack.isOf(this.getBreedingItem());
+    public boolean isFood(ItemStack stack) {
+        return stack.is(this.getBreedingItem());
     }
 
-    public boolean isSitting() {
-        return this.dataTracker.get(SITTING);
+    public boolean isOrderedToSit() {
+        return this.entityData.get(SITTING);
     }
 
-    public boolean isUniversallyAngry(World world) {
-        return world.getGameRules().getBoolean(GameRules.UNIVERSAL_ANGER) && this.hasAngerTime() && this.getAngryAt() == null;
-    }
-
+    // AgeableMob#setBaby is final now; babies get their random traits when their age first turns negative.
     @Override
-    public void setBaby(boolean baby) {
-        float scaledSize;
-        switch (random.nextInt(3) + 1) {
-            case 2 -> scaledSize = 1.25f;
-            case 3 -> scaledSize = 1.5f;
-            default -> scaledSize = 1;
+    public void setAge(int age) {
+        if (age < 0 && this.getAge() >= 0 && !this.level().isClientSide()) {
+            float scaledSize;
+            switch (random.nextInt(3) + 1) {
+                case 2 -> scaledSize = 1.25f;
+                case 3 -> scaledSize = 1.5f;
+                default -> scaledSize = 1;
+            }
+            this.setNewtSize(scaledSize);
+            this.setFungiCount(random.nextInt(5) + 1);
         }
-        this.setNewtSize(scaledSize);
-        this.setFungiCount(random.nextInt(5) + 1);
-        super.setBaby(baby);
+        super.setAge(age);
     }
 
     public void setSit(boolean sitting) {
-        this.dataTracker.set(SITTING, sitting);
-        super.setSitting(sitting);
+        this.entityData.set(SITTING, sitting);
+        super.setOrderedToSit(sitting);
         this.navigation.stop();
     }
 
-    public boolean shouldAngerAt(LivingEntity entity) {
-        if (!this.canTarget(entity)) {
-            return false;
-        } else {
-            return entity.getType() == EntityType.PLAYER && this.isUniversallyAngry(entity.getWorld()) || entity.getUuid().equals(this.getAngryAt());
-        }
+    public boolean isAngryAt(LivingEntity entity) {
+        return this.level() instanceof ServerLevel serverLevel && this.isAngryAt(entity, serverLevel);
     }
 
     @Override
     public void tick() {
         super.tick();
-        World world = this.getWorld();
+        Level world = this.level();
 
-        if (!world.isClient) {
+        if (!world.isClientSide()) {
             ticker--;
 
             if (ticker <= 0 && this.getFungiCount() != 5) {
@@ -362,16 +386,16 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
             }
         }
 
-        if (world.isClient) {
+        if (world.isClientSide()) {
             this.setupAnimationStates();
         }
     }
 
     @Override
-    public void tickMovement() {
-        super.tickMovement();
-        if (!this.getWorld().isClient) {
-            this.tickAngerLogic((ServerWorld) this.getWorld(), true);
+    public void aiStep() {
+        super.aiStep();
+        if (!this.level().isClientSide()) {
+            this.updatePersistentAnger((ServerLevel) this.level(), true);
         }
     }
 
@@ -395,46 +419,46 @@ public abstract class AbstractNetherNewtEntity extends ParentTameableEntity impl
 
     @Override
     protected void playStepSound(BlockPos pos, BlockState state) {
-        BlockSoundGroup blockSoundGroup = state.getSoundGroup();
+        SoundType blockSoundGroup = state.getSoundType();
         this.playSound(blockSoundGroup.getStepSound(), blockSoundGroup.getVolume() * 0.05F, blockSoundGroup.getPitch());
     }
 
     @Override
-    protected void updateAttributesForTamed() {
-        Objects.requireNonNull(getAttributeInstance(EntityAttributes.GENERIC_MAX_HEALTH)).setBaseValue(20.0D);
-        Objects.requireNonNull(getAttributeInstance(EntityAttributes.GENERIC_ATTACK_DAMAGE)).setBaseValue(6.0f);
+    protected void applyTamingSideEffects() {
+        Objects.requireNonNull(getAttribute(Attributes.MAX_HEALTH)).setBaseValue(20.0D);
+        Objects.requireNonNull(getAttribute(Attributes.ATTACK_DAMAGE)).setBaseValue(6.0f);
     }
 
-    protected void updateLimbs(float v) {
+    protected void updateWalkAnimation(float v) {
         float f;
-        if (this.getPose() == EntityPose.STANDING) {
+        if (this.getPose() == Pose.STANDING) {
             f = Math.min(v * 6.0F, 1.0F);
         } else {
             f = 0.0F;
         }
 
-        this.limbAnimator.updateLimbs(f, 0.2F);
+        this.walkAnimation.update(f, 0.2F, 1.0F);
     }
 
     private Ingredient getBreedingIngredient() {
-        return Ingredient.ofItems(getBreedingItem());
+        return Ingredient.of(getBreedingItem());
     }
 
     private boolean isTamingItem(ItemStack itemStack) {
-        return itemStack.isOf(this.getTamingItem());
+        return itemStack.is(this.getTamingItem());
     }
 
     private void setupAnimationStates() {
         if (this.idleAnimationTimeout <= 0 && !this.isMoving()) {
             this.idleAnimationTimeout = 80;
-            this.idleAnimationState.start(this.age);
+            this.idleAnimationState.start(this.tickCount);
         } else {
             --this.idleAnimationTimeout;
         }
 
-        if (this.isSitting() && !this.sittingAnimationState.isRunning()) {
-            this.sittingAnimationState.start(this.age);
-        } else if (!this.isSitting()) {
+        if (this.isOrderedToSit() && !this.sittingAnimationState.isStarted()) {
+            this.sittingAnimationState.start(this.tickCount);
+        } else if (!this.isOrderedToSit()) {
             this.sittingAnimationState.stop();
         }
     }

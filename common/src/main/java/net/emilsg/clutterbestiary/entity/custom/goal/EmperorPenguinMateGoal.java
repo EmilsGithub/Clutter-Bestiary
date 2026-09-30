@@ -1,15 +1,15 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.EmperorPenguinEntity;
-import net.minecraft.advancement.criterion.Criteria;
-import net.minecraft.entity.ExperienceOrbEntity;
-import net.minecraft.entity.ai.goal.AnimalMateGoal;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.stat.Stats;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.GameRules;
+import net.minecraft.advancements.triggers.CriteriaTriggers;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
+import net.minecraft.world.level.gamerules.GameRules;
 
-public class EmperorPenguinMateGoal extends AnimalMateGoal {
+public class EmperorPenguinMateGoal extends BreedGoal {
     private final EmperorPenguinEntity emperorPenguin;
 
     public EmperorPenguinMateGoal(EmperorPenguinEntity emperorPenguin, double speed) {
@@ -17,29 +17,29 @@ public class EmperorPenguinMateGoal extends AnimalMateGoal {
         this.emperorPenguin = emperorPenguin;
     }
 
-    public boolean canStart() {
-        return super.canStart() && !this.emperorPenguin.hasEgg();
+    public boolean canUse() {
+        return super.canUse() && !this.emperorPenguin.hasEgg();
     }
 
     protected void breed() {
-        ServerPlayerEntity serverPlayerEntity = this.animal.getLovingPlayer();
-        if (serverPlayerEntity == null && this.mate.getLovingPlayer() != null) {
-            serverPlayerEntity = this.mate.getLovingPlayer();
+        ServerPlayer serverPlayerEntity = this.animal.getLoveCause();
+        if (serverPlayerEntity == null && this.partner.getLoveCause() != null) {
+            serverPlayerEntity = this.partner.getLoveCause();
         }
 
         if (serverPlayerEntity != null) {
-            serverPlayerEntity.incrementStat(Stats.ANIMALS_BRED);
-            Criteria.BRED_ANIMALS.trigger(serverPlayerEntity, this.animal, this.mate, null);
+            serverPlayerEntity.awardStat(Stats.ANIMALS_BRED);
+            CriteriaTriggers.BRED_ANIMALS.trigger(serverPlayerEntity, this.animal, this.partner, null);
         }
 
         this.emperorPenguin.beginCarryingEgg();
-        this.animal.setBreedingAge(6000);
-        this.mate.setBreedingAge(6000);
-        this.animal.resetLoveTicks();
-        this.mate.resetLoveTicks();
-        Random random = this.animal.getRandom();
-        if (this.world.getGameRules().getBoolean(GameRules.DO_MOB_LOOT)) {
-            this.world.spawnEntity(new ExperienceOrbEntity(this.world, this.animal.getX(), this.animal.getY(), this.animal.getZ(), random.nextInt(7) + 1));
+        this.animal.setAge(6000);
+        this.partner.setAge(6000);
+        this.animal.resetLove();
+        this.partner.resetLove();
+        RandomSource random = this.animal.getRandom();
+        if (this.level.getGameRules().get(GameRules.MOB_DROPS)) {
+            this.level.addFreshEntity(new ExperienceOrb(this.level, this.animal.getX(), this.animal.getY(), this.animal.getZ(), random.nextInt(7) + 1));
         }
 
     }

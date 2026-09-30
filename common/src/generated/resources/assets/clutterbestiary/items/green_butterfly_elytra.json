@@ -1,0 +1,14 @@
+{
+  "model": {
+    "type": "minecraft:condition",
+    "on_false": {
+      "type": "minecraft:model",
+      "model": "clutterbestiary:item/green_butterfly_elytra"
+    },
+    "on_true": {
+      "type": "minecraft:model",
+      "model": "clutterbestiary:item/broken_green_butterfly_elytra"
+    },
+    "property": "minecraft:broken"
+  }
+}

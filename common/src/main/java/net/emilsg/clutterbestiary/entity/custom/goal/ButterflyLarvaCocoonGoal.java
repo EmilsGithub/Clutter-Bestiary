@@ -4,18 +4,18 @@ import net.emilsg.clutterbestiary.block.ModBlocks;
 import net.emilsg.clutterbestiary.block.custom.ButterflyCocoonBlock;
 import net.emilsg.clutterbestiary.block.entity.ButterflyCocoonBlockEntity;
 import net.emilsg.clutterbestiary.entity.custom.ButterflyLarvaEntity;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.ai.goal.Goal;
-import net.minecraft.entity.ai.pathing.Path;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.event.GameEvent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -41,12 +41,12 @@ public class ButterflyLarvaCocoonGoal extends Goal {
 
     public ButterflyLarvaCocoonGoal(ButterflyLarvaEntity larva) {
         this.larva = larva;
-        this.setControls(EnumSet.of(Control.MOVE));
+        this.setFlags(EnumSet.of(Flag.MOVE));
     }
 
     @Override
-    public boolean canStart() {
-        if (this.larva.getLifeTicks() < ButterflyLarvaEntity.WANDER_TICKS || this.larva.isInFluid()) return false;
+    public boolean canUse() {
+        if (this.larva.getLifeTicks() < ButterflyLarvaEntity.WANDER_TICKS || this.larva.isInLiquid()) return false;
         if (this.searchCooldownTicks > 0) {
             this.searchCooldownTicks--;
             return false;
@@ -57,11 +57,11 @@ public class ButterflyLarvaCocoonGoal extends Goal {
     }
 
     @Override
-    public boolean shouldContinue() {
-        if (this.climbStartPos == null || this.cocoonPlacementPos == null || this.larva.isInFluid()) return false;
+    public boolean canContinueToUse() {
+        if (this.climbStartPos == null || this.cocoonPlacementPos == null || this.larva.isInLiquid()) return false;
         if (!this.isCocoonSiteValid(this.cocoonPlacementPos, this.climbStartPos)) return false;
-        return this.hasStartedClimbing || !this.larva.getNavigation().isIdle()
-                || this.larva.squaredDistanceTo(Vec3d.ofBottomCenter(this.climbStartPos)) <= 1.0;
+        return this.hasStartedClimbing || !this.larva.getNavigation().isDone()
+                || this.larva.distanceToSqr(Vec3.atBottomCenterOf(this.climbStartPos)) <= 1.0;
     }
 
     @Override
@@ -69,7 +69,7 @@ public class ButterflyLarvaCocoonGoal extends Goal {
         this.climbingTimeTicks = 0;
         this.hasStartedClimbing = false;
         this.larva.setClimbing(false);
-        if (this.pathToClimbStart != null) this.larva.getNavigation().startMovingAlong(this.pathToClimbStart, 0.8);
+        if (this.pathToClimbStart != null) this.larva.getNavigation().moveTo(this.pathToClimbStart, 0.8);
     }
 
     @Override
@@ -85,7 +85,7 @@ public class ButterflyLarvaCocoonGoal extends Goal {
     }
 
     @Override
-    public boolean shouldRunEveryTick() {
+    public boolean requiresUpdateEveryTick() {
         return true;
     }
 
@@ -93,8 +93,8 @@ public class ButterflyLarvaCocoonGoal extends Goal {
     public void tick() {
         if (this.climbStartPos == null || this.cocoonPlacementPos == null || this.directionToTrunk == null) return;
 
-        Vec3d climbStartCenter = Vec3d.ofBottomCenter(this.climbStartPos);
-        if (!this.hasStartedClimbing && this.larva.squaredDistanceTo(climbStartCenter) > 1.0) return;
+        Vec3 climbStartCenter = Vec3.atBottomCenterOf(this.climbStartPos);
+        if (!this.hasStartedClimbing && this.larva.distanceToSqr(climbStartCenter) > 1.0) return;
 
         if (++this.climbingTimeTicks > MAX_CLIMB_DURATION_TICKS) {
             this.stop();
@@ -108,11 +108,11 @@ public class ButterflyLarvaCocoonGoal extends Goal {
             return;
         }
 
-        Vec3d climbingPosition = this.getClimbingPos(this.cocoonPlacementPos);
+        Vec3 climbingPosition = this.getClimbingPos(this.cocoonPlacementPos);
         double movementX = this.getAlignmentSpeed(climbingPosition.x - this.larva.getX());
         double movementZ = this.getAlignmentSpeed(climbingPosition.z - this.larva.getZ());
         this.faceTrunk();
-        this.larva.setVelocity(movementX, CLIMB_SPEED, movementZ);
+        this.larva.setDeltaMovement(movementX, CLIMB_SPEED, movementZ);
         this.larva.fallDistance = 0.0F;
     }
 
@@ -120,14 +120,14 @@ public class ButterflyLarvaCocoonGoal extends Goal {
         this.larva.getNavigation().stop();
         this.faceTrunk();
 
-        Vec3d climbingPosition = this.getClimbingPos(this.climbStartPos);
+        Vec3 climbingPosition = this.getClimbingPos(this.climbStartPos);
         double distanceX = climbingPosition.x - this.larva.getX();
         double distanceZ = climbingPosition.z - this.larva.getZ();
         double horizontalDistanceSquared = distanceX * distanceX + distanceZ * distanceZ;
-        if (horizontalDistanceSquared > CLIMB_ALIGNMENT_DISTANCE * CLIMB_ALIGNMENT_DISTANCE || !this.larva.isOnGround()) {
-            this.larva.setVelocity(
+        if (horizontalDistanceSquared > CLIMB_ALIGNMENT_DISTANCE * CLIMB_ALIGNMENT_DISTANCE || !this.larva.onGround()) {
+            this.larva.setDeltaMovement(
                     this.getAlignmentSpeed(distanceX),
-                    this.larva.getVelocity().y,
+                    this.larva.getDeltaMovement().y,
                     this.getAlignmentSpeed(distanceZ)
             );
             return false;
@@ -138,11 +138,11 @@ public class ButterflyLarvaCocoonGoal extends Goal {
         return true;
     }
 
-    private Vec3d getClimbingPos(BlockPos pos) {
-        return Vec3d.ofBottomCenter(pos).add(
-                this.directionToTrunk.getOffsetX() * TRUNK_ALIGNMENT_OFFSET,
+    private Vec3 getClimbingPos(BlockPos pos) {
+        return Vec3.atBottomCenterOf(pos).add(
+                this.directionToTrunk.getStepX() * TRUNK_ALIGNMENT_OFFSET,
                 0.0,
-                this.directionToTrunk.getOffsetZ() * TRUNK_ALIGNMENT_OFFSET
+                this.directionToTrunk.getStepZ() * TRUNK_ALIGNMENT_OFFSET
         );
     }
 
@@ -151,14 +151,14 @@ public class ButterflyLarvaCocoonGoal extends Goal {
     }
 
     private void faceTrunk() {
-        float trunkYaw = this.directionToTrunk.asRotation();
-        this.larva.setYaw(trunkYaw);
-        this.larva.bodyYaw = trunkYaw;
-        this.larva.headYaw = trunkYaw;
+        float trunkYaw = this.directionToTrunk.toYRot();
+        this.larva.setYRot(trunkYaw);
+        this.larva.yBodyRot = trunkYaw;
+        this.larva.yHeadRot = trunkYaw;
     }
 
     private boolean findCocoonSite() {
-        if (!(this.larva.getWorld() instanceof ServerWorld serverWorld)) return false;
+        if (!(this.larva.level() instanceof ServerLevel serverWorld)) return false;
 
         BlockPos homePos = this.larva.getHomePos();
         BlockState cocoonState = this.getCocoonState();
@@ -166,22 +166,22 @@ public class ButterflyLarvaCocoonGoal extends Goal {
             int searchX = homePos.getX() + this.larva.getRandom().nextInt(ButterflyLarvaEntity.HOME_RADIUS * 2 + 1) - ButterflyLarvaEntity.HOME_RADIUS;
             int searchZ = homePos.getZ() + this.larva.getRandom().nextInt(ButterflyLarvaEntity.HOME_RADIUS * 2 + 1) - ButterflyLarvaEntity.HOME_RADIUS;
             BlockPos searchColumn = new BlockPos(searchX, homePos.getY(), searchZ);
-            if (homePos.getSquaredDistance(searchColumn) > ButterflyLarvaEntity.HOME_RADIUS * ButterflyLarvaEntity.HOME_RADIUS) continue;
+            if (homePos.distSqr(searchColumn) > ButterflyLarvaEntity.HOME_RADIUS * ButterflyLarvaEntity.HOME_RADIUS) continue;
 
             for (int searchY = homePos.getY() - 4; searchY <= homePos.getY() + MAX_CLIMB_HEIGHT; searchY++) {
                 BlockPos trunkPos = new BlockPos(searchX, searchY, searchZ);
-                if (!serverWorld.isChunkLoaded(ChunkPos.toLong(trunkPos))
+                if (!serverWorld.areEntitiesLoaded(ChunkPos.pack(trunkPos))
                         || !this.isTrunk(serverWorld.getBlockState(trunkPos))) continue;
 
-                for (Direction sideOfTrunk : Direction.Type.HORIZONTAL) {
-                    BlockPos possibleCocoonPos = trunkPos.offset(sideOfTrunk);
+                for (Direction sideOfTrunk : Direction.Plane.HORIZONTAL) {
+                    BlockPos possibleCocoonPos = trunkPos.relative(sideOfTrunk);
                     if (!this.canPlaceCocoonAt(serverWorld, possibleCocoonPos, cocoonState)) continue;
 
                     BlockPos possibleClimbStart = this.findClimbStart(serverWorld, trunkPos, sideOfTrunk, possibleCocoonPos);
                     if (possibleClimbStart == null) continue;
 
-                    Path possiblePath = this.larva.getNavigation().findPathTo(possibleClimbStart, 0);
-                    if (possiblePath == null || !possiblePath.reachesTarget()) continue;
+                    Path possiblePath = this.larva.getNavigation().createPath(possibleClimbStart, 0);
+                    if (possiblePath == null || !possiblePath.canReach()) continue;
 
                     this.climbStartPos = possibleClimbStart;
                     this.cocoonPlacementPos = possibleCocoonPos;
@@ -195,20 +195,20 @@ public class ButterflyLarvaCocoonGoal extends Goal {
     }
 
     @Nullable
-    private BlockPos findClimbStart(ServerWorld serverWorld, BlockPos trunkPos, Direction sideOfTrunk, BlockPos cocoonPos) {
+    private BlockPos findClimbStart(ServerLevel serverWorld, BlockPos trunkPos, Direction sideOfTrunk, BlockPos cocoonPos) {
         BlockPos trunkBase = trunkPos;
-        for (int depth = 0; depth < MAX_CLIMB_HEIGHT && this.isTrunk(serverWorld.getBlockState(trunkBase.down())); depth++) {
-            trunkBase = trunkBase.down();
+        for (int depth = 0; depth < MAX_CLIMB_HEIGHT && this.isTrunk(serverWorld.getBlockState(trunkBase.below())); depth++) {
+            trunkBase = trunkBase.below();
         }
 
-        BlockPos possibleClimbStart = trunkBase.offset(sideOfTrunk);
-        if (!serverWorld.isChunkLoaded(ChunkPos.toLong(possibleClimbStart))) return null;
-        if (!serverWorld.getBlockState(possibleClimbStart.down()).isSolidBlock(serverWorld, possibleClimbStart.down())) return null;
+        BlockPos possibleClimbStart = trunkBase.relative(sideOfTrunk);
+        if (!serverWorld.areEntitiesLoaded(ChunkPos.pack(possibleClimbStart))) return null;
+        if (!serverWorld.getBlockState(possibleClimbStart.below()).isRedstoneConductor(serverWorld, possibleClimbStart.below())) return null;
         if (cocoonPos.getY() - possibleClimbStart.getY() < 2) return null;
 
         for (int climbY = possibleClimbStart.getY(); climbY <= cocoonPos.getY(); climbY++) {
             BlockPos climbingSpace = new BlockPos(possibleClimbStart.getX(), climbY, possibleClimbStart.getZ());
-            BlockPos supportingTrunk = climbingSpace.offset(sideOfTrunk.getOpposite());
+            BlockPos supportingTrunk = climbingSpace.relative(sideOfTrunk.getOpposite());
             if (!serverWorld.getBlockState(climbingSpace).isAir()
                     || !this.isTrunk(serverWorld.getBlockState(supportingTrunk))) return null;
         }
@@ -216,51 +216,51 @@ public class ButterflyLarvaCocoonGoal extends Goal {
     }
 
     private boolean isCocoonSiteValid(BlockPos cocoonPos, BlockPos climbStartPos) {
-        if (!(this.larva.getWorld() instanceof ServerWorld serverWorld) || this.directionToTrunk == null) return false;
+        if (!(this.larva.level() instanceof ServerLevel serverWorld) || this.directionToTrunk == null) return false;
         if (!this.canPlaceCocoonAt(serverWorld, cocoonPos, this.getCocoonState())) return false;
 
         for (int climbY = climbStartPos.getY(); climbY <= cocoonPos.getY(); climbY++) {
             BlockPos climbingSpace = new BlockPos(climbStartPos.getX(), climbY, climbStartPos.getZ());
-            BlockPos supportingTrunk = climbingSpace.offset(this.directionToTrunk);
+            BlockPos supportingTrunk = climbingSpace.relative(this.directionToTrunk);
             if (!serverWorld.getBlockState(climbingSpace).isAir()
                     || !this.isTrunk(serverWorld.getBlockState(supportingTrunk))) return false;
         }
         return true;
     }
 
-    private boolean canPlaceCocoonAt(ServerWorld serverWorld, BlockPos pos, BlockState cocoonState) {
-        return serverWorld.isChunkLoaded(ChunkPos.toLong(pos))
-                && serverWorld.getBlockState(pos).isReplaceable()
+    private boolean canPlaceCocoonAt(ServerLevel serverWorld, BlockPos pos, BlockState cocoonState) {
+        return serverWorld.areEntitiesLoaded(ChunkPos.pack(pos))
+                && serverWorld.getBlockState(pos).canBeReplaced()
                 && serverWorld.getFluidState(pos).isEmpty()
-                && cocoonState.canPlaceAt(serverWorld, pos);
+                && cocoonState.canSurvive(serverWorld, pos);
     }
 
     private void placeCocoon() {
         if (this.cocoonPlacementPos == null || this.climbStartPos == null
-                || !(this.larva.getWorld() instanceof ServerWorld serverWorld)) return;
+                || !(this.larva.level() instanceof ServerLevel serverWorld)) return;
         if (!this.isCocoonSiteValid(this.cocoonPlacementPos, this.climbStartPos)) return;
 
         BlockState cocoonState = this.getCocoonState();
 
-        if (serverWorld.setBlockState(this.cocoonPlacementPos, cocoonState, Block.NOTIFY_ALL)) {
+        if (serverWorld.setBlock(this.cocoonPlacementPos, cocoonState, Block.UPDATE_ALL)) {
             if (serverWorld.getBlockEntity(this.cocoonPlacementPos) instanceof ButterflyCocoonBlockEntity cocoonBlockEntity) {
                 cocoonBlockEntity.setParentVariant(this.larva.getVariant());
             }
-            serverWorld.emitGameEvent(
+            serverWorld.gameEvent(
                     GameEvent.BLOCK_PLACE,
                     this.cocoonPlacementPos,
-                    GameEvent.Emitter.of(this.larva, cocoonState)
+                    GameEvent.Context.of(this.larva, cocoonState)
             );
             this.larva.discard();
         }
     }
 
     private boolean isTrunk(BlockState state) {
-        return state.isIn(BlockTags.LOGS) || state.isOf(Blocks.CRIMSON_STEM) || state.isOf(Blocks.WARPED_STEM)
-                || state.isOf(Blocks.STRIPPED_CRIMSON_STEM) || state.isOf(Blocks.STRIPPED_WARPED_STEM);
+        return state.is(BlockTags.LOGS) || state.is(Blocks.CRIMSON_STEM) || state.is(Blocks.WARPED_STEM)
+                || state.is(Blocks.STRIPPED_CRIMSON_STEM) || state.is(Blocks.STRIPPED_WARPED_STEM);
     }
 
     private BlockState getCocoonState() {
-        return ModBlocks.BUTTERFLY_COCOON.get().getDefaultState().with(ButterflyCocoonBlock.CAN_HATCH, true);
+        return ModBlocks.BUTTERFLY_COCOON.get().defaultBlockState().setValue(ButterflyCocoonBlock.CAN_HATCH, true);
     }
 }

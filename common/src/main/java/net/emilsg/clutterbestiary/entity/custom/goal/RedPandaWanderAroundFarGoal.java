@@ -1,13 +1,13 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.RedPandaEntity;
-import net.minecraft.entity.ai.FuzzyTargeting;
-import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.util.LandRandomPos;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-public class RedPandaWanderAroundFarGoal extends WanderAroundFarGoal {
+public class RedPandaWanderAroundFarGoal extends WaterAvoidingRandomStrollGoal {
     private final RedPandaEntity redPandaEntity;
 
     public RedPandaWanderAroundFarGoal(RedPandaEntity redPandaEntity, float speed) {
@@ -16,7 +16,7 @@ public class RedPandaWanderAroundFarGoal extends WanderAroundFarGoal {
     }
 
     @Override
-    public boolean canStart() {
+    public boolean canUse() {
         if (this.mob.hasControllingPassenger()) {
             return false;
         } else {
@@ -24,14 +24,14 @@ public class RedPandaWanderAroundFarGoal extends WanderAroundFarGoal {
                 return false;
             }
 
-            Vec3d vec3d = this.getWanderTarget();
+            Vec3 vec3d = this.getPosition();
             if (vec3d == null) {
                 return false;
             } else {
-                this.targetX = vec3d.x;
-                this.targetY = vec3d.y;
-                this.targetZ = vec3d.z;
-                this.ignoringChance = false;
+                this.wantedX = vec3d.x;
+                this.wantedY = vec3d.y;
+                this.wantedZ = vec3d.z;
+                this.forceTrigger = false;
                 return true;
             }
         }
@@ -39,29 +39,29 @@ public class RedPandaWanderAroundFarGoal extends WanderAroundFarGoal {
 
     @Nullable
     @Override
-    protected Vec3d getWanderTarget() {
-        if (!this.redPandaEntity.isStaying()) return super.getWanderTarget();
+    protected Vec3 getPosition() {
+        if (!this.redPandaEntity.isStaying()) return super.getPosition();
 
         BlockPos centerPos = this.redPandaEntity.getStayingPos();
-        Vec3d center = Vec3d.ofCenter(centerPos);
+        Vec3 center = Vec3.atCenterOf(centerPos);
         double maxDistSq = 20.0 * 20.0;
 
-        int horizontal = this.redPandaEntity.isInsideWaterOrBubbleColumn() ? 15 : 10;
+        int horizontal = this.redPandaEntity.isInWater() ? 15 : 10;
         int vertical = 7;
 
-        if (!this.redPandaEntity.isInsideWaterOrBubbleColumn() && this.redPandaEntity.getRandom().nextFloat() < this.probability) {
-            Vec3d fallback = super.getWanderTarget();
-            return fallback != null && fallback.squaredDistanceTo(center) <= maxDistSq ? fallback : null;
+        if (!this.redPandaEntity.isInWater() && this.redPandaEntity.getRandom().nextFloat() < this.probability) {
+            Vec3 fallback = super.getPosition();
+            return fallback != null && fallback.distanceToSqr(center) <= maxDistSq ? fallback : null;
         }
 
         for (int tries = 0; tries < 12; tries++) {
-            Vec3d candidate = FuzzyTargeting.find(this.redPandaEntity, horizontal, vertical);
-            if (candidate != null && candidate.squaredDistanceTo(center) <= maxDistSq) {
+            Vec3 candidate = LandRandomPos.getPos(this.redPandaEntity, horizontal, vertical);
+            if (candidate != null && candidate.distanceToSqr(center) <= maxDistSq) {
                 return candidate;
             }
         }
 
-        Vec3d fallback = super.getWanderTarget();
-        return fallback != null && fallback.squaredDistanceTo(center) <= maxDistSq ? fallback : null;
+        Vec3 fallback = super.getPosition();
+        return fallback != null && fallback.distanceToSqr(center) <= maxDistSq ? fallback : null;
     }
 }

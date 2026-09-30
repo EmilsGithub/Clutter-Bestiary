@@ -1,43 +1,43 @@
 package net.emilsg.clutterbestiary.item.custom;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.Bucketable;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.EntityBucketItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.world.event.GameEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.Bucketable;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.MobBucketItem;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.material.Fluid;
 
-public class BestiaryEntityBucketItem extends EntityBucketItem {
+public class BestiaryEntityBucketItem extends MobBucketItem {
     private final Supplier<? extends EntityType<?>> entityType;
 
-    public BestiaryEntityBucketItem(Supplier<? extends EntityType<?>> entityType, Fluid fluid, SoundEvent emptyingSound, Settings settings) {
+    public BestiaryEntityBucketItem(Supplier<? extends EntityType<?>> entityType, Fluid fluid, SoundEvent emptyingSound, Properties settings) {
         super(null, fluid, emptyingSound, settings);
         this.entityType = entityType;
     }
 
     @Override
-    public void onEmptied(@Nullable PlayerEntity player, World world, ItemStack stack, BlockPos pos) {
-        if (!(world instanceof ServerWorld serverWorld)) return;
+    public void checkExtraContent(@Nullable LivingEntity player, Level world, ItemStack stack, BlockPos pos) {
+        if (!(world instanceof ServerLevel serverWorld)) return;
 
-        Entity entity = this.entityType.get().spawnFromItemStack(serverWorld, stack, null, pos, SpawnReason.BUCKET, true, false);
+        Entity entity = this.entityType.get().spawn(serverWorld, stack, null, pos, EntitySpawnReason.BUCKET, true, false);
         if (entity instanceof Bucketable bucketable) {
-            NbtComponent entityData = stack.getOrDefault(DataComponentTypes.BUCKET_ENTITY_DATA, NbtComponent.DEFAULT);
-            bucketable.copyDataFromNbt(entityData.copyNbt());
+            CustomData entityData = stack.getOrDefault(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY);
+            bucketable.loadFromBucketTag(entityData.copyTag());
             bucketable.setFromBucket(true);
         }
 
-        world.emitGameEvent(player, GameEvent.ENTITY_PLACE, pos);
+        world.gameEvent(player, GameEvent.ENTITY_PLACE, pos);
     }
 }

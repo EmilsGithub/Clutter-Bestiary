@@ -1,62 +1,57 @@
 package net.emilsg.clutterbestiary.block.entity;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import net.emilsg.clutterbestiary.entity.variants.ButterflyVariant;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 public class ButterflyBottleBlockEntity extends BlockEntity {
-    private NbtCompound butterflyData = new NbtCompound();
+    private CompoundTag butterflyData = new CompoundTag();
 
     public ButterflyBottleBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntityTypes.BUTTERFLY_IN_A_BOTTLE.get(), pos, state);
     }
 
     @Override
-    public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registryLookup) {
-        NbtCompound nbt = new NbtCompound();
-        writeNbt(nbt, registryLookup);
-        return nbt;
+    public CompoundTag getUpdateTag(HolderLookup.Provider registryLookup) {
+        return this.saveCustomOnly(registryLookup);
     }
 
     @Override
-    protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
-        super.writeNbt(nbt, registryLookup);
+    protected void saveAdditional(ValueOutput nbt) {
+        super.saveAdditional(nbt);
         if (butterflyData != null && !butterflyData.isEmpty()) {
-            nbt.put("ButterflyData", butterflyData);
+            nbt.store("ButterflyData", CompoundTag.CODEC, butterflyData);
         }
     }
 
     @Override
-    public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
-        super.readNbt(nbt, registryLookup);
-        if (nbt.contains("ButterflyData", NbtElement.COMPOUND_TYPE)) {
-            butterflyData = nbt.getCompound("ButterflyData").copy();
-        } else {
-            butterflyData = new NbtCompound();
-        }
+    protected void loadAdditional(ValueInput nbt) {
+        super.loadAdditional(nbt);
+        butterflyData = nbt.read("ButterflyData", CompoundTag.CODEC).map(CompoundTag::copy).orElseGet(CompoundTag::new);
     }
 
     @Nullable
-    public NbtCompound getButterflyData() {
+    public CompoundTag getButterflyData() {
         return butterflyData == null ? null : butterflyData.copy();
     }
 
-    public void setButterflyData(@Nullable NbtCompound nbt) {
-        this.butterflyData = nbt == null ? new NbtCompound() : nbt.copy();
-        markDirty();
+    public void setButterflyData(@Nullable CompoundTag nbt) {
+        this.butterflyData = nbt == null ? new CompoundTag() : nbt.copy();
+        setChanged();
 
-        if (world != null && !world.isClient) {
-            world.updateListeners(pos, getCachedState(), getCachedState(), Block.NOTIFY_LISTENERS);
+        if (level != null && !level.isClientSide()) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
         }
     }
 
@@ -64,7 +59,7 @@ public class ButterflyBottleBlockEntity extends BlockEntity {
         if (butterflyData == null || butterflyData.isEmpty()) return null;
 
         if (butterflyData.contains("Variant")) {
-            ButterflyVariant variant = ButterflyVariant.fromId(butterflyData.getString("Variant"));
+            ButterflyVariant variant = ButterflyVariant.fromId(butterflyData.getStringOr("Variant", ""));
             return variant.getTextureLocation();
         }
 
@@ -72,7 +67,7 @@ public class ButterflyBottleBlockEntity extends BlockEntity {
     }
 
     @Override
-    public Packet<ClientPlayPacketListener> toUpdatePacket() {
-        return BlockEntityUpdateS2CPacket.create(this);
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 }

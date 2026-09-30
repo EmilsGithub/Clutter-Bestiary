@@ -1,9 +1,9 @@
 package net.emilsg.clutterbestiary.entity.custom.goal;
 
 import net.emilsg.clutterbestiary.entity.custom.CapybaraEntity;
-import net.minecraft.entity.ai.goal.WanderAroundFarGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 
-public class CapybaraWanderGoal extends WanderAroundFarGoal {
+public class CapybaraWanderGoal extends WaterAvoidingRandomStrollGoal {
     private final CapybaraEntity capybara;
 
     public CapybaraWanderGoal(CapybaraEntity capybara, double speed, float probability) {
@@ -12,8 +12,8 @@ public class CapybaraWanderGoal extends WanderAroundFarGoal {
     }
 
     @Override
-    public boolean canStart() {
-        return super.canStart() && !this.capybara.isSleeping();
+    public boolean canUse() {
+        return super.canUse() && !this.capybara.isSleeping();
     }
 
     @Override
