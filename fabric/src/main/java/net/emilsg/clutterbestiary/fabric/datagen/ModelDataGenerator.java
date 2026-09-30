@@ -88,7 +88,7 @@ public class ModelDataGenerator extends FabricModelProvider {
                 new VariantsRecord(0.17f, "crimson_butterfly_in_a_bottle", false),
                 new VariantsRecord(0.18f, "soul_butterfly_in_a_bottle", false)
         );
-        registerItemWithPredicate(gen, bottle, "type", "default_butterfly_in_a_bottle", variants);
+        registerItemWithPredicate(gen, bottle, "type", "white_butterfly_in_a_bottle", variants);
     }
 
     private void registerElytra(ItemModelGenerator itemGen, Item elytra) {

@@ -38,7 +38,7 @@ public class KoiEggsEntity extends MobEntity {
 
     public KoiEggsEntity(EntityType<? extends MobEntity> entityType, World world) {
         super(entityType, world);
-        this.timeToHatch = 1200;
+        this.timeToHatch = 6000 + this.random.nextInt(6001);
     }
 
     @Override
@@ -54,7 +54,7 @@ public class KoiEggsEntity extends MobEntity {
     @Override
     public void readCustomDataFromNbt(NbtCompound nbt) {
         super.readCustomDataFromNbt(nbt);
-        this.timeToHatch = nbt.contains("HatchTime") ? nbt.getInt("HatchTime") : 120;
+        this.timeToHatch = nbt.contains("HatchTime") ? nbt.getInt("HatchTime") : this.timeToHatch;
         this.setBaseColorVariant(KoiBaseColorVariant.fromId(nbt.getString("BaseColor")));
         this.setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant.fromId(nbt.getString("PrimaryPatternColor")));
         this.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.fromId(nbt.getString("PrimaryPatternType")));
