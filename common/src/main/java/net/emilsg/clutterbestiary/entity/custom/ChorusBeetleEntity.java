@@ -7,7 +7,6 @@ import net.emilsg.clutterbestiary.animation_handling.EntityAnimationController;
 import net.emilsg.clutterbestiary.animation_handling.HandledEntityAnimations;
 import net.emilsg.clutterbestiary.animation_handling.IdleAnimationGroup;
 import net.emilsg.clutterbestiary.animation_handling.animation_states.ChorusBeetleAnimationState;
-import net.emilsg.clutterbestiary.entity.ModEntityTypes;
 import net.emilsg.clutterbestiary.entity.custom.goal.ChorusBeetleBreakFlowerGoal;
 import net.emilsg.clutterbestiary.entity.custom.goal.ChorusBeetleFlyAroundGoal;
 import net.emilsg.clutterbestiary.entity.custom.goal.ChorusBeetleReturnFlowerGoal;
@@ -32,15 +31,16 @@ import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.AnimationState;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.control.JumpControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
-import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.FollowParentGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
@@ -73,7 +73,7 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
     private static final double MAX_LANDING_ANIMATION_SPEED = 1.5;
     private static final double MAX_LANDING_ANIMATION_SPEED_HEIGHT = 8.0;
     private static final double GROUND_CHECK_DISTANCE = 32.0;
-    private static final Ingredient BREEDING_INGREDIENT = Ingredient.of(Items.CHORUS_FLOWER);
+    private static final Ingredient TEMPT_INGREDIENT = Ingredient.of(Items.CHORUS_FLOWER);
     private static final EntityDataAccessor<Boolean> FLYING = SynchedEntityData.defineId(ChorusBeetleEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> CARRYING_CHORUS_FLOWER = SynchedEntityData.defineId(ChorusBeetleEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> ANIMATION_STATE = SynchedEntityData.defineId(ChorusBeetleEntity.class, EntityDataSerializers.INT);
@@ -160,10 +160,8 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.25));
         this.goalSelector.addGoal(2, new ChorusBeetleBreakFlowerGoal(this, 1.15, 12));
         this.goalSelector.addGoal(2, new ChorusBeetleReturnFlowerGoal(this, 1.15));
-        this.goalSelector.addGoal(3, new BreedGoal(this, 1.0));
         this.goalSelector.addGoal(4, new ChorusBeetleFlyAroundGoal(this, 1.0));
-        this.goalSelector.addGoal(5, new TemptGoal(this, 1.1, BREEDING_INGREDIENT, false));
-        this.goalSelector.addGoal(6, new FollowParentGoal(this, 1.0));
+        this.goalSelector.addGoal(5, new TemptGoal(this, 1.1, TEMPT_INGREDIENT, false));
         this.goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 1.0));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 6.0f));
         this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
@@ -182,10 +180,16 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
         return world.getBlockState(pos.below()).is(ModBlockTags.CHORUS_BEETLES_SPAWN_ON);
     }
 
+    @Override
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData entityData) {
+        // Chorus beetles can't be bred, so never spawn them as babies either.
+        return super.finalizeSpawn(world, difficulty, spawnReason, new AgeableMob.AgeableMobGroupData(false));
+    }
+
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(ServerLevel world, AgeableMob entity) {
-        return ModEntityTypes.CHORUS_BEETLE.get().create(world, EntitySpawnReason.BREEDING);
+        return null;
     }
 
     @Override
@@ -215,7 +219,7 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
 
     @Override
     public boolean isFood(ItemStack stack) {
-        return BREEDING_INGREDIENT.test(stack);
+        return false;
     }
 
     @Override
@@ -467,11 +471,6 @@ public class ChorusBeetleEntity extends ParentAnimalEntity implements HandledEnt
         navigation.setCanOpenDoors(false);
         navigation.setCanFloat(false);
         return navigation;
-    }
-
-    @Override
-    public float getAgeScale() {
-        return this.isBaby() ? 0.5f : 1.0f;
     }
 
     private static class ChorusBeetleJumpControl extends JumpControl {

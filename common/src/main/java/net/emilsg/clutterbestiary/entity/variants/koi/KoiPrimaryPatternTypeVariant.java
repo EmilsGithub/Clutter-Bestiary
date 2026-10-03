@@ -67,4 +67,8 @@ public enum KoiPrimaryPatternTypeVariant implements BestiaryBasicVariant {
     public Identifier getTextureLocation() {
         return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/koi/koi_primary_pattern_" + getName() + ".png");
     }
+
+    public Identifier getBabyTextureLocation() {
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/koi/baby_koi_primary_pattern_" + getName() + ".png");
+    }
 }

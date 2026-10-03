@@ -12,6 +12,7 @@ if (localPropertiesFile.exists()) {
 
 ext.localDevUsername = localProperties.getProperty("dev.username", "")
 ext.localDevUuid = localProperties.getProperty("dev.uuid", "")
+ext.localReleaseDir = localProperties.getProperty("release.dir", "")
 
 architectury {
     minecraft = project.minecraft_version
@@ -29,8 +30,24 @@ subprojects {
     apply plugin: 'maven-publish'
 
     base {
-        // Set up a suffixed format for the mod jar names, e.g. `example-fabric`.
-        archivesName = "$rootProject.archives_name-$project.name"
+        archivesName = rootProject.archives_name
+    }
+
+    // Jar names follow `clutterbestiary-<version>-<loader>-<minecraft version>`, e.g. `clutterbestiary-1.2.0-neoforge-26.3.jar`.
+    tasks.withType(AbstractArchiveTask).configureEach {
+        archiveVersion = "$rootProject.mod_version-$project.name-$rootProject.minecraft_version"
+    }
+
+    // If `release.dir` is set in local.properties, also copy the release jar there.
+    def localReleaseDir = rootProject.ext.localReleaseDir
+    if (localReleaseDir) {
+        plugins.withId('com.gradleup.shadow') {
+            def copyReleaseJar = tasks.register('copyReleaseJar', Copy) {
+                from tasks.named('shadowJar').flatMap { it.archiveFile }
+                into localReleaseDir
+            }
+            tasks.named('shadowJar').configure { finalizedBy copyReleaseJar }
+        }
     }
 
     repositories {
@@ -64,7 +81,7 @@ subprojects {
     publishing {
         publications {
             mavenJava(MavenPublication) {
-                artifactId = base.archivesName.get()
+                artifactId = "$rootProject.archives_name-$project.name"
                 from components.java
             }
         }

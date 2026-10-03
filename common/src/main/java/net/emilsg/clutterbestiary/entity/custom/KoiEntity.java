@@ -22,6 +22,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.*;
 import net.minecraft.world.damagesource.DamageSource;
@@ -33,6 +34,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
@@ -56,6 +58,11 @@ import java.util.function.Supplier;
 
 public class KoiEntity extends ParentFishEntity {
     private static final Ingredient BREEDING_INGREDIENT = Ingredient.of(Items.KELP);
+    private static final float MIN_ADULT_SIZE = 0.8F;
+    private static final float MAX_ADULT_SIZE = 1.2F;
+    private static final float MIN_BRED_SIZE = 0.5F;
+    private static final float MAX_BRED_SIZE = 1.5F;
+    private static final float BRED_SIZE_VARIATION = 0.05F;
 
     private static final EntityDataAccessor<String> BASE_COLOR = SynchedEntityData.defineId(KoiEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<String> PRIMARY_PATTERN_COLOR = SynchedEntityData.defineId(KoiEntity.class, EntityDataSerializers.STRING);
@@ -71,6 +78,8 @@ public class KoiEntity extends ParentFishEntity {
     @Nullable
     private UUID lovingPlayer;
     private int swimmingAnimationTimeout = 0;
+    // Size this koi grows into when inherited from bred parents; 0 means it rolls a wild size instead.
+    private float inheritedAdultSize = 0.0F;
 
     public KoiEntity(EntityType<? extends AbstractFish> entityType, Level world) {
         super(entityType, world);
@@ -94,6 +103,10 @@ public class KoiEntity extends ParentFishEntity {
         }
 
         passiveData.increaseGroupSizeByOne();
+
+        if (!this.isBaby()) {
+            this.randomizeAdultSize();
+        }
 
         KoiBaseColorVariant base;
         KoiPrimaryPatternColorVariant primaryColor;
@@ -140,6 +153,12 @@ public class KoiEntity extends ParentFishEntity {
     public void loadFromBucketTag(CompoundTag nbt) {
         super.loadFromBucketTag(nbt);
 
+        if (nbt.getFloat("Size").isPresent()) {
+            this.setKoiSize(nbt.getFloatOr("Size", 1.0F));
+        }
+
+        this.inheritedAdultSize = nbt.getFloatOr("InheritedAdultSize", this.inheritedAdultSize);
+
         if (nbt.getString("BaseColor").isPresent()) {
             this.setBaseColorVariant(KoiBaseColorVariant.fromId(nbt.getStringOr("BaseColor", "")));
         }
@@ -174,6 +193,7 @@ public class KoiEntity extends ParentFishEntity {
         }
         nbt.putInt("Age", this.getBreedingAge());
         nbt.putInt("ForcedAge", this.forcedAge);
+        nbt.putFloat("InheritedAdultSize", this.inheritedAdultSize);
     }
 
     @Override
@@ -186,6 +206,7 @@ public class KoiEntity extends ParentFishEntity {
         this.setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant.fromId(nbt.getStringOr("SecondaryPatternType", "")));
         this.loveTicks = nbt.getIntOr("InLove", 0);
         this.lovingPlayer = nbt.read("LoveCause", UUIDUtil.CODEC).orElse(null);
+        this.inheritedAdultSize = nbt.getFloatOr("InheritedAdultSize", 0.0F);
         this.setBreedingAge(nbt.getIntOr("Age", 0));
         this.forcedAge = nbt.getIntOr("ForcedAge", 0);
     }
@@ -232,6 +253,7 @@ public class KoiEntity extends ParentFishEntity {
         koiEggs.setPrimaryPatternTypeVariant(primaryType);
         koiEggs.setSecondaryPatternColorVariant(secondaryColor);
         koiEggs.setSecondaryPatternTypeVariant(secondaryType);
+        koiEggs.setParentAverageSize((this.getKoiSize() + other.getKoiSize()) / 2.0F);
 
         koiEggs.snapTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
         world.addFreshEntity(koiEggs);
@@ -269,6 +291,8 @@ public class KoiEntity extends ParentFishEntity {
             nbt.putString("PrimaryPatternColor", this.getPrimaryPatternColorVariant().getID());
             nbt.putString("SecondaryPatternType", this.getSecondaryPatternTypeVariant().getID());
             nbt.putString("SecondaryPatternColor", this.getSecondaryPatternColorVariant().getID());
+            nbt.putFloat("Size", this.getKoiSize());
+            if (this.inheritedAdultSize > 0.0F) nbt.putFloat("InheritedAdultSize", this.inheritedAdultSize);
         });
     }
 
@@ -580,6 +604,17 @@ public class KoiEntity extends ParentFishEntity {
     }
 
     protected void onGrowUp() {
+        if (!this.level().isClientSide()) {
+            if (this.isBaby()) {
+                this.setKoiSize(1.0F);
+            } else if (this.inheritedAdultSize > 0.0F) {
+                this.setKoiSize(this.inheritedAdultSize);
+                this.inheritedAdultSize = 0.0F;
+            } else {
+                this.randomizeAdultSize();
+            }
+        }
+
         if (!this.isBaby() && this.isPassenger()) {
             Entity var2 = this.getVehicle();
             if (var2 instanceof Boat boatEntity) {
@@ -589,6 +624,34 @@ public class KoiEntity extends ParentFishEntity {
             }
         }
 
+    }
+
+    /**
+     * Adult koi vary in size; the size is stored in the SCALE attribute, which is saved and synced to the client.
+     */
+    private void randomizeAdultSize() {
+        this.setKoiSize(MIN_ADULT_SIZE + this.random.nextFloat() * (MAX_ADULT_SIZE - MIN_ADULT_SIZE));
+    }
+
+    /**
+     * Rolls the adult size of a bred koi: the parents' average size, plus or minus a small variation, so selective
+     * breeding can push koi beyond the wild size range.
+     */
+    public void inheritAdultSize(float parentAverageSize) {
+        float variation = (this.random.nextFloat() * 2.0F - 1.0F) * BRED_SIZE_VARIATION;
+        this.inheritedAdultSize = Mth.clamp(parentAverageSize + variation, MIN_BRED_SIZE, MAX_BRED_SIZE);
+    }
+
+    public float getKoiSize() {
+        AttributeInstance scale = this.getAttribute(Attributes.SCALE);
+        return scale != null ? (float) scale.getBaseValue() : 1.0F;
+    }
+
+    public void setKoiSize(float size) {
+        AttributeInstance scale = this.getAttribute(Attributes.SCALE);
+        if (scale == null) return;
+        scale.setBaseValue(size);
+        this.refreshDimensions();
     }
 
     private void setupAnimationStates() {

@@ -2,7 +2,9 @@ package net.emilsg.clutterbestiary.entity.client.render.feature;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.emilsg.clutterbestiary.entity.client.layer.ModModelLayers;
+import net.emilsg.clutterbestiary.entity.client.model.BabyKoiModel;
 import net.emilsg.clutterbestiary.entity.client.model.KoiModel;
+import net.emilsg.clutterbestiary.entity.client.model.parent.ParentFishModel;
 import net.emilsg.clutterbestiary.entity.client.render.state.KoiRenderState;
 import net.emilsg.clutterbestiary.entity.custom.KoiEntity;
 import net.emilsg.clutterbestiary.entity.variants.koi.KoiBaseColorVariant;
@@ -13,12 +15,14 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 
 import java.awt.Color;
 
-public class KoiBaseColorFeatureRenderer extends RenderLayer<KoiRenderState, KoiModel<KoiEntity>> {
-    private final KoiModel<KoiEntity> layerModel;
+public class KoiBaseColorFeatureRenderer extends RenderLayer<KoiRenderState, ParentFishModel<KoiEntity>> {
+    private final KoiModel<KoiEntity> adultLayerModel;
+    private final BabyKoiModel<KoiEntity> babyLayerModel;
 
-    public KoiBaseColorFeatureRenderer(RenderLayerParent<KoiRenderState, KoiModel<KoiEntity>> context, EntityModelSet loader) {
+    public KoiBaseColorFeatureRenderer(RenderLayerParent<KoiRenderState, ParentFishModel<KoiEntity>> context, EntityModelSet loader) {
         super(context);
-        this.layerModel = new KoiModel<>(loader.bakeLayer(ModModelLayers.KOI_BASE));
+        this.adultLayerModel = new KoiModel<>(loader.bakeLayer(ModModelLayers.KOI_BASE));
+        this.babyLayerModel = new BabyKoiModel<>(loader.bakeLayer(ModModelLayers.BABY_KOI_BASE));
     }
 
     /**
@@ -45,6 +49,6 @@ public class KoiBaseColorFeatureRenderer extends RenderLayer<KoiRenderState, Koi
     public void submit(PoseStack matrices, SubmitNodeCollector submitNodeCollector, int light, KoiRenderState state, float yRot, float xRot) {
         if (state.baseColor == 0 || state.entity == null) return;
         int argb = 0xFF000000 | (state.baseColor & 0x00FFFFFF);
-        coloredCutoutModelCopyLayerRender(this.layerModel, state.entity.getBaseColorVariant().getTextureLocation(), matrices, submitNodeCollector, light, state, argb, 1);
+        coloredCutoutModelCopyLayerRender(state.isBaby ? this.babyLayerModel : this.adultLayerModel, (state.isBaby ? state.entity.getBaseColorVariant().getBabyTextureLocation() : state.entity.getBaseColorVariant().getTextureLocation()), matrices, submitNodeCollector, light, state, argb, 1);
     }
 }

@@ -65,4 +65,8 @@ public enum RiverTurtleVariant implements BestiaryBasicVariant {
         return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/river_turtle/" + getName() + "_river_turtle.png");
     }
 
+    public Identifier getBabyTextureLocation() {
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/river_turtle/baby_" + getName() + "_river_turtle.png");
+    }
+
 }

@@ -110,19 +110,4 @@ public class CoatiModel<T extends CoatiEntity> extends ParentTameableModel<T> {
     private void setChestVisibility(boolean chestVisibility) {
         chest.visible = chestVisibility;
     }
-
-    @Override
-    public float getBabyScale() {
-        return DEFAULT_BABY_SCALE;
-    }
-
-    @Override
-    public float getBabyYOffset() {
-        return DEFAULT_BABY_Y_OFFSET;
-    }
-
-    @Override
-    protected ModelPart getBabyHead() {
-        return this.getHeadPart();
-    }
 }

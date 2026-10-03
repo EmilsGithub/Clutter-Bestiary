@@ -37,7 +37,15 @@ public enum StoatVariant {
         return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/stoat/" + getName() + "_stoat_sleeping.png");
     }
 
+    public Identifier getBabySleepingTextureLocation() {
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/stoat/baby_" + getName() + "_stoat_sleeping.png");
+    }
+
     public Identifier getTextureLocation() {
         return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/stoat/" + getName() + "_stoat.png");
+    }
+
+    public Identifier getBabyTextureLocation() {
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/stoat/baby_" + getName() + "_stoat.png");
     }
 }

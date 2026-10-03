@@ -124,19 +124,4 @@ public class MossbloomModel<T extends MossbloomEntity> extends ParentTameableMod
 
         saddle.visible = hasSaddle && !mossbloom.isBaby();
     }
-
-    @Override
-    public float getBabyScale() {
-        return DEFAULT_BABY_SCALE;
-    }
-
-    @Override
-    public float getBabyYOffset() {
-        return DEFAULT_BABY_Y_OFFSET;
-    }
-
-    @Override
-    protected ModelPart getBabyHead() {
-        return this.getHeadPart();
-    }
 }

@@ -42,4 +42,8 @@ public enum CoatiVariant {
     public Identifier getTextureLocation() {
         return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/coati/" + getName() + "_coati.png");
     }
+
+    public Identifier getBabyTextureLocation() {
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/coati/baby_" + getName() + "_coati.png");
+    }
 }

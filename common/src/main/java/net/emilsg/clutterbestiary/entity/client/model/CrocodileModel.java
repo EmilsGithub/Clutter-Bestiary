@@ -160,19 +160,4 @@ public class CrocodileModel<T extends CrocodileEntity> extends ParentTameableMod
     protected ModelPart getHeadPart() {
         return head;
     }
-
-    @Override
-    public float getBabyScale() {
-        return 0.25F;
-    }
-
-    @Override
-    public float getBabyYOffset() {
-        return 4.5F;
-    }
-
-    @Override
-    protected ModelPart getBabyHead() {
-        return this.head;
-    }
 }

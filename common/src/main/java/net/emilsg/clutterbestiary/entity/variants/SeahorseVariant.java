@@ -64,4 +64,8 @@ public enum SeahorseVariant implements BestiaryBasicVariant {
     public Identifier getTextureLocation() {
         return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/seahorse/" + getName() + "_seahorse.png");
     }
+
+    public Identifier getBabyTextureLocation() {
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/seahorse/baby_" + getName() + "_seahorse.png");
+    }
 }

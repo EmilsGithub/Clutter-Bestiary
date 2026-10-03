@@ -3,6 +3,7 @@ package net.emilsg.clutterbestiary.item.custom;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.component.TooltipDisplay;
 import java.util.function.Consumer;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import net.emilsg.clutterbestiary.entity.variants.koi.*;
 import net.emilsg.clutterbestiary.util.ModUtil;
@@ -17,6 +18,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.material.Fluid;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -26,6 +28,8 @@ public class KoiBucketItem extends BestiaryEntityBucketItem {
     public static final MapCodec<KoiPrimaryPatternColorVariant> PRIMARY_COLOR_CODEC = KoiPrimaryPatternColorVariant.CODEC.fieldOf("PrimaryPatternColor");
     public static final MapCodec<KoiSecondaryPatternTypeVariant> SECONDARY_TYPE_CODEC = KoiSecondaryPatternTypeVariant.CODEC.fieldOf("SecondaryPatternType");
     public static final MapCodec<KoiSecondaryPatternColorVariant> SECONDARY_COLOR_CODEC = KoiSecondaryPatternColorVariant.CODEC.fieldOf("SecondaryPatternColor");
+    public static final MapCodec<Float> SIZE_CODEC = Codec.FLOAT.fieldOf("Size");
+
     public KoiBucketItem(Supplier<? extends EntityType<?>> type, Fluid fluid, SoundEvent emptyingSound, Properties settings) {
         super(type, fluid, emptyingSound, settings);
     }
@@ -44,11 +48,22 @@ public class KoiBucketItem extends BestiaryEntityBucketItem {
         if (base.hasSeparateTexture()) {
             int tick = (int) (System.currentTimeMillis() / 100) % base.getColorHex().length;
             tooltip.accept(ModUtil.buildCyclicFormattedName("tooltip.clutterbestiary." + base.getName() + ".koi", base.getColorHex(), tick, true));
-            return;
         } else {
             tooltip.accept(Component.translatable("tooltip.clutterbestiary." + base.getName() + ".koi").withStyle(base.getFormatting()));
+            appendPatterns(cmp, tooltip);
         }
 
+        var sizeOpt = ModUtil.readComponentData(cmp, SIZE_CODEC);
+        if (sizeOpt.isPresent()) {
+            tooltip.accept(CommonComponents.EMPTY);
+            tooltip.accept(Component.translatable("tooltip.clutterbestiary.size.koi").withStyle(ChatFormatting.GRAY));
+            tooltip.accept(Component.literal(String.format(Locale.ROOT, "%.2fx", sizeOpt.get())).withStyle(ChatFormatting.WHITE));
+        } else {
+            tooltip.accept(CommonComponents.EMPTY);
+        }
+    }
+
+    private static void appendPatterns(CustomData cmp, Consumer<Component> tooltip) {
         var pType = ModUtil.readComponentData(cmp, PRIMARY_TYPE_CODEC).orElse(null);
         var pColor = ModUtil.readComponentData(cmp, PRIMARY_COLOR_CODEC).orElse(null);
         var sType = ModUtil.readComponentData(cmp, SECONDARY_TYPE_CODEC).orElse(null);
@@ -66,8 +81,6 @@ public class KoiBucketItem extends BestiaryEntityBucketItem {
                     .withStyle(sType.getFormatting())
                     .withStyle(sColor.getFormatting()));
         }
-
-        tooltip.accept(CommonComponents.EMPTY);
     }
 
 }

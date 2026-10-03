@@ -94,19 +94,4 @@ public class RiverTurtleModel<T extends RiverTurtleEntity> extends BestiaryModel
     protected ModelPart getHeadPart() {
         return neck;
     }
-
-    @Override
-    public float getBabyScale() {
-        return 0.5F;
-    }
-
-    @Override
-    public float getBabyYOffset() {
-        return 1.5F;
-    }
-
-    @Override
-    protected ModelPart getBabyHead() {
-        return this.head;
-    }
 }

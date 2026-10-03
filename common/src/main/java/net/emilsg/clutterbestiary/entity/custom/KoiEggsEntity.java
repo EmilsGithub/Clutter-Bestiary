@@ -41,6 +41,8 @@ public class KoiEggsEntity extends Mob {
     private static final int MAX_HATCH_TIME = 12000; // 10 minutes
 
     private int timeToHatch;
+    // Average size of the parents, passed on to the hatchlings; 0 means the eggs weren't bred.
+    private float parentAverageSize = 0.0F;
 
     public KoiEggsEntity(EntityType<? extends Mob> entityType, Level world) {
         super(entityType, world);
@@ -61,6 +63,7 @@ public class KoiEggsEntity extends Mob {
     public void readAdditionalSaveData(ValueInput nbt) {
         super.readAdditionalSaveData(nbt);
         this.timeToHatch = nbt.getIntOr("HatchTime", this.timeToHatch);
+        this.parentAverageSize = nbt.getFloatOr("ParentAverageSize", 0.0F);
         this.setBaseColorVariant(KoiBaseColorVariant.fromId(nbt.getStringOr("BaseColor", "")));
         this.setPrimaryPatternColorVariant(KoiPrimaryPatternColorVariant.fromId(nbt.getStringOr("PrimaryPatternColor", "")));
         this.setPrimaryPatternTypeVariant(KoiPrimaryPatternTypeVariant.fromId(nbt.getStringOr("PrimaryPatternType", "")));
@@ -72,6 +75,7 @@ public class KoiEggsEntity extends Mob {
     public void addAdditionalSaveData(ValueOutput nbt) {
         super.addAdditionalSaveData(nbt);
         nbt.putInt("HatchTime", this.timeToHatch);
+        nbt.putFloat("ParentAverageSize", this.parentAverageSize);
         nbt.putString("BaseColor", this.getBaseColorVariant().getID());
         nbt.putString("PrimaryPatternColor", this.getPrimaryPatternColorVariant().getID());
         nbt.putString("PrimaryPatternType", this.getPrimaryPatternTypeVariant().getID());
@@ -135,6 +139,10 @@ public class KoiEggsEntity extends Mob {
 
     public void setSecondaryPatternTypeVariant(KoiSecondaryPatternTypeVariant secondaryPatternTypeVariant) {
         this.entityData.set(SECONDARY_PATTERN_TYPE, secondaryPatternTypeVariant.getID());
+    }
+
+    public void setParentAverageSize(float parentAverageSize) {
+        this.parentAverageSize = parentAverageSize;
     }
 
     @Override
@@ -210,6 +218,7 @@ public class KoiEggsEntity extends Mob {
             koiEntity.setPrimaryPatternTypeVariant(this.getPrimaryPatternTypeVariant());
             koiEntity.setSecondaryPatternColorVariant(this.getSecondaryPatternColorVariant());
             koiEntity.setSecondaryPatternTypeVariant(this.getSecondaryPatternTypeVariant());
+            if (this.parentAverageSize > 0.0F) koiEntity.inheritAdultSize(this.parentAverageSize);
             koiEntity.snapTo(x, y, z, this.getYRot(), this.getXRot());
             world.addFreshEntity(koiEntity);
         }

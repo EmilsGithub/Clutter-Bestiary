@@ -90,19 +90,4 @@ public class CapybaraModel<T extends CapybaraEntity> extends ParentTameableModel
     protected ModelPart getHeadPart() {
         return head;
     }
-
-    @Override
-    public float getBabyScale() {
-        return DEFAULT_BABY_SCALE;
-    }
-
-    @Override
-    public float getBabyYOffset() {
-        return DEFAULT_BABY_Y_OFFSET;
-    }
-
-    @Override
-    protected ModelPart getBabyHead() {
-        return this.getHeadPart();
-    }
 }

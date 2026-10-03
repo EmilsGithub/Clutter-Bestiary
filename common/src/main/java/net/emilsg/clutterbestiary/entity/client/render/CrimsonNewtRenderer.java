@@ -8,6 +8,7 @@ import net.minecraft.resources.Identifier;
 
 public class CrimsonNewtRenderer extends AbstractNetherNewtRenderer {
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/nether_newt/crimson_newt.png");
+    private static final Identifier BABY_TEXTURE = Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/nether_newt/baby_crimson_newt.png");
 
     public CrimsonNewtRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
@@ -15,6 +16,6 @@ public class CrimsonNewtRenderer extends AbstractNetherNewtRenderer {
 
     @Override
     public Identifier getTextureLocation(AbstractNetherNewtEntity entity) {
-        return TEXTURE;
+        return entity.isBaby() ? BABY_TEXTURE : TEXTURE;
     }
 }

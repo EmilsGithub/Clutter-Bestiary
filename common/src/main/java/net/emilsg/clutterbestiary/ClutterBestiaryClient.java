@@ -65,37 +65,53 @@ public final class ClutterBestiaryClient {
 
     public static void registerEntityModelLayers() {
         EntityModelLayerRegistry.register(ModModelLayers.NETHER_NEWT, NetherNewtModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_NETHER_NEWT, BabyNetherNewtModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.BEAVER, BeaverModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_BEAVER, BabyBeaverModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.BUTTERFLY, ButterflyModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.BUTTERFLY_LARVA, ButterflyLarvaModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.EMBER_TORTOISE, EmberTortoiseModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_EMBER_TORTOISE, BabyEmberTortoiseModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.JELLYFISH, JellyfishModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.MANTA_RAY, MantaRayModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.CAPYBARA, CapybaraModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_CAPYBARA, BabyCapybaraModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.CHAMELEON, ChameleonModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.BABY_CHAMELEON, BabyChameleonModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.KIWI_BIRD, KiwiBirdModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_KIWI_BIRD, BabyKiwiBirdModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.MOSSBLOOM, MossbloomModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.BABY_MOSSBLOOM, BabyMossbloomModel::createBodyLayer);
         EntityModelLayerRegistry.register(ModModelLayers.EMPEROR_PENGUIN, EmperorPenguinModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.BABY_EMPEROR_PENGUIN, BabyEmperorPenguinModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.ECHOFIN, EchofinModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.SEAHORSE, SeahorseModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_SEAHORSE, BabySeahorseModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.POTION_WASP, PotionWaspModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.POTION_SAC, PotionSacModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.DRAGONFLY, DragonflyModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_DRAGONFLY, BabyDragonflyModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.BOOPLET, BoopletModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.KOI_BASE, KoiModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.KOI_PRIMARY_COLOR, KoiModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.KOI_SECONDARY_COLOR, KoiModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_KOI_BASE, BabyKoiModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_KOI_PRIMARY_COLOR, BabyKoiModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_KOI_SECONDARY_COLOR, BabyKoiModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.KOI_EGGS, KoiEggsModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.RIVER_TURTLE, RiverTurtleModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_RIVER_TURTLE, BabyRiverTurtleModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.COATI, CoatiModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_COATI, BabyCoatiModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.RED_PANDA, RedPandaModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_RED_PANDA, BabyRedPandaModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.STOAT, StoatModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_STOAT, BabyStoatModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.CROCODILE, CrocodileModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_CROCODILE, BabyCrocodileModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.CHORUS_BEETLE, ChorusBeetleModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.WOODPECKER, WoodpeckerModel::getTexturedModelData);
+        EntityModelLayerRegistry.register(ModModelLayers.BABY_WOODPECKER, BabyWoodpeckerModel::getTexturedModelData);
         EntityModelLayerRegistry.register(ModModelLayers.ARROWFISH, ArrowfishModel::getTexturedModelData);
     }
 

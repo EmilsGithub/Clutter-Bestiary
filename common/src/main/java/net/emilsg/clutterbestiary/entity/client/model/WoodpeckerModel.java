@@ -91,19 +91,4 @@ public class WoodpeckerModel extends BestiaryEntityModel<WoodpeckerEntity> {
             this.head.xRot = Mth.clamp(headPitch, -25.0f, 45.0f) * Mth.DEG_TO_RAD;
         }
     }
-
-    @Override
-    public float getBabyScale() {
-        return 0.5F;
-    }
-
-    @Override
-    public float getBabyYOffset() {
-        return 1.5F;
-    }
-
-    @Override
-    protected ModelPart getBabyHead() {
-        return this.head;
-    }
 }

@@ -2,7 +2,7 @@ package net.emilsg.clutterbestiary.entity.client.render.feature;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.emilsg.clutterbestiary.entity.client.model.BeaverModel;
+import net.emilsg.clutterbestiary.entity.client.model.parent.BestiaryModel;
 import net.emilsg.clutterbestiary.entity.client.render.state.BeaverRenderState;
 import net.emilsg.clutterbestiary.entity.custom.BeaverEntity;
 import net.minecraft.client.Minecraft;
@@ -19,9 +19,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector4f;
 
-public class BeaverStripItemFeatureRenderer extends RenderLayer<BeaverRenderState, BeaverModel<BeaverEntity>> {
+public class BeaverStripItemFeatureRenderer extends RenderLayer<BeaverRenderState, BestiaryModel<BeaverEntity>> {
 
-    public BeaverStripItemFeatureRenderer(RenderLayerParent<BeaverRenderState, BeaverModel<BeaverEntity>> context) {
+    public BeaverStripItemFeatureRenderer(RenderLayerParent<BeaverRenderState, BestiaryModel<BeaverEntity>> context) {
         super(context);
     }
 

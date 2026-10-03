@@ -61,19 +61,4 @@ public class DragonflyModel<T extends DragonflyEntity> extends BestiaryModel<T> 
     protected ModelPart getHeadPart() {
         return head;
     }
-
-    @Override
-    public float getBabyScale() {
-        return 0.5F;
-    }
-
-    @Override
-    public float getBabyYOffset() {
-        return 1.5F;
-    }
-
-    @Override
-    protected ModelPart getBabyHead() {
-        return this.head;
-    }
 }

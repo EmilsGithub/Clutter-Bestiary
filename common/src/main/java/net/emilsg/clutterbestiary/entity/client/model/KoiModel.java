@@ -80,19 +80,4 @@ public class KoiModel<T extends KoiEntity> extends ParentFishModel<T> {
     private void updatePatternVisibility(boolean patternVisibility) {
         this.bodyPatternLayer.visible = patternVisibility;
     }
-
-    @Override
-    public float getBabyScale() {
-        return 0.35F;
-    }
-
-    @Override
-    public float getBabyYOffset() {
-        return 2.65F;
-    }
-
-    @Override
-    protected ModelPart getBabyHead() {
-        return this.head;
-    }
 }

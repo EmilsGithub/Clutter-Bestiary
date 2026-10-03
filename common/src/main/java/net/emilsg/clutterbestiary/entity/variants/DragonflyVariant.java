@@ -37,4 +37,8 @@ public enum DragonflyVariant {
     public Identifier getTextureLocation() {
         return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/dragonfly/" + getName() + "_dragonfly.png");
     }
+
+    public Identifier getBabyTextureLocation() {
+        return Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/dragonfly/baby_" + getName() + "_dragonfly.png");
+    }
 }

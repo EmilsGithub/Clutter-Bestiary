@@ -75,19 +75,4 @@ public class SeahorseModel<T extends SeahorseEntity> extends ParentFishModel<T> 
             this.stomach.offsetScale(createVec3f(seahorse.getHasChildrenTimer()));
         }
     }
-
-    @Override
-    public float getBabyScale() {
-        return 0.5F;
-    }
-
-    @Override
-    public float getBabyYOffset() {
-        return 1.5F;
-    }
-
-    @Override
-    protected ModelPart getBabyHead() {
-        return this.head;
-    }
 }

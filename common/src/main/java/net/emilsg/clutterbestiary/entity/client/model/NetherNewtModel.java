@@ -143,19 +143,4 @@ public class NetherNewtModel<T extends AbstractNetherNewtEntity> extends ParentT
         backLeftMushroom.visible = fungiCount >= 5;
         backRightMushroom.visible = fungiCount >= 3;
     }
-
-    @Override
-    public float getBabyScale() {
-        return DEFAULT_BABY_SCALE;
-    }
-
-    @Override
-    public float getBabyYOffset() {
-        return DEFAULT_BABY_Y_OFFSET;
-    }
-
-    @Override
-    protected ModelPart getBabyHead() {
-        return this.getHeadPart();
-    }
 }

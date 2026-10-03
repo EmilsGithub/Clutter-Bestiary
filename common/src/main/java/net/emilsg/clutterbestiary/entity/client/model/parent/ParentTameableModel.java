@@ -6,10 +6,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 
 public abstract class ParentTameableModel<T extends ParentTameableEntity> extends BestiaryEntityModel<T> {
-    // Shared baby look: half-size body with an enlarged head (formerly setBabyHeadSizeAndRender).
-    protected static final float DEFAULT_BABY_SCALE = 0.5F;
-    protected static final float DEFAULT_BABY_Y_OFFSET = 1.5F;
-
     protected ParentTameableModel(ModelPart root) {
         super(root);
     }

@@ -86,19 +86,4 @@ public class RedPandaModel<T extends RedPandaEntity> extends ParentTameableModel
     protected ModelPart getHeadPart() {
         return this.head;
     }
-
-    @Override
-    public float getBabyScale() {
-        return DEFAULT_BABY_SCALE;
-    }
-
-    @Override
-    public float getBabyYOffset() {
-        return DEFAULT_BABY_Y_OFFSET;
-    }
-
-    @Override
-    protected ModelPart getBabyHead() {
-        return this.getHeadPart();
-    }
 }

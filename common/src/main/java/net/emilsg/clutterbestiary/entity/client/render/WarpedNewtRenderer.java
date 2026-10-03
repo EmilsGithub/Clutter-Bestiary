@@ -8,6 +8,7 @@ import net.minecraft.resources.Identifier;
 
 public class WarpedNewtRenderer extends AbstractNetherNewtRenderer {
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/nether_newt/warped_newt.png");
+    private static final Identifier BABY_TEXTURE = Identifier.fromNamespaceAndPath(ClutterBestiary.MOD_ID, "textures/entity/nether_newt/baby_warped_newt.png");
 
     public WarpedNewtRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
@@ -15,6 +16,6 @@ public class WarpedNewtRenderer extends AbstractNetherNewtRenderer {
 
     @Override
     public Identifier getTextureLocation(AbstractNetherNewtEntity entity) {
-        return TEXTURE;
+        return entity.isBaby() ? BABY_TEXTURE : TEXTURE;
     }
 }
